@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { Connection, PublicKey } from '@solana/web3.js'
 import { FogoWalletButton } from '../components/FogoWalletButton'
+import { WalletProvider } from '../contexts/WalletContext'
 
-export default function FogoTest() {
+function FogoTestContent() {
   const { publicKey, connected, connect, disconnect } = useWallet()
   const [connection, setConnection] = useState<Connection | null>(null)
   const [balance, setBalance] = useState<number | null>(null)
@@ -152,5 +153,13 @@ export default function FogoTest() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function FogoTest() {
+  return (
+    <WalletProvider>
+      <FogoTestContent />
+    </WalletProvider>
   )
 }

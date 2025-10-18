@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
 import Head from 'next/head'
+import { WalletProvider } from '../contexts/WalletContext'
 
-export default function TestWallet() {
+function TestWalletContent() {
   const { publicKey, connected, connecting, disconnecting, wallet, connect, disconnect, wallets } = useWallet()
   const [logs, setLogs] = useState<string[]>([])
 
@@ -143,5 +144,13 @@ export default function TestWallet() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function TestWallet() {
+  return (
+    <WalletProvider>
+      <TestWalletContent />
+    </WalletProvider>
   )
 }

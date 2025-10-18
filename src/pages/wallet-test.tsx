@@ -1,8 +1,9 @@
 import React, { useState } from 'react'
 import Head from 'next/head'
 import { useWallet } from '@solana/wallet-adapter-react'
+import { WalletProvider } from '../contexts/WalletContext'
 
-export default function WalletTest() {
+function WalletTestContent() {
   const { 
     publicKey, 
     connected, 
@@ -167,5 +168,13 @@ export default function WalletTest() {
         </div>
       </div>
     </>
+  )
+}
+
+export default function WalletTest() {
+  return (
+    <WalletProvider>
+      <WalletTestContent />
+    </WalletProvider>
   )
 }
