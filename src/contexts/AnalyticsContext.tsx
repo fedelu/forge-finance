@@ -116,7 +116,7 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({ children }
   }, []);
 
   const getDailyStats = useCallback((days: number = 7) => {
-    const stats: { date: string; volume: number; day: string }[] = [];
+    const stats: Array<{ date: string; volume: number; day: string }> = [];
     for (let i = days - 1; i >= 0; i--) {
       const date = new Date();
       date.setDate(date.getDate() - i);
