@@ -1,7 +1,7 @@
 {
   "version": 2,
   "name": "forge-finance",
-  "buildCommand": "npm run build",
+  "buildCommand": "cp next.config.prod.js next.config.js && npm run build",
   "outputDirectory": "out",
   "env": {
     "NEXT_PUBLIC_SOLANA_NETWORK": "devnet",
