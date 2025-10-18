@@ -1,9 +1,21 @@
 {
   "version": 2,
   "name": "forge-finance",
-  "buildCommand": "cd app && rm -rf node_modules package-lock.json && npm install && npm run build",
-  "outputDirectory": "app/.next",
-  "installCommand": "cd app && rm -rf node_modules package-lock.json && npm install",
+  "builds": [
+    {
+      "src": "app/package.json",
+      "use": "@vercel/next",
+      "config": {
+        "distDir": ".next"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "app/$1"
+    }
+  ],
   "env": {
     "NEXT_PUBLIC_SOLANA_NETWORK": "devnet",
     "NEXT_PUBLIC_RPC_URL": "https://api.devnet.solana.com",
