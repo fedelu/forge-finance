@@ -8,8 +8,8 @@ async function setupTestEnvironment() {
   console.log('🧪 Setting up test environment...')
 
   // Setup connection
-  const connection = new Connection(clusterApiUrl('localnet'), 'confirmed')
-  console.log('📡 Connected to Solana localnet')
+  const connection = new Connection(clusterApiUrl('devnet'), 'confirmed')
+  console.log('📡 Connected to Solana devnet')
 
   // Create test accounts
   const testAuthority = Keypair.generate()
