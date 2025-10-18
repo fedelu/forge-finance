@@ -1,6 +1,8 @@
 {
   "version": 2,
   "name": "forge-finance",
+  "buildCommand": "npm run build",
+  "outputDirectory": "out",
   "env": {
     "NEXT_PUBLIC_SOLANA_NETWORK": "devnet",
     "NEXT_PUBLIC_RPC_URL": "https://api.devnet.solana.com",
