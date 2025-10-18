@@ -7,6 +7,8 @@ import {
   ArrowUpIcon,
   ArrowDownIcon
 } from '@heroicons/react/24/outline'
+import { useCrucible } from '../contexts/CrucibleContext'
+import { useAnalytics } from '../contexts/AnalyticsContext'
 
 interface ProtocolStats {
   totalCrucibles: number
@@ -29,25 +31,59 @@ export default function SimpleStats({ className = '' }: SimpleStatsProps) {
   const [isLive, setIsLive] = useState(true)
   const [isClient, setIsClient] = useState(false)
   
+  // Only use context hooks on client side
+  const crucibles = isClient ? useCrucible().crucibles : []
+  const analytics = isClient ? useAnalytics().analytics : { totalVolume: 0, transactionCount: 0 }
+  
   useEffect(() => {
     setIsClient(true)
   }, [])
 
-  // Calculate stats (static for SSR compatibility)
+  // Calculate stats with real data when client-side, static data for SSR
   const stats = useMemo(() => {
-    return {
-      totalCrucibles: 10,
-      totalTVL: 1000000,
-      totalUsers: 500,
-      averageAPR: 8.5,
-      priceChange24h: 2.3,
-      volume24h: 250000,
-      tvlChange: 5.2,
-      userChange: 12.5,
-      aprChange: -0.8,
-      volumeChange: 15.3
+    if (!isClient) {
+      // Static data for SSR
+      return {
+        totalCrucibles: 10,
+        totalTVL: 1000000,
+        totalUsers: 500,
+        averageAPR: 8.5,
+        priceChange24h: 2.3,
+        volume24h: 250000,
+        tvlChange: 5.2,
+        userChange: 12.5,
+        aprChange: -0.8,
+        volumeChange: 15.3
+      }
     }
-  }, [])
+    
+    // Real data when client-side
+    const totalCrucibles = crucibles.length
+    const totalTVL = crucibles.reduce((sum, crucible) => sum + crucible.tvl, 0)
+    const totalUsers = Math.max(100, analytics.transactionCount * 2)
+    const averageAPR = crucibles.length > 0 
+      ? crucibles.reduce((sum, crucible) => sum + crucible.apr, 0) / crucibles.length 
+      : 8.5
+    const volume24h = analytics.totalVolume
+    const priceChange24h = 0.05 // Mock for now
+    const tvlChange = 5.2 // Mock for now
+    const userChange = 12 // Mock for now
+    const aprChange = 0.2 // Mock for now
+    const volumeChange = 15.3 // Mock for now
+
+    return {
+      totalCrucibles,
+      totalTVL,
+      totalUsers,
+      averageAPR,
+      priceChange24h,
+      volume24h,
+      tvlChange,
+      userChange,
+      aprChange,
+      volumeChange
+    }
+  }, [isClient, crucibles, analytics])
 
   // Real-time updates are now handled by the contexts
   // No need for simulation since we're using real data
