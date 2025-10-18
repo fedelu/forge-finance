@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
 import Head from 'next/head'
-import { WalletProvider } from '../contexts/WalletContext'
+import { ConnectionProvider, WalletProvider as SolanaWalletProvider } from '@solana/wallet-adapter-react'
+import { WalletAdapterNetwork } from '@solana/wallet-adapter-base'
+import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets'
+import { clusterApiUrl } from '@solana/web3.js'
 
 function TestWalletContent() {
   const { publicKey, connected, connecting, disconnecting, wallet, connect, disconnect, wallets } = useWallet()
@@ -148,9 +151,21 @@ function TestWalletContent() {
 }
 
 export default function TestWallet() {
+  const network = WalletAdapterNetwork.Devnet
+  const endpoint = useMemo(() => clusterApiUrl(network), [network])
+  
+  const wallets = useMemo(
+    () => [
+      new PhantomWalletAdapter(),
+    ],
+    []
+  )
+
   return (
-    <WalletProvider>
-      <TestWalletContent />
-    </WalletProvider>
+    <ConnectionProvider endpoint={endpoint}>
+      <SolanaWalletProvider wallets={wallets} autoConnect>
+        <TestWalletContent />
+      </SolanaWalletProvider>
+    </ConnectionProvider>
   )
 }
