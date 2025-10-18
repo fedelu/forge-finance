@@ -1,28 +1,17 @@
 {
   "name": "forge-finance",
   "version": "1.0.0",
-  "description": "DeFi platform on Solana - Forge",
+  "description": "Forge Finance - Solana DeFi Protocol",
+  "private": true,
   "scripts": {
-    "build": "anchor build",
-    "test": "anchor test",
-    "deploy:localnet": "anchor deploy",
-    "deploy:devnet": "anchor deploy --provider.cluster devnet",
-    "lint": "eslint . --ext .ts,.tsx"
+    "build": "cd app && npm install && npm run build",
+    "start": "cd app && npm start",
+    "dev": "cd app && npm run dev"
   },
-  "dependencies": {
-    "@coral-xyz/anchor": "0.32.0",
-    "@solana/spl-token": "^0.3.9",
-    "@solana/web3.js": "^1.87.6"
-  },
-  "devDependencies": {
-    "@types/bn.js": "^5.1.1",
-    "@types/chai": "^4.3.11",
-    "@types/mocha": "^10.0.6",
-    "@types/node": "^20.10.6",
-    "chai": "^4.3.10",
-    "mocha": "^10.2.0",
-    "ts-mocha": "^10.0.0",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
+  "workspaces": [
+    "app"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

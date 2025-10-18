@@ -4,7 +4,8 @@
   "description": "Forge Protocol Frontend - DeFi platform on Solana",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "cp next.config.dev.js next.config.js && next dev",
+    "dev:clean": "rm -f next.config.js && next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"

@@ -1,43 +1,15 @@
 {
   "version": 2,
   "name": "forge-finance",
-  "builds": [
-    {
-      "src": "app/package.json",
-      "use": "@vercel/next"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "app/$1"
-    }
-  ],
+  "buildCommand": "npm run build",
+  "outputDirectory": "app/.next",
+  "installCommand": "npm install",
   "env": {
     "NEXT_PUBLIC_SOLANA_NETWORK": "devnet",
     "NEXT_PUBLIC_RPC_URL": "https://api.devnet.solana.com",
     "NEXT_PUBLIC_EXPLORER_URL": "https://explorer.solana.com",
     "NEXT_PUBLIC_COMMITMENT": "confirmed"
   },
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        },
-        {
-          "key": "X-Frame-Options",
-          "value": "DENY"
-        },
-        {
-          "key": "X-XSS-Protection",
-          "value": "1; mode=block"
-        }
-      ]
-    }
-  ],
   "redirects": [
     {
       "source": "/",
