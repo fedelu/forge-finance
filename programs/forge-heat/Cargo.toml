@@ -1,0 +1,20 @@
+[package]
+name = "forge-heat"
+version = "0.1.0"
+description = "Forge Protocol Heat - Reward calculation and emission engine"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "forge_heat"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = "0.32.0"
+anchor-spl = "0.32.0"

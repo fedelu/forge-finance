@@ -1,0 +1,112 @@
+FORGE FINANCE - SMART CONTRACTS ARCHITECTURE
+===============================================
+
+┌─────────────────────────────────────────────────────────────────┐
+│                    SOLANA BLOCKCHAIN                            │
+└─────────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    EXTERNAL SYSTEMS                             │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐            │
+│  │    USERS    │  │   WALLETS   │  │   TOKENS    │            │
+│  │             │  │             │  │ SOL,USDC,   │            │
+│  │             │  │             │  │ ETH, BTC    │            │
+│  └─────────────┘  └─────────────┘  └─────────────┘            │
+└─────────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    CORE PROTOCOL LAYER                          │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │              forge-core                                 │   │
+│  │         Protocol Manager                                │   │
+│  │    ID: DWkDGw5Pvqgh3DN6HZwssn31AUAkuWLtjDnjyEUdgRHU    │   │
+│  │                                                         │   │
+│  │  • Initialize Protocol                                  │   │
+│  │  • Manage Configuration                                 │   │
+│  │  • Track Statistics                                     │   │
+│  │  • Protocol Fees                                        │   │
+│  └─────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                  VAULT MANAGEMENT LAYER                         │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │              forge-crucibles                            │   │
+│  │              Yield Vaults                               │   │
+│  │    ID: Ab84n2rkgEnDnQmJKfMsr88jbJqYPcgBW7irwoYWwCL2    │   │
+│  │                                                         │   │
+│  │  • Initialize Crucibles                                 │   │
+│  │  • Handle Deposits/Withdrawals                          │   │
+│  │  • Mint SPARK Tokens                                    │   │
+│  │  • Distribute HEAT Rewards                              │   │
+│  │  • Manage User Positions                                │   │
+│  └─────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    TOKEN SYSTEMS LAYER                          │
+│  ┌─────────────────────────┐  ┌─────────────────────────┐     │
+│  │      forge-sparks       │  │       forge-heat        │     │
+│  │   Governance Tokens     │  │     Reward Tokens       │     │
+│  │ ID: FsWCUFEPYNv6d4b6... │  │ ID: Bg3eqdWPYdjYGzVSu... │     │
+│  │                         │  │                         │     │
+│  │ • Initialize SPARK      │  │ • Initialize Heat       │     │
+│  │ • Handle Transfers      │  │ • Calculate Rewards     │     │
+│  │ • Voting Power          │  │ • Distribute Rewards    │     │
+│  │ • Governance            │  │ • Manage Emission       │     │
+│  └─────────────────────────┘  └─────────────────────────┘     │
+└─────────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    PROCESSING LAYER                             │
+│  ┌─────────────────────────┐  ┌─────────────────────────┐     │
+│  │     forge-smelters      │  │     forge-reactors      │     │
+│  │    Token Processing     │  │    Yield Generation      │     │
+│  │ ID: B4HQzxJXq2ynfSJY... │  │ ID: HurGQkPBHqc68txHv... │     │
+│  │                         │  │                         │     │
+│  │ • Token Swaps           │  │ • Yield Strategies      │     │
+│  │ • Liquidity Provision   │  │ • Liquidity Pools       │     │
+│  │ • Token Aggregation     │  │ • Calculate Yields      │     │
+│  │ • Cross-crucible Ops    │  │ • Optimize Returns      │     │
+│  └─────────────────────────┘  └─────────────────────────┘     │
+└─────────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                SECURITY & MANAGEMENT LAYER                      │
+│  ┌─────────────────────────┐  ┌─────────────────────────┐     │
+│  │     forge-firewall      │  │    forge-engineers      │     │
+│  │  Security & Access      │  │  Protocol Engineers     │     │
+│  │ ID: 6CtfUiqzkUJub4dZz... │  │ ID: 99hNfvzEBChK3XHYx... │     │
+│  │                         │  │                         │     │
+│  │ • Access Control        │  │ • Engineer Management   │     │
+│  │ • Security Checks       │  │ • Permission Management │     │
+│  │ • Rate Limiting         │  │ • Crucible Creation     │     │
+│  │ • Emergency Pause       │  │ • Protocol Maintenance  │     │
+│  └─────────────────────────┘  └─────────────────────────┘     │
+└─────────────────────────────────────────────────────────────────┘
+
+DATA FLOW:
+==========
+1. Users → Core Protocol → Crucibles
+2. Crucibles → SPARK/HEAT Systems
+3. Tokens → Smelters → Reactors
+4. All Operations → Firewall Validation
+5. Engineers → Protocol Management
+
+KEY FEATURES:
+=============
+• Modular Design - Independent contract upgrades
+• Governance - SPARK token voting power
+• Rewards - HEAT token incentives
+• Security - Multi-layer protection
+• Scalability - Multiple crucibles support
+• Upgradeability - Governance-driven updates
+
+NETWORK: Solana Devnet/Testnet
+RPC: https://api.devnet.solana.com

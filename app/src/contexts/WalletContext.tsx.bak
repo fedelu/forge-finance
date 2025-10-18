@@ -1,0 +1,234 @@
+import React, { FC, ReactNode, useMemo } from 'react'
+import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react'
+import { WalletAdapterNetwork } from '@solana/wallet-adapter-base'
+import { clusterApiUrl } from '@solana/web3.js'
+
+// Import wallet adapters with proper error handling
+let PhantomWalletAdapter: any = null
+let SolflareWalletAdapter: any = null
+
+// Try to load wallet adapters
+if (typeof window !== 'undefined') {
+  try {
+    const walletAdapters = require('@solana/wallet-adapter-wallets')
+    PhantomWalletAdapter = walletAdapters.PhantomWalletAdapter
+    SolflareWalletAdapter = walletAdapters.SolflareWalletAdapter
+    console.log('✅ Wallet adapters loaded successfully')
+  } catch (error) {
+    console.error('❌ Failed to load wallet adapters:', error)
+  }
+} else {
+  console.log('⚠️ Server-side rendering - wallet adapters not loaded')
+}
+
+// Create Fogo testnet mock wallet
+const createFogoMockWallet = () => {
+  console.log('➕ Creating Fogo testnet mock wallet')
+  
+  // Create a class-based wallet adapter that properly extends EventTarget
+  class FogoWalletAdapter extends EventTarget {
+    name = 'Fogo Testnet Wallet'
+    url = 'https://testnet.fogo.io'
+    icon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJMMTMuMDkgOC4yNkwyMCA5TDEzLjA5IDE1Ljc0TDEyIDIyTDEwLjkxIDE1Ljc0TDQgOUwxMC45MSA4LjI2TDEyIDJaIiBmaWxsPSIjRkZCNzAwIi8+Cjwvc3ZnPgo='
+    readyState = 'Installed' as const
+    publicKey = null
+    connecting = false
+    connected = false
+    supportedTransactionVersions = new Set(['legacy', 0])
+    supportedFeatures = new Set()
+    
+    constructor() {
+      super()
+      // Bind methods to ensure they're properly attached to the instance
+      this.on = this.on.bind(this)
+      this.off = this.off.bind(this)
+      this.emit = this.emit.bind(this)
+      this.addListener = this.addListener.bind(this)
+      this.removeListener = this.removeListener.bind(this)
+      this.removeAllListeners = this.removeAllListeners.bind(this)
+      this.connect = this.connect.bind(this)
+      this.disconnect = this.disconnect.bind(this)
+      this.signTransaction = this.signTransaction.bind(this)
+      this.signAllTransactions = this.signAllTransactions.bind(this)
+      this.signMessage = this.signMessage.bind(this)
+    }
+    
+    async connect() {
+      console.log('🔥 Fogo testnet wallet connect called - simulating connection')
+      this.connecting = true
+      this.dispatchEvent(new Event('connecting'))
+      
+      // Simulate connection with your wallet address
+      const mockPublicKey = new (require('@solana/web3.js').PublicKey)('78bNPUUvdFLoCubco57mfXqEu1EU9UmRcodqUGNaZ7Pf')
+      this.publicKey = mockPublicKey
+      this.connected = true
+      this.connecting = false
+      this.dispatchEvent(new CustomEvent('connect', { detail: mockPublicKey }))
+      return Promise.resolve()
+    }
+    
+    async disconnect() {
+      console.log('🔥 Fogo testnet wallet disconnect called')
+      this.publicKey = null
+      this.connected = false
+      this.dispatchEvent(new Event('disconnect'))
+      return Promise.resolve()
+    }
+    
+    async signTransaction(tx: any) {
+      console.log('✍️ Fogo testnet wallet signTransaction called')
+      return tx
+    }
+    
+    async signAllTransactions(txs: any[]) {
+      console.log('✍️ Fogo testnet wallet signAllTransactions called')
+      return txs
+    }
+    
+    async signMessage(message: Uint8Array) {
+      console.log('✍️ Fogo testnet wallet signMessage called')
+      return { signature: new Uint8Array(64) }
+    }
+    
+    // Event emitter methods using EventTarget
+    on(event: string, callback: Function) {
+      console.log(`📡 Fogo testnet wallet: listening for ${event}`)
+      this.addEventListener(event, callback as EventListener)
+      return this
+    }
+    
+    off(event: string, callback: Function) {
+      console.log(`📡 Fogo testnet wallet: stopped listening for ${event}`)
+      this.removeEventListener(event, callback as EventListener)
+      return this
+    }
+    
+    emit(event: string, ...args: any[]) {
+      console.log(`📡 Fogo testnet wallet: emitting ${event}`, args)
+      this.dispatchEvent(new CustomEvent(event, { detail: args }))
+      return this
+    }
+    
+    addListener(event: string, callback: Function) {
+      console.log(`📡 Fogo testnet wallet: addListener for ${event}`)
+      return this.on(event, callback)
+    }
+    
+    removeListener(event: string, callback: Function) {
+      console.log(`📡 Fogo testnet wallet: removeListener for ${event}`)
+      return this.off(event, callback)
+    }
+    
+    removeAllListeners(event?: string) {
+      console.log(`📡 Fogo testnet wallet: removeAllListeners for ${event || 'all'}`)
+      // EventTarget doesn't have removeAllListeners, so we'll implement it
+      if (event) {
+        // We can't easily remove all listeners for a specific event with EventTarget
+        // This is a limitation, but the wallet adapter should work
+        console.warn(`Cannot remove all listeners for ${event} with EventTarget`)
+      } else {
+        // We can't remove all listeners with EventTarget
+        console.warn('Cannot remove all listeners with EventTarget')
+      }
+      return this
+    }
+  }
+  
+  const adapter = new FogoWalletAdapter()
+  
+  // Debug: Verify adapter has required methods
+  console.log('🔍 Adapter methods check:', {
+    hasOn: typeof adapter.on === 'function',
+    hasOff: typeof adapter.off === 'function',
+    hasEmit: typeof adapter.emit === 'function',
+    hasAddListener: typeof adapter.addListener === 'function',
+    hasRemoveListener: typeof adapter.removeListener === 'function',
+    hasRemoveAllListeners: typeof adapter.removeAllListeners === 'function',
+    isEventTarget: adapter instanceof EventTarget,
+    adapterKeys: Object.getOwnPropertyNames(adapter),
+    adapterDescriptor: Object.getOwnPropertyDescriptor(adapter, 'on')
+  })
+  
+  // Return the wallet object with the adapter
+  return {
+    adapter,
+    readyState: 'Installed' as const
+  }
+}
+
+        // Create wallet adapters
+        const getWallets = () => {
+          console.log('🔍 Getting wallets...')
+          console.log('Window available:', typeof window !== 'undefined')
+          console.log('PhantomWalletAdapter available:', !!PhantomWalletAdapter)
+          console.log('SolflareWalletAdapter available:', !!SolflareWalletAdapter)
+
+          try {
+            const wallets = []
+
+            // Always create a Fogo testnet mock wallet for testing
+            const fogoMockWallet = createFogoMockWallet()
+            console.log('🔍 Fogo wallet adapter before push:', {
+              adapter: fogoMockWallet.adapter,
+              hasOn: typeof fogoMockWallet.adapter.on === 'function',
+              adapterKeys: Object.keys(fogoMockWallet.adapter),
+              adapterPrototype: Object.getPrototypeOf(fogoMockWallet.adapter)
+            })
+            wallets.push(fogoMockWallet)
+            console.log('➕ Added Fogo mock wallet')
+
+            // Add real wallet adapters if available
+            if (typeof window !== 'undefined') {
+              if (PhantomWalletAdapter) {
+                console.log('➕ Adding Phantom wallet')
+                wallets.push(new PhantomWalletAdapter())
+              }
+
+              if (SolflareWalletAdapter) {
+                console.log('➕ Adding Solflare wallet')
+                wallets.push(new SolflareWalletAdapter())
+              }
+            }
+
+            console.log('✅ Successfully loaded wallet adapters:', wallets.map(w => w.adapter?.name || w.name))
+            return wallets
+          } catch (error) {
+            console.error('❌ Failed to create wallet adapters:', error)
+            // Return at least the Fogo mock wallet even if there's an error
+            return [createFogoMockWallet()]
+          }
+        }
+
+interface WalletContextProviderProps {
+  children: ReactNode
+}
+
+export const WalletContextProvider: FC<WalletContextProviderProps> = ({ children }) => {
+  const network = WalletAdapterNetwork.Testnet
+  const endpoint = useMemo(() => 'https://testnet.fogo.io', [])
+
+  const wallets = useMemo(() => {
+    const walletList = getWallets()
+    console.log('Initialized wallets:', walletList.map(w => w.adapter?.name || w.name))
+    return walletList
+  }, [])
+
+  // Ensure wallets are available on both client and server side
+  const clientWallets = useMemo(() => {
+    return wallets
+  }, [wallets])
+
+  console.log('WalletContext - Network:', network)
+  console.log('WalletContext - Endpoint:', endpoint)
+  console.log('WalletContext - Wallets:', wallets.length)
+
+  return (
+    <ConnectionProvider endpoint={endpoint}>
+      <WalletProvider wallets={clientWallets} autoConnect={false}>
+        {children}
+      </WalletProvider>
+    </ConnectionProvider>
+  )
+}
+
+export { WalletContextProvider as WalletProvider }
