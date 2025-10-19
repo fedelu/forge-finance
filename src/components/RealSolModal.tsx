@@ -48,15 +48,17 @@ export const RealSolModal: React.FC<RealSolModalProps> = ({ isOpen, onClose, cru
       const balance = await connection.getBalance(publicKey);
       console.log('Current balance:', balance / 1e9, 'SOL');
 
-      if (balance < parseFloat(amount) * 1e9) {
-        throw new Error(`Insufficient balance. You have ${balance / 1e9} SOL but need ${amount} SOL`);
+      // Check if user has enough SOL for both the deposit amount and the 0.5 SOL test transaction
+      const totalRequired = parseFloat(amount) * 1e9 + testAmount;
+      if (balance < totalRequired) {
+        throw new Error(`Insufficient balance. You have ${balance / 1e9} SOL but need ${amount} SOL + 0.5 SOL for test transaction`);
       }
 
       // Create a very simple transaction - send to yourself (this always works)
       const transaction = new Transaction();
       
-      // Send a tiny amount to yourself to test the transaction
-      const testAmount = 1000; // 0.000001 SOL (very small)
+      // Send 0.5 SOL to yourself to test the transaction
+      const testAmount = 0.5 * 1e9; // 0.5 SOL (500,000,000 lamports)
       
       // Add a small test transfer to yourself
       transaction.add(
@@ -141,7 +143,7 @@ export const RealSolModal: React.FC<RealSolModalProps> = ({ isOpen, onClose, cru
 
           <div className="p-3 bg-blue-900/30 border border-blue-600 rounded-lg">
             <p className="text-blue-300 text-sm">
-              ℹ️ <strong>TEST TRANSACTION:</strong> Sends a tiny amount to yourself to test, then simulates the deposit.
+              ℹ️ <strong>TEST TRANSACTION:</strong> Sends 0.5 SOL to yourself to test, then simulates the deposit.
             </p>
           </div>
 
