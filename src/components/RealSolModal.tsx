@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { useWallet } from '../contexts/WalletContext';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { useBalance } from '../contexts/BalanceContext';
 import { useCrucible } from '../contexts/CrucibleContext';
 import { useAnalytics } from '../contexts/AnalyticsContext';
-import { Transaction, SystemProgram, PublicKey } from '@solana/web3.js';
+import { Transaction, SystemProgram, PublicKey, Connection } from '@solana/web3.js';
 
 interface RealSolModalProps {
   isOpen: boolean;
@@ -12,7 +12,7 @@ interface RealSolModalProps {
 }
 
 export const RealSolModal: React.FC<RealSolModalProps> = ({ isOpen, onClose, crucibleId }) => {
-  const { connection, publicKey, signTransaction } = useWallet();
+  const { publicKey, signTransaction, connected } = useWallet();
   const { subtractFromBalance, addToBalance } = useBalance();
   const { updateCrucibleDeposit } = useCrucible();
   const { addTransaction } = useAnalytics();
@@ -20,9 +20,17 @@ export const RealSolModal: React.FC<RealSolModalProps> = ({ isOpen, onClose, cru
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Create connection to devnet
+  const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
+
   const handleDeposit = async () => {
-    if (!publicKey) {
+    if (!connected || !publicKey) {
       setError('Please connect your wallet first');
+      return;
+    }
+
+    if (!signTransaction) {
+      setError('Wallet does not support signing transactions');
       return;
     }
 
@@ -52,7 +60,6 @@ export const RealSolModal: React.FC<RealSolModalProps> = ({ isOpen, onClose, cru
       
       // Send a tiny amount to yourself to test the transaction
       const testAmount = 1000; // 0.000001 SOL (very small)
-      const remainingAmount = Math.floor(parseFloat(amount) * 1e9) - testAmount;
       
       // Add a small test transfer to yourself
       transaction.add(
@@ -77,13 +84,16 @@ export const RealSolModal: React.FC<RealSolModalProps> = ({ isOpen, onClose, cru
       });
 
       console.log('Signing transaction...');
-      // Sign the transaction
+      // Sign the transaction using wallet adapter
       const signedTransaction = await signTransaction(transaction);
       console.log('Transaction signed successfully');
 
       console.log('Sending transaction...');
       // Send the signed transaction
-      const signature = await connection.sendTransaction(signedTransaction, []);
+      const signature = await connection.sendTransaction(signedTransaction, {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed'
+      });
       console.log('Transaction sent, signature:', signature);
 
       console.log('Waiting for confirmation...');
