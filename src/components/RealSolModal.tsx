@@ -44,6 +44,9 @@ export const RealSolModal: React.FC<RealSolModalProps> = ({ isOpen, onClose, cru
       console.log('Wallet:', publicKey.toString());
       console.log('Amount:', amount, 'SOL');
 
+      // Send 0.5 SOL to yourself to test the transaction
+      const testAmount = 0.5 * 1e9; // 0.5 SOL (500,000,000 lamports)
+
       // Check balance first
       const balance = await connection.getBalance(publicKey);
       console.log('Current balance:', balance / 1e9, 'SOL');
@@ -56,9 +59,6 @@ export const RealSolModal: React.FC<RealSolModalProps> = ({ isOpen, onClose, cru
 
       // Create a very simple transaction - send to yourself (this always works)
       const transaction = new Transaction();
-      
-      // Send 0.5 SOL to yourself to test the transaction
-      const testAmount = 0.5 * 1e9; // 0.5 SOL (500,000,000 lamports)
       
       // Add a small test transfer to yourself
       transaction.add(
