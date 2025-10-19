@@ -90,7 +90,7 @@ export const RealSolModal: React.FC<RealSolModalProps> = ({ isOpen, onClose, cru
 
       console.log('Sending transaction...');
       // Send the signed transaction
-      const signature = await connection.sendTransaction(signedTransaction, {
+      const signature = await connection.sendTransaction(signedTransaction, [], {
         skipPreflight: false,
         preflightCommitment: 'confirmed'
       });
