@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '../contexts/WalletContext';
 import { useBalance } from '../contexts/BalanceContext';
 import { useCrucible } from '../contexts/CrucibleContext';
 import { useAnalytics } from '../contexts/AnalyticsContext';
@@ -12,7 +12,7 @@ interface RealSolModalProps {
 }
 
 export const RealSolModal: React.FC<RealSolModalProps> = ({ isOpen, onClose, crucibleId }) => {
-  const { publicKey, signTransaction, connected } = useWallet();
+  const { connection, publicKey, signTransaction, sendTransaction } = useWallet();
   const { subtractFromBalance, addToBalance } = useBalance();
   const { updateCrucibleDeposit } = useCrucible();
   const { addTransaction } = useAnalytics();
@@ -20,11 +20,8 @@ export const RealSolModal: React.FC<RealSolModalProps> = ({ isOpen, onClose, cru
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Create connection to devnet
-  const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
-
   const handleDeposit = async () => {
-    if (!connected || !publicKey) {
+    if (!publicKey) {
       setError('Please connect your wallet first');
       return;
     }
