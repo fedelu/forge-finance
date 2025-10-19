@@ -67,43 +67,15 @@ export const RealSolModal: React.FC<RealSolModalProps> = ({ isOpen, onClose, cru
         })
       );
 
-      console.log('Getting recent blockhash...');
-      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-      
-      // Set transaction properties
-      transaction.recentBlockhash = blockhash;
-      transaction.feePayer = publicKey;
-
       console.log('Transaction created:', {
-        recentBlockhash: blockhash,
-        feePayer: publicKey.toString(),
-        testAmount: testAmount
+        testAmount: testAmount,
+        feePayer: publicKey.toString()
       });
-
-      console.log('Signing transaction...');
-      // Sign the transaction using wallet adapter
-      const signedTransaction = await signTransaction(transaction);
-      console.log('Transaction signed successfully');
 
       console.log('Sending transaction...');
-      // Send the signed transaction
-      const signature = await connection.sendTransaction(signedTransaction, [], {
-        skipPreflight: false,
-        preflightCommitment: 'confirmed'
-      });
+      // Use the context's sendTransaction method (handles signing and sending)
+      const signature = await sendTransaction(transaction);
       console.log('Transaction sent, signature:', signature);
-
-      console.log('Waiting for confirmation...');
-      // Wait for confirmation
-      const confirmation = await connection.confirmTransaction({
-        signature,
-        blockhash,
-        lastValidBlockHeight
-      }, 'confirmed');
-
-      if (confirmation.value.err) {
-        throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
-      }
 
       console.log('Transaction confirmed successfully!');
       console.log('=== REAL SOL TRANSACTION SUCCESS ===');
