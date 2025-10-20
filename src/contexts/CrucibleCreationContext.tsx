@@ -48,40 +48,19 @@ export const CrucibleCreationProvider: React.FC<CrucibleCreationProviderProps> =
   const { crucibles, addCrucible } = useCrucible();
   const [templates] = useState<CrucibleTemplate[]>([
     {
-      id: 'template_1',
-      name: 'High Yield SOL',
-      symbol: 'SOL',
-      description: 'High yield SOL crucible with 15% APR for long-term holders',
-      icon: '☀️',
-      minDeposit: 1,
-      maxDeposit: 1000,
-      apr: 0.15,
+      id: 'fogo_template_1',
+      name: 'FOGO Stable Strategy',
+      symbol: 'FOGO',
+      description: 'Conservative FOGO crucible with 12% APR and stable returns',
+      icon: '🔥',
+      minDeposit: 10,
+      maxDeposit: 10000,
+      apr: 0.12,
       lockPeriod: 30,
       fees: {
         deposit: 0.5,
         withdrawal: 1.0,
-        performance: 10
-      },
-      requirements: {
-        minBalance: 0.1,
-        kycRequired: false,
-        whitelistOnly: false
-      }
-    },
-    {
-      id: 'template_2',
-      name: 'Stable USDC',
-      symbol: 'USDC',
-      description: 'Stable USDC crucible with 8% APR and low risk',
-      icon: '💎',
-      minDeposit: 100,
-      maxDeposit: 10000,
-      apr: 0.08,
-      lockPeriod: 7,
-      fees: {
-        deposit: 0.1,
-        withdrawal: 0.5,
-        performance: 5
+        performance: 8
       },
       requirements: {
         minBalance: 1,
@@ -90,45 +69,87 @@ export const CrucibleCreationProvider: React.FC<CrucibleCreationProviderProps> =
       }
     },
     {
-      id: 'template_3',
-      name: 'Premium ETH',
-      symbol: 'ETH',
-      description: 'Premium ETH crucible with 12% APR and 60-day lock',
-      icon: '🔷',
-      minDeposit: 0.1,
-      maxDeposit: 100,
-      apr: 0.12,
+      id: 'fogo_template_2',
+      name: 'FOGO Growth Strategy',
+      symbol: 'FOGO',
+      description: 'Aggressive FOGO crucible with 18% APR for growth-focused investors',
+      icon: '🚀',
+      minDeposit: 50,
+      maxDeposit: 50000,
+      apr: 0.18,
       lockPeriod: 60,
       fees: {
         deposit: 1.0,
         withdrawal: 2.0,
-        performance: 15
+        performance: 12
       },
       requirements: {
-        minBalance: 0.01,
-        kycRequired: true,
+        minBalance: 5,
+        kycRequired: false,
         whitelistOnly: false
       }
     },
     {
-      id: 'template_4',
-      name: 'Bitcoin Vault',
-      symbol: 'BTC',
-      description: 'Bitcoin vault with 10% APR and institutional-grade security',
-      icon: '₿',
-      minDeposit: 0.01,
-      maxDeposit: 50,
-      apr: 0.10,
+      id: 'fogo_template_3',
+      name: 'FOGO Premium Strategy',
+      symbol: 'FOGO',
+      description: 'Premium FOGO crucible with 15% APR and enhanced features',
+      icon: '💎',
+      minDeposit: 100,
+      maxDeposit: 100000,
+      apr: 0.15,
+      lockPeriod: 45,
+      fees: {
+        deposit: 0.8,
+        withdrawal: 1.5,
+        performance: 10
+      },
+      requirements: {
+        minBalance: 10,
+        kycRequired: false,
+        whitelistOnly: false
+      }
+    },
+    {
+      id: 'fogo_template_4',
+      name: 'FOGO Yield Strategy',
+      symbol: 'FOGO',
+      description: 'High-yield FOGO crucible with 22% APR and DeFi integration',
+      icon: '⚡',
+      minDeposit: 25,
+      maxDeposit: 25000,
+      apr: 0.22,
       lockPeriod: 90,
+      fees: {
+        deposit: 1.5,
+        withdrawal: 2.5,
+        performance: 15
+      },
+      requirements: {
+        minBalance: 2.5,
+        kycRequired: false,
+        whitelistOnly: false
+      }
+    },
+    {
+      id: 'fogo_template_5',
+      name: 'FOGO DeFi Strategy',
+      symbol: 'FOGO',
+      description: 'Advanced FOGO crucible with 25% APR and DeFi protocols',
+      icon: '🏦',
+      minDeposit: 200,
+      maxDeposit: 200000,
+      apr: 0.25,
+      lockPeriod: 120,
       fees: {
         deposit: 2.0,
         withdrawal: 3.0,
-        performance: 20
+        performance: 18
       },
       requirements: {
-        minBalance: 0.001,
-        kycRequired: true,
-        whitelistOnly: true
+        minBalance: 20,
+        kycRequired: false,
+        whitelistOnly: false
       }
     }
   ]);

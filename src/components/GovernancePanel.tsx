@@ -10,6 +10,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { useGovernance } from '../contexts/GovernanceContext'
 import { useWallet } from '../contexts/WalletContext'
+import { useBalance } from '../contexts/BalanceContext'
 import { ProposalCreationModal } from './ProposalCreationModal'
 
 interface Proposal {
@@ -34,12 +35,13 @@ interface GovernancePanelProps {
 export default function GovernancePanel({ className = '', onVote, isConnected = false }: GovernancePanelProps) {
   const { proposals, voteOnProposal, getUserVotingPower } = useGovernance()
   const { connected } = useWallet()
+  const { balances } = useBalance()
   const [activeTab, setActiveTab] = useState<'proposals' | 'voting' | 'delegation'>('proposals')
   const [showProposalCreationModal, setShowProposalCreationModal] = useState(false)
-  const userVotingPower = getUserVotingPower()
   
-  // Use wallet connection status instead of prop
-  const isWalletConnected = connected
+  // Get actual SPARK balance from balances context
+  const sparkBalance = balances.find(b => b.symbol === 'SPARK')?.amount || 0
+  const userVotingPower = sparkBalance // Use actual SPARK balance as voting power
 
   // Convert governance context proposals to match the interface
   const convertedProposals: Proposal[] = proposals.map(proposal => ({
@@ -98,7 +100,7 @@ export default function GovernancePanel({ className = '', onVote, isConnected = 
   }
 
   const handleVote = (proposalId: string, vote: 'for' | 'against') => {
-    if (!isWalletConnected) {
+    if (!connected) {
       alert('⚠️ Please connect your wallet first!\n\nClick "Connect Wallet" to start using the protocol.')
       return
     }
@@ -115,11 +117,15 @@ export default function GovernancePanel({ className = '', onVote, isConnected = 
     <div className={`space-y-6 ${className}`}>
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-white">Governance</h2>
+        <div>
+          <h2 className="text-2xl font-bold text-white">🔥 FOGO Governance</h2>
+          <p className="text-gray-400 text-sm mt-1">Shape the future of the FOGO ecosystem</p>
+        </div>
         <div className="flex items-center space-x-4">
           <div className="text-right">
             <p className="text-sm text-gray-400">Voting Power</p>
             <p className="text-lg font-semibold text-white">{userVotingPower.toLocaleString()} SPARKS</p>
+            <p className="text-xs text-gray-500">1 SPARK = 1 Vote</p>
           </div>
           <button 
             onClick={() => setShowProposalCreationModal(true)}

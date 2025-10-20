@@ -88,7 +88,10 @@ export const CrucibleCreationModal: React.FC<CrucibleCreationModalProps> = ({ is
     <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
       <div className="bg-forge-gray p-8 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto border border-gray-700">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white">Create New Crucible</h2>
+          <div>
+            <h2 className="text-2xl font-bold text-white">🔥 Create FOGO Crucible</h2>
+            <p className="text-gray-400 text-sm mt-1">Design your custom FOGO token strategy</p>
+          </div>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-white transition-colors"
@@ -126,7 +129,10 @@ export const CrucibleCreationModal: React.FC<CrucibleCreationModalProps> = ({ is
         {/* Step 1: Template Selection */}
         {step === 'template' && (
           <div className="space-y-6">
-            <h3 className="text-xl font-semibold text-white mb-4">Choose a Template</h3>
+            <div className="text-center mb-6">
+              <h3 className="text-xl font-semibold text-white mb-2">🔥 Choose Your FOGO Strategy</h3>
+              <p className="text-gray-400">Select a template to start building your custom FOGO crucible</p>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {templates.map((template) => (
                 <div

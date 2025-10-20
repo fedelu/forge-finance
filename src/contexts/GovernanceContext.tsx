@@ -41,9 +41,9 @@ interface GovernanceProviderProps {
 export const GovernanceProvider: React.FC<GovernanceProviderProps> = ({ children }) => {
   const [proposals, setProposals] = useState<Proposal[]>([
     {
-      id: 'prop_1',
-      title: 'Increase SPARK rewards for SOL crucible',
-      description: 'This proposal suggests increasing SPARK token rewards for SOL crucible deposits from 10x to 15x to incentivize more SOL liquidity.',
+      id: 'fogo_prop_1',
+      title: 'Increase SPARK rewards for FOGO crucibles',
+      description: 'This proposal suggests increasing SPARK token rewards for FOGO crucible deposits from 10x to 15x to incentivize more FOGO liquidity and ecosystem growth.',
       status: 'active',
       votesFor: 1250,
       votesAgainst: 320,
@@ -55,9 +55,9 @@ export const GovernanceProvider: React.FC<GovernanceProviderProps> = ({ children
       options: ['Increase to 15x', 'Keep at 10x', 'Increase to 12x']
     },
     {
-      id: 'prop_2',
-      title: 'Add new ETH crucible with 8% APR',
-      description: 'Proposal to create a new ETH crucible with competitive 8% APR to attract more ETH holders to the protocol.',
+      id: 'fogo_prop_2',
+      title: 'Add new FOGO DeFi Strategy crucible with 25% APR',
+      description: 'Proposal to create a new advanced FOGO crucible with 25% APR using DeFi protocols to maximize FOGO token yields.',
       status: 'active',
       votesFor: 890,
       votesAgainst: 150,
@@ -66,12 +66,12 @@ export const GovernanceProvider: React.FC<GovernanceProviderProps> = ({ children
       createdAt: Date.now() - 172800000, // 2 days ago
       endTime: Date.now() + 432000000, // 5 days from now
       category: 'protocol',
-      options: ['Create ETH crucible', 'Reject proposal', 'Modify APR to 6%']
+      options: ['Create DeFi crucible', 'Reject proposal', 'Modify APR to 20%']
     },
     {
-      id: 'prop_3',
-      title: 'Treasury allocation for marketing campaign',
-      description: 'Allocate 50,000 USDC from treasury for a 3-month marketing campaign to increase protocol adoption.',
+      id: 'fogo_prop_3',
+      title: 'FOGO Treasury allocation for ecosystem development',
+      description: 'Allocate 100,000 FOGO tokens from treasury for ecosystem development including partnerships, integrations, and developer incentives.',
       status: 'passed',
       votesFor: 2100,
       votesAgainst: 400,
@@ -80,7 +80,35 @@ export const GovernanceProvider: React.FC<GovernanceProviderProps> = ({ children
       createdAt: Date.now() - 259200000, // 3 days ago
       endTime: Date.now() - 86400000, // 1 day ago
       category: 'treasury',
-      options: ['Approve allocation', 'Reject allocation', 'Reduce to 30,000 USDC']
+      options: ['Approve allocation', 'Reject allocation', 'Reduce to 75,000 FOGO']
+    },
+    {
+      id: 'fogo_prop_4',
+      title: 'Implement FOGO token burn mechanism',
+      description: 'Proposal to implement a token burn mechanism where 2% of all FOGO crucible fees are burned to reduce total supply and increase token value.',
+      status: 'active',
+      votesFor: 1800,
+      votesAgainst: 600,
+      totalVotes: 2400,
+      creator: '0x7890...1234',
+      createdAt: Date.now() - 432000000, // 5 days ago
+      endTime: Date.now() + 259200000, // 3 days from now
+      category: 'governance',
+      options: ['Implement burn mechanism', 'Reject proposal', 'Reduce to 1% burn']
+    },
+    {
+      id: 'fogo_prop_5',
+      title: 'FOGO cross-chain bridge integration',
+      description: 'Proposal to integrate FOGO tokens with major cross-chain bridges to enable multi-chain FOGO crucibles and expand ecosystem reach.',
+      status: 'active',
+      votesFor: 950,
+      votesAgainst: 200,
+      totalVotes: 1150,
+      creator: '0x2468...1357',
+      createdAt: Date.now() - 345600000, // 4 days ago
+      endTime: Date.now() + 172800000, // 2 days from now
+      category: 'technical',
+      options: ['Approve bridge integration', 'Reject proposal', 'Phase implementation']
     }
   ]);
 
