@@ -122,9 +122,9 @@ export const DynamicTokenBalances: React.FC<DynamicTokenBalancesProps> = ({ clas
           <div className="text-center p-4 bg-forge-gray/30 rounded-lg">
             <ArrowTrendingUpIcon className="h-8 w-8 text-green-400 mx-auto mb-2" />
             <div className="text-2xl font-bold text-white">
-              {formatCurrency(analytics.averageDeposit)}
+              {formatNumber(analytics.averageDeposit, 2)} SOL
             </div>
-            <div className="text-sm text-green-400">Avg Deposit</div>
+            <div className="text-sm text-green-400">Avg Deposit (SOL)</div>
             <div className="text-xs text-gray-400">Per Transaction</div>
           </div>
 
@@ -132,9 +132,9 @@ export const DynamicTokenBalances: React.FC<DynamicTokenBalancesProps> = ({ clas
           <div className="text-center p-4 bg-forge-gray/30 rounded-lg">
             <ArrowTrendingUpIcon className="h-8 w-8 text-red-400 mx-auto mb-2 rotate-180" />
             <div className="text-2xl font-bold text-white">
-              {formatCurrency(analytics.averageWithdrawal)}
+              {formatNumber(analytics.averageWithdrawal, 2)} SOL
             </div>
-            <div className="text-sm text-red-400">Avg Withdrawal</div>
+            <div className="text-sm text-red-400">Avg Withdrawal (SOL)</div>
             <div className="text-xs text-gray-400">Per Transaction</div>
           </div>
 

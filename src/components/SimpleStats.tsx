@@ -208,8 +208,8 @@ export default function SimpleStats({ className = '' }: SimpleStatsProps) {
         />
         
         <StatCard
-          title="Total TVL"
-          value={formatCurrency(stats.totalTVL)}
+          title="Total TVL (SOL)"
+          value={`${(stats.totalTVL).toFixed(2)} SOL`}
           change={stats.tvlChange}
           changeType={stats.tvlChange >= 0 ? "positive" : "negative"}
           icon={BanknotesIcon}
