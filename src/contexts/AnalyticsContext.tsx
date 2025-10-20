@@ -4,7 +4,8 @@ interface Transaction {
   id: string;
   type: 'deposit' | 'withdraw';
   amount: number;
-  token: string;
+  token: string; // input token (SOL)
+  distToken?: string; // crucible native token for distribution
   crucibleId: string;
   timestamp: number;
   signature?: string;
@@ -67,7 +68,7 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({ children }
     setAnalytics(prev => {
       const newTransactions = [newTransaction, ...prev.transactions].slice(0, 100); // Keep last 100
       
-      const price = (token: string) => ({ SOL: 200, USDC: 1, ETH: 2000, BTC: 50000 } as any)[token] || 1;
+      const price = (token: string) => ({ SOL: 200, USDC: 1, ETH: 4000, BTC: 110000 } as any)[token] || 1;
       const toUsd = (tx: Transaction) => tx.amount * price(tx.token);
 
       const totalDeposits = newTransactions
@@ -78,7 +79,8 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({ children }
         .filter(tx => tx.type === 'withdraw')
         .reduce((sum, tx) => sum + toUsd(tx), 0);
       
-      const totalVolume = totalDeposits + totalWithdrawals;
+      // Net volume = deposits - withdrawals (USD)
+      const totalVolume = totalDeposits - totalWithdrawals;
       
       const depositTransactions = newTransactions.filter(tx => tx.type === 'deposit');
       const withdrawalTransactions = newTransactions.filter(tx => tx.type === 'withdraw');
@@ -95,13 +97,15 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({ children }
       const dailyVolume: { [key: string]: number } = {};
       newTransactions.forEach(tx => {
         const date = new Date(tx.timestamp).toISOString().split('T')[0];
-        dailyVolume[date] = (dailyVolume[date] || 0) + toUsd(tx);
+        const signed = tx.type === 'deposit' ? toUsd(tx) : -toUsd(tx);
+        dailyVolume[date] = (dailyVolume[date] || 0) + signed;
       });
 
-      // Calculate token distribution in USD
+      // Calculate token distribution in USD (by crucible token)
       const tokenDistribution: { [key: string]: number } = {};
       newTransactions.forEach(tx => {
-        tokenDistribution[tx.token] = (tokenDistribution[tx.token] || 0) + toUsd(tx);
+        const key = tx.distToken || tx.token;
+        tokenDistribution[key] = (tokenDistribution[key] || 0) + toUsd(tx);
       });
 
       return {
@@ -144,7 +148,13 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({ children }
   }, [analytics.tokenDistribution]);
 
   const getRecentTransactions = useCallback((limit: number = 10) => {
-    return analytics.transactions.slice(0, limit);
+    const price = (token: string) => ({ SOL: 200, USDC: 1, ETH: 4000, BTC: 110000 } as any)[token] || 1;
+    const toSol = (tx: Transaction) => {
+      const usd = tx.amount * price(tx.token);
+      const sol = usd / price('SOL');
+      return { ...tx, token: 'SOL', amount: parseFloat(sol.toFixed(6)) };
+    };
+    return analytics.transactions.slice(0, limit).map(toSol);
   }, [analytics.transactions]);
 
   const value = {

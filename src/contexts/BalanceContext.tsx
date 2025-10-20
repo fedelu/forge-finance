@@ -105,8 +105,8 @@ export const BalanceProvider: React.FC<BalanceProviderProps> = ({ children }) =>
     const prices: { [key: string]: number } = {
       'SOL': 200,
       'USDC': 1,
-      'ETH': 2000,
-      'BTC': 50000,
+      'ETH': 4000,
+      'BTC': 110000,
       'SPARK': 0.1,
       'HEAT': 0.05,
     };

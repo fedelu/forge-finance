@@ -71,10 +71,10 @@ export default function SimpleStats({ className = '' }: SimpleStatsProps) {
     // Compute 24h volume in USD using token prices
     const now = Date.now()
     const txs = (analytics as any).transactions || []
-    const price = (token: string) => ({ SOL: 200, USDC: 1, ETH: 2000, BTC: 50000 } as any)[token] || 1
+    const price = (token: string) => ({ SOL: 200, USDC: 1, ETH: 4000, BTC: 110000 } as any)[token] || 1
     const volume24h = txs
       .filter((tx: any) => now - tx.timestamp <= 24 * 60 * 60 * 1000)
-      .reduce((sum: number, tx: any) => sum + tx.amount * price(tx.token), 0)
+      .reduce((sum: number, tx: any) => sum + (tx.type === 'deposit' ? 1 : -1) * tx.amount * price(tx.token), 0)
     const priceChange24h = 0.05 // Mock for now
     const tvlChange = 5.2 // Mock for now
     const userChange = 12 // Mock for now
@@ -209,8 +209,8 @@ export default function SimpleStats({ className = '' }: SimpleStatsProps) {
         />
         
         <StatCard
-          title="Total TVL (SOL)"
-          value={`${(stats.totalTVL).toFixed(2)} SOL`}
+          title="Total TVL (USD)"
+          value={formatCurrency(stats.totalTVL)}
           change={stats.tvlChange}
           changeType={stats.tvlChange >= 0 ? "positive" : "negative"}
           icon={BanknotesIcon}

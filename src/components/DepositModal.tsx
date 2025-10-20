@@ -19,6 +19,9 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose, cru
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const crucible = getCrucible(crucibleId);
+  const inputToken = 'SOL'; // User inputs in SOL everywhere
+  const price = (symbol: string) => ({ SOL: 200, USDC: 1, ETH: 4000, BTC: 110000 } as any)[symbol] || 1;
 
   const handleDeposit = async () => {
     if (!publicKey) {
@@ -61,8 +64,8 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose, cru
       
       console.log('Deposit simulated successfully:', mockSignature);
       
-      // Update balances
-      const depositAmount = parseFloat(amount);
+      // Update balances (input in SOL)
+      const depositAmount = parseFloat(amount); // in SOL
       
       console.log('DepositModal: Processing deposit:', {
         depositAmount,
@@ -77,22 +80,26 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose, cru
       addToBalance('SPARK', depositAmount * 10); // 10 SPARK per SOL deposited
       addToBalance('HEAT', depositAmount * 5); // 5 HEAT per SOL deposited
       
-      // Update crucible
-      updateCrucibleDeposit(crucibleId, depositAmount);
+      // Convert SOL to crucible token amount using USD parity
+      const targetSymbol = crucible?.symbol || 'SOL';
+      const depositInTarget = (depositAmount * price('SOL')) / price(targetSymbol);
+
+      // Update crucible with target token amount
+      updateCrucibleDeposit(crucibleId, depositInTarget);
       
       // Record transaction in analytics
       // Derive token from crucible for analytics
-      const crucible = getCrucible(crucibleId)
-      const token = crucible?.symbol || 'SOL'
+      const token = 'SOL'
       addTransaction({
         type: 'deposit',
-        amount: depositAmount,
+        amount: depositAmount, // record in SOL for analytics normalization
         token,
+        distToken: targetSymbol,
         crucibleId,
         signature: mockSignature
       });
       
-      alert(`Deposit simulated successfully! Mock Transaction: ${mockSignature}\n\n✅ ${depositAmount} SOL deposited\n✅ ${depositAmount * 10} SPARK earned\n✅ ${depositAmount * 5} HEAT earned\n\nNote: This is a demo. In production, this would be a real transaction on Solana testnet.`);
+      alert(`Deposit simulated successfully! Mock Transaction: ${mockSignature}\n\n✅ ${depositAmount} SOL deposited (converted to ${depositInTarget.toFixed(6)} ${targetSymbol})\n✅ ${depositAmount * 10} SPARK earned\n✅ ${depositAmount * 5} HEAT earned\n\nNote: This is a demo. In production, this would be a real transaction on Solana testnet.`);
       
       // Reset form
       setAmount('');
@@ -114,7 +121,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose, cru
         
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
               Amount (SOL)
             </label>
             <input

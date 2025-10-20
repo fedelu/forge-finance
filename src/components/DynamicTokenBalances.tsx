@@ -1,6 +1,7 @@
 import React from 'react';
 import { useBalance } from '../contexts/BalanceContext';
 import { useAnalytics } from '../contexts/AnalyticsContext';
+import { useCrucible } from '../contexts/CrucibleContext';
 import { 
   FireIcon, 
   BoltIcon, 
@@ -17,6 +18,7 @@ interface DynamicTokenBalancesProps {
 export const DynamicTokenBalances: React.FC<DynamicTokenBalancesProps> = ({ className = '' }) => {
   const { balances } = useBalance();
   const { analytics } = useAnalytics();
+  const { crucibles } = useCrucible();
   
 
   const formatNumber = (num: number, decimals: number = 2) => {
@@ -64,6 +66,17 @@ export const DynamicTokenBalances: React.FC<DynamicTokenBalancesProps> = ({ clas
     return balances.reduce((total, b) => total + b.usdValue, 0);
   };
 
+  const price = (symbol: string): number => ({ SOL: 200, USDC: 1, ETH: 2000, BTC: 50000 } as any)[symbol] || 1;
+
+  const getUsdDeposited = () => {
+    return crucibles.reduce((sum, c) => sum + c.userDeposit * price(c.symbol), 0);
+  };
+
+  const getCrucibleDeposit = (symbol: string) => {
+    const c = crucibles.find(x => x.symbol === symbol);
+    return c ? c.userDeposit : 0;
+  };
+
   const getSparkBalance = () => {
     return balances.find(b => b.symbol === 'SPARK')?.amount || 0;
   };
@@ -87,14 +100,12 @@ export const DynamicTokenBalances: React.FC<DynamicTokenBalancesProps> = ({ clas
           <h3 className="text-xl font-semibold text-white">Portfolio Overview</h3>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-          {/* Total Portfolio Value */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4">
+          {/* 1) USD Deposited (sum of crucibles) */}
           <div className="text-center p-4 bg-forge-gray/30 rounded-lg">
             <CurrencyDollarIcon className="h-8 w-8 text-forge-accent mx-auto mb-2" />
-            <div className="text-2xl font-bold text-white">
-              {formatCurrency(getTotalPortfolioValue())}
-            </div>
-            <div className="text-sm text-gray-400">Portfolio Value (USD)</div>
+            <div className="text-2xl font-bold text-white">{formatCurrency(getUsdDeposited())}</div>
+            <div className="text-sm text-gray-400">USD Deposited</div>
           </div>
 
           {/* SPARK Balance */}
@@ -117,34 +128,28 @@ export const DynamicTokenBalances: React.FC<DynamicTokenBalancesProps> = ({ clas
             <div className="text-xs text-gray-400">Rewards</div>
           </div>
 
-          {/* Average Deposit */}
+          {/* 4) Crucible SOL */}
           <div className="text-center p-4 bg-forge-gray/30 rounded-lg">
-            <ArrowTrendingUpIcon className="h-8 w-8 text-green-400 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-white">
-              {formatNumber(analytics.averageDeposit, 2)} SOL
-            </div>
-            <div className="text-sm text-green-400">Avg Deposit (SOL)</div>
-            <div className="text-xs text-gray-400">Per Transaction</div>
+            <div className="text-2xl font-bold text-white">{formatNumber(getCrucibleDeposit('SOL'), 2)} SOL</div>
+            <div className="text-sm text-gray-400">Crucible SOL</div>
           </div>
 
-          {/* Average Withdrawal */}
+          {/* 5) Crucible ETH */}
           <div className="text-center p-4 bg-forge-gray/30 rounded-lg">
-            <ArrowTrendingUpIcon className="h-8 w-8 text-red-400 mx-auto mb-2 rotate-180" />
-            <div className="text-2xl font-bold text-white">
-              {formatNumber(analytics.averageWithdrawal, 2)} SOL
-            </div>
-            <div className="text-sm text-red-400">Avg Withdrawal (SOL)</div>
-            <div className="text-xs text-gray-400">Per Transaction</div>
+            <div className="text-2xl font-bold text-white">{formatNumber(getCrucibleDeposit('ETH'), 2)} ETH</div>
+            <div className="text-sm text-gray-400">Crucible ETH</div>
           </div>
 
-          {/* Active Tokens */}
+          {/* 6) Crucible USDC */}
           <div className="text-center p-4 bg-forge-gray/30 rounded-lg">
-            <ClockIcon className="h-8 w-8 text-blue-400 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-white">
-              {balances.filter(b => b.amount > 0).length}
-            </div>
-            <div className="text-sm text-blue-400">Active Tokens</div>
-            <div className="text-xs text-gray-400">In Crucibles</div>
+            <div className="text-2xl font-bold text-white">{formatNumber(getCrucibleDeposit('USDC'), 2)} USDC</div>
+            <div className="text-sm text-gray-400">Crucible USDC</div>
+          </div>
+
+          {/* 7) Crucible BTC */}
+          <div className="text-center p-4 bg-forge-gray/30 rounded-lg">
+            <div className="text-2xl font-bold text-white">{formatNumber(getCrucibleDeposit('BTC'), 2)} BTC</div>
+            <div className="text-sm text-gray-400">Crucible BTC</div>
           </div>
         </div>
       </div>

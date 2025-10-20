@@ -9,7 +9,7 @@ interface WithdrawModalProps {
   isOpen: boolean;
   onClose: () => void;
   crucibleId: string;
-  maxAmount: number;
+  maxAmount: number; // kept for backwards compatibility; we compute it dynamically
 }
 
 export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose, crucibleId, maxAmount }) => {
@@ -20,6 +20,12 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose, c
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Compute maximum SOL withdrawable based on crucible token holdings
+  const price = (symbol: string) => ({ SOL: 200, USDC: 1, ETH: 4000, BTC: 110000 } as any)[symbol] || 1;
+  const crucible = getCrucible(crucibleId);
+  const targetSymbol = crucible?.symbol || 'SOL';
+  const maxSolFromCrucible = crucible ? (crucible.userDeposit * price(targetSymbol)) / price('SOL') : 0;
 
   const handleWithdraw = async () => {
     if (!publicKey) {
@@ -32,8 +38,8 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose, c
       return;
     }
 
-    if (parseFloat(amount) > maxAmount) {
-      setError(`Maximum withdrawable amount is ${maxAmount} SOL`);
+    if (parseFloat(amount) > maxSolFromCrucible) {
+      setError(`Maximum withdrawable amount is ${maxSolFromCrucible.toFixed(6)} SOL`);
       return;
     }
 
@@ -67,8 +73,8 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose, c
       
       console.log('Withdrawal simulated successfully:', mockSignature);
       
-      // Update balances
-      const withdrawAmount = parseFloat(amount);
+      // Update balances (input in SOL)
+      const withdrawAmount = parseFloat(amount); // in SOL
       
       console.log('WithdrawModal: Processing withdrawal:', {
         withdrawAmount,
@@ -81,24 +87,29 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose, c
       subtractFromBalance('SPARK', withdrawAmount * 10); // 10 SPARK per SOL withdrawn
       subtractFromBalance('HEAT', withdrawAmount * 5); // 5 HEAT per SOL withdrawn
       
+      // Convert SOL to crucible token units to reduce userDeposit in that crucible
+      const withdrawInTarget = (withdrawAmount * price('SOL')) / price(targetSymbol);
+      
       // Add SOL back to wallet (simulated)
       addToBalance('SOL', withdrawAmount);
       
       // Update crucible
-      updateCrucibleWithdraw(crucibleId, withdrawAmount);
+      updateCrucibleWithdraw(crucibleId, withdrawInTarget);
       
       // Record transaction in analytics (token-aware)
       console.log('Recording withdrawal transaction in analytics:', {
         type: 'withdraw',
         amount: withdrawAmount,
-        token: (getCrucible(crucibleId)?.symbol || 'SOL'),
+        token: 'SOL',
+        distToken: targetSymbol,
         crucibleId,
         signature: mockSignature
       });
       addTransaction({
         type: 'withdraw',
         amount: withdrawAmount,
-        token: (getCrucible(crucibleId)?.symbol || 'SOL'),
+        token: 'SOL',
+        distToken: targetSymbol,
         crucibleId,
         signature: mockSignature
       });
@@ -117,7 +128,7 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose, c
   };
 
   const handleMax = () => {
-    setAmount(maxAmount.toString());
+    setAmount(maxSolFromCrucible.toFixed(6));
   };
 
   if (!isOpen) return null;
@@ -137,7 +148,7 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose, c
                 type="number"
                 step="0.01"
                 min="0"
-                max={maxAmount}
+              max={maxSolFromCrucible}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
@@ -151,7 +162,7 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose, c
               </button>
             </div>
             <div className="text-xs text-gray-400 mt-1">
-              Available: {maxAmount} SOL
+              Available: {maxSolFromCrucible.toFixed(6)} SOL
             </div>
           </div>
 
