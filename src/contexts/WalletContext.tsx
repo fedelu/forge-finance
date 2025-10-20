@@ -192,38 +192,65 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const getFogoBalance = useCallback(async (): Promise<number | null> => {
     if (!publicKey || !wallet) return null;
     try {
-      // Request FOGO token balance from Phantom wallet
-      // This mimics how Pyron.fi gets FOGO balances
-      const response = await wallet.request({
-        method: 'getTokenAccountsByOwner',
-        params: {
-          owner: publicKey.toString(),
-          programId: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA', // SPL Token Program
+      // Get all token accounts for the user
+      const tokenAccounts = await connection.getTokenAccountsByOwner(publicKey, {
+        programId: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA')
+      });
+
+      console.log('=== DEBUGGING TOKEN ACCOUNTS ===');
+      console.log('Found token accounts:', tokenAccounts.value.length);
+      console.log('Your wallet address:', publicKey.toString());
+
+      // Log all token accounts for debugging
+      tokenAccounts.value.forEach((accountInfo, index) => {
+        const accountData = accountInfo.account.data;
+        if (accountData.parsed) {
+          const mint = accountData.parsed.info.mint;
+          const amount = accountData.parsed.info.tokenAmount.uiAmount;
+          const decimals = accountData.parsed.info.tokenAmount.decimals;
+          
+          console.log(`Token Account ${index + 1}:`, {
+            mint,
+            amount,
+            decimals,
+            rawAmount: accountData.parsed.info.tokenAmount.amount
+          });
         }
       });
 
-      // Look for FOGO token account
-      // FOGO token mint address on Fogo testnet (this would be the actual FOGO mint)
-      const fogoMint = 'FOGO1111111111111111111111111111111111111111'; // Placeholder FOGO mint
-      
-      const fogoAccount = response.value?.find((account: any) => {
-        // In production, you'd check the actual mint address
-        return account.account.data.parsed.info.mint === fogoMint;
-      });
-
-      if (fogoAccount) {
-        const balance = fogoAccount.account.data.parsed.info.tokenAmount.uiAmount;
-        return balance || 0;
+      // Look for FOGO token account using Pyron's approach
+      // Pyron queries banks by token symbol "FOGO" - we need to find the actual FOGO mint
+      for (const accountInfo of tokenAccounts.value) {
+        const accountData = accountInfo.account.data;
+        if (accountData.parsed) {
+          const mint = accountData.parsed.info.mint;
+          const amount = accountData.parsed.info.tokenAmount.uiAmount;
+          
+          // Check if this looks like a FOGO token account
+          // We'll look for tokens with significant balance that might be FOGO
+          if (amount && amount > 0) {
+            console.log('Found token with balance:', { mint, amount });
+            
+            // If you have 1000 FOGO tokens, this should show the mint address
+            // Please check the console logs and tell me the mint address for your FOGO tokens
+            if (amount >= 1000) {
+              console.log('🎯 POTENTIAL FOGO TOKEN FOUND:', { mint, amount });
+              console.log('This might be your FOGO token! Please verify the mint address.');
+            }
+          }
+        }
       }
 
-      // If no FOGO account found, return 0
+      // For now, return 0 until we identify the correct FOGO mint address
+      console.log('No FOGO token account identified yet');
+      console.log('Please check the console logs above to find your FOGO token mint address');
+      console.log('Once you find it, we can update the code to detect it properly');
       return 0;
     } catch (error) {
       console.error('Error getting FOGO balance:', error);
-      // Fallback to mock balance for demo
-      return Math.random() * 1000;
+      return null;
     }
-  }, [publicKey, wallet]);
+  }, [publicKey, wallet, connection]);
 
   const value = useMemo(() => ({
     connection,
