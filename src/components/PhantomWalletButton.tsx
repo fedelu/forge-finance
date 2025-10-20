@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useWallet } from '../contexts/WalletContext';
 
 interface PhantomWalletButtonProps {
@@ -6,8 +6,25 @@ interface PhantomWalletButtonProps {
 }
 
 export const PhantomWalletButton: React.FC<PhantomWalletButtonProps> = ({ className = '' }) => {
-  const { connected, connecting, connect, disconnect, publicKey } = useWallet();
+  const { connected, connecting, connect, disconnect, publicKey, getFogoBalance, network } = useWallet();
   const [isConnecting, setIsConnecting] = useState(false);
+  const [fogoBalance, setFogoBalance] = useState<number | null>(null);
+  const [loadingBalance, setLoadingBalance] = useState(false);
+
+  // Fetch FOGO balance when connected
+  useEffect(() => {
+    if (connected && publicKey) {
+      setLoadingBalance(true);
+      getFogoBalance().then(balance => {
+        setFogoBalance(balance);
+        setLoadingBalance(false);
+      }).catch(() => {
+        setLoadingBalance(false);
+      });
+    } else {
+      setFogoBalance(null);
+    }
+  }, [connected, publicKey, getFogoBalance]);
 
   const handleConnect = async () => {
     setIsConnecting(true);
@@ -23,21 +40,39 @@ export const PhantomWalletButton: React.FC<PhantomWalletButtonProps> = ({ classN
 
   const handleDisconnect = () => {
     disconnect();
+    setFogoBalance(null);
   };
 
   if (connected && publicKey) {
     return (
       <div className={`flex items-center space-x-4 ${className}`}>
+        {/* Network Indicator */}
         <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-          <span className="text-sm font-medium text-green-600">Connected</span>
+          <div className={`w-3 h-3 rounded-full ${network === 'fogo-testnet' ? 'bg-orange-500' : 'bg-blue-500'} animate-pulse`}></div>
+          <span className="text-sm font-medium text-gray-300">
+            {network === 'fogo-testnet' ? 'FOGO' : 'SOL'}
+          </span>
         </div>
-        <div className="text-sm text-gray-600">
+
+        {/* Wallet Address */}
+        <div className="text-sm text-gray-300 font-mono">
           {publicKey.toString().slice(0, 4)}...{publicKey.toString().slice(-4)}
         </div>
+
+        {/* FOGO Balance Display (like Pyron.fi) */}
+        {network === 'fogo-testnet' && (
+          <div className="flex items-center space-x-2 px-3 py-1 bg-orange-900/30 border border-orange-500/50 rounded-lg">
+            <span className="text-orange-400 text-sm">🔥</span>
+            <span className="text-orange-300 text-sm font-medium">
+              {loadingBalance ? '...' : fogoBalance !== null ? `${fogoBalance.toFixed(2)} FOGO` : '0 FOGO'}
+            </span>
+          </div>
+        )}
+
+        {/* Disconnect Button */}
         <button
           onClick={handleDisconnect}
-          className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+          className="px-3 py-1 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors"
         >
           Disconnect
         </button>

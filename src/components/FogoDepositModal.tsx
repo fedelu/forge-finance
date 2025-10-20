@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useWallet } from '../contexts/WalletContext';
 import { useBalance } from '../contexts/BalanceContext';
 import { useCrucible } from '../contexts/CrucibleContext';
@@ -12,17 +12,27 @@ interface FogoDepositModalProps {
 }
 
 export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onClose, crucibleId }) => {
-  const { connection, publicKey, sendTransaction, network, switchNetwork } = useWallet();
+  const { connection, publicKey, sendTransaction, network, switchNetwork, getFogoBalance } = useWallet();
   const { subtractFromBalance, addToBalance } = useBalance();
   const { updateCrucibleDeposit, getCrucible } = useCrucible();
   const { addTransaction } = useAnalytics();
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [depositMode, setDepositMode] = useState<'simulation' | 'real'>('simulation');
+  const [depositMode, setDepositMode] = useState<'simulation' | 'real'>('real'); // Default to real FOGO
+  const [fogoBalance, setFogoBalance] = useState<number | null>(null);
 
   const crucible = getCrucible(crucibleId);
   const targetSymbol = useMemo(() => crucible?.symbol || 'FOGO', [crucible?.symbol]);
+
+  // Fetch FOGO balance when modal opens
+  useEffect(() => {
+    if (isOpen && publicKey && depositMode === 'real') {
+      getFogoBalance().then(balance => {
+        setFogoBalance(balance);
+      });
+    }
+  }, [isOpen, publicKey, depositMode, getFogoBalance]);
 
   const handleDeposit = async () => {
     if (!publicKey) {
@@ -36,6 +46,12 @@ export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onCl
     }
 
     const depositAmount = parseFloat(amount);
+
+    // Check FOGO balance for real deposits
+    if (depositMode === 'real' && fogoBalance !== null && depositAmount > fogoBalance) {
+      setError(`Insufficient FOGO balance. You have ${fogoBalance.toFixed(2)} FOGO tokens.`);
+      return;
+    }
     setLoading(true);
     setError(null);
 

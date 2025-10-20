@@ -69,50 +69,22 @@ export default function CrucibleManager({ className = '', onDeposit, onWithdraw,
     }
   }
 
-  const handleAction = (action: string, crucibleId: string) => {
-    if (!connected) {
-      alert('⚠️ Please connect your wallet first!\n\nClick "Connect Wallet" to start using the protocol.')
-      return
-    }
+         const handleAction = (action: string, crucibleId: string) => {
+           if (!connected) {
+             alert('⚠️ Please connect your Phantom wallet first!\n\nClick "Connect Phantom" to start using the protocol.')
+             return
+           }
 
-    if (action === 'deposit') {
-      setSelectedCrucible(crucibleId);
-      
-      // Check if this is a FOGO crucible
-      const isFogoCrucible = crucibleId.toLowerCase().includes('fogo');
-      
-      if (isFogoCrucible) {
-        // For FOGO crucible, show FOGO deposit option
-        setShowFogoDepositModal(true);
-      } else {
-        // For other crucibles, show the existing options
-        const choice = prompt('Choose transaction type:\n\n1 = Basic simulation\n2 = Ultra simple (no errors, no real SOL)\n3 = Real SOL transaction (uses your SOL)\n\nEnter 1, 2, or 3:');
-        
-        if (choice === '1') {
-          setShowDepositModal(true);
-        } else if (choice === '2') {
-          setShowUltraSimpleModal(true);
-        } else if (choice === '3') {
-          setShowRealSolModal(true);
-        } else {
-          alert('Invalid choice. Please try again.');
-        }
-      }
-    } else if (action === 'withdraw') {
-      setSelectedCrucible(crucibleId);
-      
-      // Check if this is a FOGO crucible
-      const isFogoCrucible = crucibleId.toLowerCase().includes('fogo');
-      
-      if (isFogoCrucible) {
-        // For FOGO crucible, show FOGO withdrawal option
-        setShowFogoWithdrawModal(true);
-      } else {
-        // For other crucibles, show the existing withdrawal option
-        setShowWorkingWithdrawModal(true);
-      }
-    }
-  }
+           if (action === 'deposit') {
+             setSelectedCrucible(crucibleId);
+             // All deposits now use FOGO through Phantom wallet
+             setShowFogoDepositModal(true);
+           } else if (action === 'withdraw') {
+             setSelectedCrucible(crucibleId);
+             // All withdrawals now use FOGO through Phantom wallet
+             setShowFogoWithdrawModal(true);
+           }
+         }
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -204,42 +176,21 @@ export default function CrucibleManager({ className = '', onDeposit, onWithdraw,
         </div>
       </div>
 
-      {/* Modals */}
-      {selectedCrucible && (
-        <>
-          <DepositModal
-            isOpen={showDepositModal}
-            onClose={() => setShowDepositModal(false)}
-            crucibleId={selectedCrucible}
-          />
-          <UltraSimpleModal
-            isOpen={showUltraSimpleModal}
-            onClose={() => setShowUltraSimpleModal(false)}
-            crucibleId={selectedCrucible}
-          />
-          <RealSolModal
-            isOpen={showRealSolModal}
-            onClose={() => setShowRealSolModal(false)}
-            crucibleId={selectedCrucible}
-          />
-          <FogoDepositModal
-            isOpen={showFogoDepositModal}
-            onClose={() => setShowFogoDepositModal(false)}
-            crucibleId={selectedCrucible}
-          />
-          <WorkingWithdrawModal
-            isOpen={showWorkingWithdrawModal}
-            onClose={() => setShowWorkingWithdrawModal(false)}
-            crucibleId={selectedCrucible}
-            maxAmount={crucibles.find(c => c.id === selectedCrucible)?.userDeposit || 0}
-          />
-          <FogoWithdrawModal
-            isOpen={showFogoWithdrawModal}
-            onClose={() => setShowFogoWithdrawModal(false)}
-            crucibleId={selectedCrucible}
-          />
-        </>
-      )}
+             {/* Modals */}
+             {selectedCrucible && (
+               <>
+                 <FogoDepositModal
+                   isOpen={showFogoDepositModal}
+                   onClose={() => setShowFogoDepositModal(false)}
+                   crucibleId={selectedCrucible}
+                 />
+                 <FogoWithdrawModal
+                   isOpen={showFogoWithdrawModal}
+                   onClose={() => setShowFogoWithdrawModal(false)}
+                   crucibleId={selectedCrucible}
+                 />
+               </>
+             )}
 
       {/* Crucible Creation Modal */}
       <CrucibleCreationModal

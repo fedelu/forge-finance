@@ -19,7 +19,6 @@ import { GovernanceProvider } from '../contexts/GovernanceContext'
 import { CrucibleCreationProvider } from '../contexts/CrucibleCreationContext'
 import { DynamicTokenBalances } from '../components/DynamicTokenBalances'
 import { AnalyticsDashboard } from '../components/AnalyticsDashboard'
-import { FogoIntegrationProvider, FogoWalletButton, FogoSessionStatus, FogoTokenOperations } from '../components/FogoIntegration'
 
 function DemoContent() {
   const [mainTab, setMainTab] = useState('dashboard')
@@ -91,7 +90,6 @@ function DemoContent() {
 
               <div className="flex items-center space-x-4">
                 <PhantomWalletButton />
-                <FogoWalletButton />
               </div>
             </div>
           </div>
@@ -123,18 +121,15 @@ function DemoContent() {
                         <span className="ml-2 text-green-400">Ready</span>
                       </div>
                     </div>
-                    <div className="mt-4 space-y-3">
-                      <div className="p-3 bg-orange-900/30 rounded-lg">
-                        <p className="text-sm text-orange-300">
-                          🔥 <strong>FOGO Ecosystem:</strong> Deposit your FOGO tokens into specialized crucibles with APY ranging from 12% to 25%
+                    <div className="mt-4 p-3 bg-orange-900/30 rounded-lg">
+                      <p className="text-sm text-orange-300">
+                        🔥 <strong>FOGO Ecosystem:</strong> Deposit your FOGO tokens into specialized crucibles with APY ranging from 12% to 25%
+                      </p>
+                      {network !== 'fogo-testnet' && (
+                        <p className="text-sm text-yellow-300 mt-2">
+                          💡 <strong>Tip:</strong> Switch to FOGO Testnet for real FOGO token transactions
                         </p>
-                        {network !== 'fogo-testnet' && (
-                          <p className="text-sm text-yellow-300 mt-2">
-                            💡 <strong>Tip:</strong> Switch to FOGO Testnet for real FOGO token transactions
-                          </p>
-                        )}
-                      </div>
-                      <FogoSessionStatus />
+                      )}
                     </div>
                   </div>
 
@@ -197,31 +192,40 @@ function DemoContent() {
                        <div className="space-y-8">
                          <div className="text-center">
                            <h2 className="text-3xl font-bold text-white mb-4">🔥 FOGO Token Operations</h2>
-                           <p className="text-gray-400 text-lg">Official FOGO Sessions SDK Integration</p>
+                           <p className="text-gray-400 text-lg">Connect Phantom wallet to use your FOGO tokens</p>
                          </div>
-                         
-                         <FogoTokenOperations />
                          
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                            <div className="card bg-gradient-to-br from-orange-500/10 to-red-500/10 border-orange-500/20">
                              <h3 className="text-xl font-semibold text-white mb-4">🔥 FOGO Features</h3>
                              <ul className="space-y-2 text-gray-300">
-                               <li>• Official FOGO Sessions SDK</li>
-                               <li>• Secure wallet integration</li>
-                               <li>• Real FOGO token operations</li>
-                               <li>• Session-based authentication</li>
-                               <li>• Terms & Privacy policy integration</li>
+                               <li>• Phantom wallet integration</li>
+                               <li>• Real FOGO token deposits</li>
+                               <li>• APY rewards up to 25%</li>
+                               <li>• Secure blockchain transactions</li>
+                               <li>• FOGO testnet support</li>
                              </ul>
                            </div>
                            
                            <div className="card bg-gradient-to-br from-blue-500/10 to-purple-500/10 border-blue-500/20">
-                             <h3 className="text-xl font-semibold text-white mb-4">📊 SDK Versions</h3>
+                             <h3 className="text-xl font-semibold text-white mb-4">📊 How to Use</h3>
                              <ul className="space-y-2 text-gray-300">
-                               <li>• @fogo/sessions-idls@0.0.7</li>
-                               <li>• @fogo/sessions-sdk@0.0.17</li>
-                               <li>• @fogo/sessions-sdk-web@0.0.11</li>
-                               <li>• @fogo/sessions-sdk-react@0.0.27</li>
+                               <li>1. Connect Phantom wallet</li>
+                               <li>2. Switch to FOGO testnet</li>
+                               <li>3. Deposit FOGO tokens</li>
+                               <li>4. Earn APY rewards</li>
+                               <li>5. Withdraw anytime</li>
                              </ul>
+                           </div>
+                         </div>
+
+                         <div className="card bg-gray-800 border-gray-600">
+                           <h3 className="text-xl font-semibold text-white mb-4">🎯 Ready to Start?</h3>
+                           <p className="text-gray-400 mb-4">
+                             Connect your Phantom wallet and switch to FOGO testnet to start depositing your FOGO tokens into our crucibles.
+                           </p>
+                           <div className="flex justify-center">
+                             <PhantomWalletButton />
                            </div>
                          </div>
                        </div>
@@ -234,21 +238,19 @@ function DemoContent() {
 
 export default function Demo() {
   return (
-    <FogoIntegrationProvider>
-      <WalletProvider>
-        <BalanceProvider>
-          <CrucibleProvider>
-            <AnalyticsProvider>
-              <GovernanceProvider>
-                <CrucibleCreationProvider>
-                  <DemoContent />
-                </CrucibleCreationProvider>
-              </GovernanceProvider>
-            </AnalyticsProvider>
-          </CrucibleProvider>
-        </BalanceProvider>
-      </WalletProvider>
-    </FogoIntegrationProvider>
+    <WalletProvider>
+      <BalanceProvider>
+        <CrucibleProvider>
+          <AnalyticsProvider>
+            <GovernanceProvider>
+              <CrucibleCreationProvider>
+                <DemoContent />
+              </CrucibleCreationProvider>
+            </GovernanceProvider>
+          </AnalyticsProvider>
+        </CrucibleProvider>
+      </BalanceProvider>
+    </WalletProvider>
   )
 }
 
