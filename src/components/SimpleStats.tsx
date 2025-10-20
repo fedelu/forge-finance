@@ -254,12 +254,12 @@ export default function SimpleStats({ className = '' }: SimpleStatsProps) {
             <div className="w-full h-3 bg-forge-gray-700 rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-forge-success to-green-400 transition-all duration-500 ease-out animate-pulse-glow"
-                style={{ width: `${Math.min(volumeChange, 100)}%` }}
+                style={{ width: `${Math.min(stats.volumeChange, 100)}%` }}
               />
             </div>
             <div className="flex justify-between items-center text-sm">
               <span className="text-forge-gray-400">Progress</span>
-              <span className="text-white font-semibold">{Math.min(volumeChange, 100).toFixed(1)}%</span>
+              <span className="text-white font-semibold">{Math.min(stats.volumeChange, 100).toFixed(1)}%</span>
             </div>
           </div>
         </div>
