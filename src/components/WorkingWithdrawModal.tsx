@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useWallet } from '../contexts/WalletContext';
 import { useBalance } from '../contexts/BalanceContext';
 import { useCrucible } from '../contexts/CrucibleContext';
 import { useAnalytics } from '../contexts/AnalyticsContext';
 import { Transaction, SystemProgram, PublicKey } from '@solana/web3.js';
+import { calculateAPYRewards, getTimeInCrucible, formatAPYBreakdown } from '../utils/apyCalculations';
 
 interface WorkingWithdrawModalProps {
   isOpen: boolean;
@@ -21,7 +22,7 @@ export const WorkingWithdrawModal: React.FC<WorkingWithdrawModalProps> = ({ isOp
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const priceTable = { SOL: 200, USDC: 1, ETH: 4000, BTC: 110000 } as const;
+  const priceTable = { SOL: 200, USDC: 1, ETH: 4000, BTC: 110000, FOGO: 0.5 } as const;
   const normalizeSymbol = (s?: string) => (s || 'SOL').toUpperCase().trim();
   const price = (symbol: string) => (priceTable as any)[normalizeSymbol(symbol)] || 1;
   const crucible = getCrucible(crucibleId);
@@ -30,11 +31,25 @@ export const WorkingWithdrawModal: React.FC<WorkingWithdrawModalProps> = ({ isOp
     if (key.includes('eth')) return 'ETH';
     if (key.includes('btc')) return 'BTC';
     if (key.includes('usdc')) return 'USDC';
+    if (key.includes('fogo')) return 'FOGO';
     if (key.includes('sol')) return 'SOL';
     return 'SOL';
   };
   const targetSymbol = normalizeSymbol(inferSymbol(crucibleId));
   const availableTokenUnits = Number(crucible?.userDeposit || 0);
+
+  // APY Calculation
+  const timeInCrucible = useMemo(() => getTimeInCrucible(crucibleId), [crucibleId]);
+  const apyCalculation = useMemo(() => {
+    if (!amount || parseFloat(amount) <= 0) return null;
+    const principal = parseFloat(amount);
+    const apyRate = crucible?.apr || 0.08;
+    return calculateAPYRewards(principal, apyRate, timeInCrucible);
+  }, [amount, crucible?.apr, timeInCrucible]);
+
+  const apyBreakdown = useMemo(() => {
+    return apyCalculation ? formatAPYBreakdown(apyCalculation) : null;
+  }, [apyCalculation]);
 
   const handleWithdraw = async () => {
     if (!publicKey) {
@@ -47,21 +62,27 @@ export const WorkingWithdrawModal: React.FC<WorkingWithdrawModalProps> = ({ isOp
       return;
     }
 
-    if (parseFloat(amount) > availableTokenUnits) {
+    const withdrawTokenAmount = parseFloat(amount);
+
+    if (withdrawTokenAmount > availableTokenUnits) {
       setError(`Maximum withdrawable amount is ${availableTokenUnits.toFixed(6)} ${targetSymbol}`);
       return;
     }
+
+    // Calculate total withdrawal including APY rewards
+    const totalWithdrawal = apyCalculation ? apyCalculation.totalWithdrawal : withdrawTokenAmount;
+    const apyRewards = apyCalculation ? apyCalculation.totalRewards : 0;
 
     setLoading(true);
     setError(null);
 
     try {
-      // Create a simple transfer transaction (simulating withdrawal)
+      // Create a simple transfer transaction (simulating withdrawal with APY)
       const transaction = new Transaction().add(
         SystemProgram.transfer({
           fromPubkey: new PublicKey('11111111111111111111111111111111'), // Mock crucible address
           toPubkey: publicKey,
-          lamports: Math.floor(parseFloat(amount) * 1e9), // Convert SOL to lamports
+          lamports: Math.floor(totalWithdrawal * price(targetSymbol) / price('SOL') * 1e9), // Convert total withdrawal to SOL lamports
         })
       );
 
@@ -83,8 +104,7 @@ export const WorkingWithdrawModal: React.FC<WorkingWithdrawModalProps> = ({ isOp
       console.log('Withdrawal simulated successfully:', mockSignature);
       
       // Update balances: input is in crucible token units
-      const withdrawTokenAmount = parseFloat(amount);
-      const solCredited = (withdrawTokenAmount * price(targetSymbol)) / price('SOL');
+      const solCredited = (totalWithdrawal * price(targetSymbol)) / price('SOL');
       addToBalance('SOL', solCredited);
       
       // Remove from crucible-linked rewards (demo logic)
@@ -103,7 +123,7 @@ export const WorkingWithdrawModal: React.FC<WorkingWithdrawModalProps> = ({ isOp
         signature: mockSignature
       });
       
-      alert(`✅ Withdrawal successful!\n\nMock Transaction: ${mockSignature}\nWithdrawn: ${withdrawTokenAmount} ${targetSymbol}\nCredited: ${solCredited.toFixed(2)} SOL`);
+      alert(`✅ Withdrawal successful!\n\nMock Transaction: ${mockSignature}\nPrincipal: ${withdrawTokenAmount.toFixed(6)} ${targetSymbol}\nAPY Rewards: ${apyRewards.toFixed(6)} ${targetSymbol}\nTotal Withdrawn: ${totalWithdrawal.toFixed(6)} ${targetSymbol}\nCredited: ${solCredited.toFixed(6)} SOL`);
       
       // Reset form
       setAmount('');
@@ -154,6 +174,32 @@ export const WorkingWithdrawModal: React.FC<WorkingWithdrawModalProps> = ({ isOp
               Available: {availableTokenUnits} {targetSymbol}
             </div>
           </div>
+
+          {/* APY Rewards Breakdown */}
+          {apyBreakdown && (
+            <div className="p-4 bg-green-900/30 border border-green-600 rounded-lg">
+              <h4 className="text-green-300 font-semibold mb-3">💰 APY Rewards Breakdown</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-300">Principal:</span>
+                  <span className="text-white font-medium">{apyBreakdown.principal} {targetSymbol}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-300">APY Rewards ({apyBreakdown.apyPercentage}% for {apyBreakdown.timeInDays} days):</span>
+                  <span className="text-green-400 font-medium">+{apyBreakdown.rewards} {targetSymbol}</span>
+                </div>
+                <div className="border-t border-green-600 pt-2">
+                  <div className="flex justify-between">
+                    <span className="text-green-300 font-semibold">Total Withdrawal:</span>
+                    <span className="text-green-400 font-bold">{apyBreakdown.total} {targetSymbol}</span>
+                  </div>
+                </div>
+                <div className="text-xs text-green-200 mt-2">
+                  💡 You'll receive the full amount including APY rewards!
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="p-3 bg-blue-900/30 border border-blue-600 rounded-lg">
             <p className="text-blue-300 text-sm">
