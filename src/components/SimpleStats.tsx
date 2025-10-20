@@ -73,7 +73,9 @@ export default function SimpleStats({ className = '' }: SimpleStatsProps) {
     const tvlChange = 5.2 // Mock for now
     const userChange = 12 // Mock for now
     const aprChange = 0.2 // Mock for now
-    const volumeChange = 15.3 // Mock for now
+    // Calculate volume change based on actual volume vs target
+    const targetVolume = 1000000 // Target volume for 100%
+    const volumeChange = volume24h > 0 ? ((volume24h / targetVolume) * 100) : 0
 
     return {
       totalCrucibles,
@@ -240,7 +242,9 @@ export default function SimpleStats({ className = '' }: SimpleStatsProps) {
             <h3 className="text-xl font-semibold text-white">24h Volume</h3>
             <div className="flex items-center space-x-2">
               <div className="status-online" />
-              <span className="text-forge-success text-sm font-medium">+{stats.volumeChange.toFixed(1)}%</span>
+              <span className="text-forge-success text-sm font-medium">
+                {stats.volumeChange > 0 ? '+' : ''}{stats.volumeChange.toFixed(1)}%
+              </span>
             </div>
           </div>
           <div className="space-y-4">
@@ -250,12 +254,12 @@ export default function SimpleStats({ className = '' }: SimpleStatsProps) {
             <div className="w-full h-3 bg-forge-gray-700 rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-forge-success to-green-400 transition-all duration-500 ease-out animate-pulse-glow"
-                style={{ width: '75%' }}
+                style={{ width: `${Math.min(volumeChange, 100)}%` }}
               />
             </div>
             <div className="flex justify-between items-center text-sm">
               <span className="text-forge-gray-400">Progress</span>
-              <span className="text-white font-semibold">75.0%</span>
+              <span className="text-white font-semibold">{Math.min(volumeChange, 100).toFixed(1)}%</span>
             </div>
           </div>
         </div>
