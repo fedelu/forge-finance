@@ -92,6 +92,13 @@ export const RealSolModal: React.FC<RealSolModalProps> = ({ isOpen, onClose, cru
       updateCrucibleDeposit(crucibleId, depositAmount);
       
       // Record transaction in analytics
+      console.log('Recording transaction in analytics:', {
+        type: 'deposit',
+        amount: depositAmount,
+        token: 'SOL',
+        crucibleId,
+        signature
+      });
       addTransaction({
         type: 'deposit',
         amount: depositAmount,

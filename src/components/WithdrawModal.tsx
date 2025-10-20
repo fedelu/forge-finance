@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useWallet } from '../contexts/WalletContext';
 import { useBalance } from '../contexts/BalanceContext';
+import { useCrucible } from '../contexts/CrucibleContext';
+import { useAnalytics } from '../contexts/AnalyticsContext';
 import { Transaction, SystemProgram, PublicKey } from '@solana/web3.js';
 
 interface WithdrawModalProps {
@@ -13,6 +15,8 @@ interface WithdrawModalProps {
 export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose, crucibleId, maxAmount }) => {
   const { connection, publicKey, signTransaction, sendTransaction } = useWallet();
   const { addToBalance, subtractFromBalance } = useBalance();
+  const { updateCrucibleWithdraw } = useCrucible();
+  const { addTransaction } = useAnalytics();
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -70,6 +74,25 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose, c
       // Remove from crucible balance (simulated)
       subtractFromBalance('SPARK', withdrawAmount * 10); // 10 SPARK per SOL withdrawn
       subtractFromBalance('HEAT', withdrawAmount * 5); // 5 HEAT per SOL withdrawn
+      
+      // Update crucible
+      updateCrucibleWithdraw(crucibleId, withdrawAmount);
+      
+      // Record transaction in analytics
+      console.log('Recording withdrawal transaction in analytics:', {
+        type: 'withdraw',
+        amount: withdrawAmount,
+        token: 'SOL',
+        crucibleId,
+        signature: mockSignature
+      });
+      addTransaction({
+        type: 'withdraw',
+        amount: withdrawAmount,
+        token: 'SOL',
+        crucibleId,
+        signature: mockSignature
+      });
       
       alert(`Withdrawal simulated successfully! Mock Transaction: ${mockSignature}\n\n✅ ${withdrawAmount} SOL withdrawn\n✅ ${withdrawAmount * 10} SPARK spent\n✅ ${withdrawAmount * 5} HEAT spent\n\nNote: This is a demo. In production, this would be a real transaction on Solana testnet.`);
       
