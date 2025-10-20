@@ -98,10 +98,10 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({ children }
         dailyVolume[date] = (dailyVolume[date] || 0) + toUsd(tx);
       });
 
-      // Calculate token distribution
+      // Calculate token distribution in USD
       const tokenDistribution: { [key: string]: number } = {};
       newTransactions.forEach(tx => {
-        tokenDistribution[tx.token] = (tokenDistribution[tx.token] || 0) + tx.amount;
+        tokenDistribution[tx.token] = (tokenDistribution[tx.token] || 0) + toUsd(tx);
       });
 
       return {
@@ -135,12 +135,13 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({ children }
   }, [analytics.dailyVolume]);
 
   const getTokenStats = useCallback(() => {
+    const totalUsd = Object.values(analytics.tokenDistribution).reduce((s, v) => s + v, 0);
     return Object.entries(analytics.tokenDistribution).map(([token, amount]) => ({
       token,
       amount,
-      percentage: analytics.totalVolume > 0 ? (amount / analytics.totalVolume) * 100 : 0
+      percentage: totalUsd > 0 ? (amount / totalUsd) * 100 : 0
     }));
-  }, [analytics.tokenDistribution, analytics.totalVolume]);
+  }, [analytics.tokenDistribution]);
 
   const getRecentTransactions = useCallback((limit: number = 10) => {
     return analytics.transactions.slice(0, limit);
