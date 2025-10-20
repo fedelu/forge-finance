@@ -12,7 +12,7 @@ import { UltraSimpleModal } from './UltraSimpleModal'
 import { RealSolModal } from './RealSolModal'
 import { FogoDepositModal } from './FogoDepositModal'
 import { WorkingWithdrawModal } from './WorkingWithdrawModal'
-import { RealFogoWithdrawModal } from './RealFogoWithdrawModal'
+import { FogoWithdrawModal } from './FogoWithdrawModal'
 import { CrucibleCreationModal } from './CrucibleCreationModal'
 
 interface Crucible {
@@ -44,6 +44,7 @@ export default function CrucibleManager({ className = '', onDeposit, onWithdraw,
   const [showRealSolModal, setShowRealSolModal] = useState(false)
   const [showFogoDepositModal, setShowFogoDepositModal] = useState(false)
   const [showWorkingWithdrawModal, setShowWorkingWithdrawModal] = useState(false)
+  const [showFogoWithdrawModal, setShowFogoWithdrawModal] = useState(false)
   const [showCrucibleCreationModal, setShowCrucibleCreationModal] = useState(false)
 
   const formatCurrency = (amount: number) => {
@@ -99,7 +100,17 @@ export default function CrucibleManager({ className = '', onDeposit, onWithdraw,
       }
     } else if (action === 'withdraw') {
       setSelectedCrucible(crucibleId);
-      setShowWorkingWithdrawModal(true);
+      
+      // Check if this is a FOGO crucible
+      const isFogoCrucible = crucibleId.toLowerCase().includes('fogo');
+      
+      if (isFogoCrucible) {
+        // For FOGO crucible, show FOGO withdrawal option
+        setShowFogoWithdrawModal(true);
+      } else {
+        // For other crucibles, show the existing withdrawal option
+        setShowWorkingWithdrawModal(true);
+      }
     }
   }
 
@@ -221,6 +232,11 @@ export default function CrucibleManager({ className = '', onDeposit, onWithdraw,
             onClose={() => setShowWorkingWithdrawModal(false)}
             crucibleId={selectedCrucible}
             maxAmount={crucibles.find(c => c.id === selectedCrucible)?.userDeposit || 0}
+          />
+          <FogoWithdrawModal
+            isOpen={showFogoWithdrawModal}
+            onClose={() => setShowFogoWithdrawModal(false)}
+            crucibleId={selectedCrucible}
           />
         </>
       )}

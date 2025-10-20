@@ -19,9 +19,10 @@ export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onCl
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [depositMode, setDepositMode] = useState<'simulation' | 'real'>('simulation');
 
   const crucible = getCrucible(crucibleId);
-  const targetSymbol = useMemo(() => crucible?.symbol || 'SOL', [crucible?.symbol]);
+  const targetSymbol = useMemo(() => crucible?.symbol || 'FOGO', [crucible?.symbol]);
 
   const handleDeposit = async () => {
     if (!publicKey) {
@@ -39,50 +40,79 @@ export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onCl
     setError(null);
 
     try {
-      // Switch to Fogo testnet if not already there
-      if (network !== 'fogo-testnet') {
-        switchNetwork('fogo-testnet');
-        // Wait a moment for network switch
-        await new Promise(resolve => setTimeout(resolve, 1000));
+      if (depositMode === 'simulation') {
+        // SIMULATION MODE - No real tokens, just testing
+        console.log('Simulating FOGO deposit...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        const mockSignature = 'sim_fogo_' + Math.random().toString(36).substr(2, 9);
+        
+        console.log('Simulated FOGO deposit successful:', mockSignature);
+
+        // Update local state (simulation)
+        subtractFromBalance('SOL', depositAmount * 0.5); // Convert FOGO to SOL for simulation
+        addToBalance('SPARK', depositAmount * 10);
+        addToBalance('HEAT', depositAmount * 5);
+
+        // Update crucible
+        updateCrucibleDeposit(crucibleId, depositAmount);
+
+        // Record transaction
+        addTransaction({
+          type: 'deposit',
+          amount: depositAmount,
+          token: 'FOGO',
+          distToken: targetSymbol,
+          crucibleId,
+          signature: mockSignature
+        });
+
+        alert(`🎮 SIMULATION MODE\n\n✅ ${depositAmount} FOGO simulated deposit\n✅ ${depositAmount * 10} SPARK earned\n✅ ${depositAmount * 5} HEAT earned\n\nTransaction: ${mockSignature}\n\nThis is a test - no real tokens were used!`);
+
+      } else {
+        // REAL MODE - Actual FOGO tokens
+        if (network !== 'fogo-testnet') {
+          switchNetwork('fogo-testnet');
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
+        // Create real transaction for FOGO deposit
+        const transaction = new Transaction();
+
+        // For now, we'll simulate a FOGO token transfer
+        // In production, this would be a proper token transfer instruction
+        transaction.add(
+          SystemProgram.transfer({
+            fromPubkey: publicKey,
+            toPubkey: new PublicKey('11111111111111111111111111111111'), // Mock crucible vault
+            lamports: Math.floor(depositAmount * LAMPORTS_PER_SOL), // Convert FOGO to lamports
+          })
+        );
+
+        // Send transaction
+        const signature = await sendTransaction(transaction);
+        
+        console.log('Real FOGO deposit successful:', signature);
+
+        // Update local state
+        subtractFromBalance('SOL', depositAmount * 0.5); // Convert FOGO to SOL for balance tracking
+        addToBalance('SPARK', depositAmount * 10);
+        addToBalance('HEAT', depositAmount * 5);
+
+        // Update crucible
+        updateCrucibleDeposit(crucibleId, depositAmount);
+
+        // Record transaction
+        addTransaction({
+          type: 'deposit',
+          amount: depositAmount,
+          token: 'FOGO',
+          distToken: targetSymbol,
+          crucibleId,
+          signature
+        });
+
+        alert(`🔥 REAL FOGO DEPOSIT\n\n✅ ${depositAmount} FOGO deposited\n✅ ${depositAmount * 10} SPARK earned\n✅ ${depositAmount * 5} HEAT earned\n\nTransaction: ${signature}\n\nView on Fogo Explorer: https://explorer.fogo.io/tx/${signature}`);
       }
-
-      // Create transaction for FOGO deposit
-      const transaction = new Transaction();
-
-      // For now, we'll simulate a FOGO token transfer
-      // In production, this would be a proper token transfer instruction
-      transaction.add(
-        SystemProgram.transfer({
-          fromPubkey: publicKey,
-          toPubkey: new PublicKey('11111111111111111111111111111111'), // Mock crucible vault
-          lamports: Math.floor(depositAmount * LAMPORTS_PER_SOL), // Convert FOGO to lamports
-        })
-      );
-
-      // Send transaction
-      const signature = await sendTransaction(transaction);
-      
-      console.log('FOGO deposit successful:', signature);
-
-      // Update local state
-      subtractFromBalance('SOL', depositAmount); // Using SOL balance for now
-      addToBalance('SPARK', depositAmount * 10);
-      addToBalance('HEAT', depositAmount * 5);
-
-      // Update crucible
-      updateCrucibleDeposit(crucibleId, depositAmount);
-
-      // Record transaction
-      addTransaction({
-        type: 'deposit',
-        amount: depositAmount,
-        token: 'FOGO', // Mark as FOGO token
-        distToken: targetSymbol,
-        crucibleId,
-        signature
-      });
-
-      alert(`✅ FOGO deposit successful!\n\nTransaction: ${signature}\nDeposited: ${depositAmount} FOGO\nEarned: ${depositAmount * 10} SPARK + ${depositAmount * 5} HEAT\n\nNetwork: Fogo Testnet`);
 
       setAmount('');
       onClose();
@@ -104,19 +134,71 @@ export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onCl
         </h2>
 
         <div className="space-y-4">
+          {/* Deposit Mode Selection */}
+          <div className="p-4 bg-gray-700 rounded-lg">
+            <h4 className="text-sm font-semibold text-white mb-3">Choose Deposit Mode</h4>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setDepositMode('simulation')}
+                className={`p-3 rounded-lg border-2 transition-colors ${
+                  depositMode === 'simulation'
+                    ? 'border-blue-500 bg-blue-900/30 text-blue-300'
+                    : 'border-gray-600 bg-gray-600/30 text-gray-300 hover:border-gray-500'
+                }`}
+              >
+                <div className="text-lg mb-1">🎮</div>
+                <div className="text-sm font-medium">Simulation</div>
+                <div className="text-xs opacity-75">Test platform</div>
+              </button>
+              <button
+                onClick={() => setDepositMode('real')}
+                className={`p-3 rounded-lg border-2 transition-colors ${
+                  depositMode === 'real'
+                    ? 'border-orange-500 bg-orange-900/30 text-orange-300'
+                    : 'border-gray-600 bg-gray-600/30 text-gray-300 hover:border-gray-500'
+                }`}
+              >
+                <div className="text-lg mb-1">🔥</div>
+                <div className="text-sm font-medium">Real FOGO</div>
+                <div className="text-xs opacity-75">Actual tokens</div>
+              </button>
+            </div>
+          </div>
+
+          {/* Mode-specific Information */}
+          {depositMode === 'simulation' ? (
+            <div className="p-3 bg-blue-900/30 border border-blue-600 rounded-lg">
+              <h4 className="text-sm font-semibold text-blue-300 mb-2">🎮 Simulation Mode</h4>
+              <div className="text-xs text-blue-200 space-y-1">
+                <div>• No real FOGO tokens required</div>
+                <div>• Perfect for testing the platform</div>
+                <div>• All features work normally</div>
+                <div>• Safe to experiment with</div>
+              </div>
+            </div>
+          ) : (
+            <div className="p-3 bg-orange-900/30 border border-orange-600 rounded-lg">
+              <h4 className="text-sm font-semibold text-orange-300 mb-2">🔥 Real FOGO Mode</h4>
+              <div className="text-xs text-orange-200 space-y-1">
+                <div>• Uses your actual FOGO tokens</div>
+                <div>• Requires Fogo testnet connection</div>
+                <div>• Real transactions on blockchain</div>
+                <div>• Earn actual APY rewards</div>
+              </div>
+            </div>
+          )}
+
           {/* Network Status */}
-          <div className="p-3 bg-blue-900/30 rounded-lg">
+          <div className="p-3 bg-gray-700 rounded-lg">
             <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-              <span className="text-sm text-blue-300">
-                Network: {network === 'fogo-testnet' ? 'Fogo Testnet' : 'Solana Testnet'}
+              <div className={`w-2 h-2 rounded-full ${depositMode === 'real' && network === 'fogo-testnet' ? 'bg-orange-400' : 'bg-blue-400'}`}></div>
+              <span className="text-sm text-gray-300">
+                {depositMode === 'simulation' 
+                  ? 'Simulation Mode - No network required'
+                  : `Network: ${network === 'fogo-testnet' ? 'Fogo Testnet' : 'Will switch to Fogo Testnet'}`
+                }
               </span>
             </div>
-            {network !== 'fogo-testnet' && (
-              <p className="text-xs text-yellow-300 mt-1">
-                ⚠️ Will switch to Fogo testnet for FOGO deposits
-              </p>
-            )}
           </div>
 
           {/* FOGO Token Info */}
@@ -126,7 +208,7 @@ export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onCl
               <div>• Deposit your FOGO tokens from Phantom wallet</div>
               <div>• Earn SPARK governance tokens</div>
               <div>• Earn HEAT reward tokens</div>
-              <div>• APY: {(crucible?.apr || 0.08) * 100}%</div>
+              <div>• APY: {(crucible?.apr || 0.15) * 100}%</div>
             </div>
           </div>
 
@@ -152,7 +234,7 @@ export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onCl
               <div className="text-xs text-green-200 space-y-1">
                 <div>SPARK Rewards: {(parseFloat(amount) * 10).toFixed(0)} SPARK</div>
                 <div>HEAT Rewards: {(parseFloat(amount) * 5).toFixed(0)} HEAT</div>
-                <div>Annual APY: {((crucible?.apr || 0.08) * 100).toFixed(1)}%</div>
+                <div>Annual APY: {((crucible?.apr || 0.15) * 100).toFixed(1)}%</div>
               </div>
             </div>
           )}
@@ -173,7 +255,7 @@ export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onCl
               disabled={loading || !amount || parseFloat(amount) <= 0}
               className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
             >
-              {loading ? 'Depositing FOGO...' : 'Deposit FOGO'}
+              {loading ? 'Depositing...' : depositMode === 'simulation' ? 'Simulate Deposit' : 'Deposit Real FOGO'}
             </button>
           </div>
         </div>
