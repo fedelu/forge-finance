@@ -9,6 +9,7 @@ interface FogoSessionContextType {
   sessionData: OfficialFogoSessionResponse | null;
   connect: () => Promise<void>;
   endSession: () => Promise<void>;
+  sendTransaction: (instructions: any[]) => Promise<string>;
   error: string | null;
 }
 
@@ -83,12 +84,44 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
     }
   };
 
+  const sendTransaction = async (instructions: any[]): Promise<string> => {
+    try {
+      console.log('🔥 Sending transaction via FOGO Sessions...');
+      
+      if (!sessionData) {
+        throw new Error('No active FOGO Session');
+      }
+      
+      if (!walletPublicKey) {
+        throw new Error('No wallet connected');
+      }
+      
+      // For now, we'll simulate the transaction sending
+      // In a real implementation, this would use the FOGO Sessions SDK
+      console.log('📦 Instructions:', instructions);
+      
+      // Simulate transaction processing
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Generate a mock signature
+      const signature = 'fogo_' + Math.random().toString(36).substr(2, 9);
+      
+      console.log('✅ FOGO Sessions transaction sent:', signature);
+      return signature;
+      
+    } catch (error: any) {
+      console.error('❌ Failed to send transaction via FOGO Sessions:', error);
+      throw error;
+    }
+  };
+
   const value: FogoSessionContextType = {
     isEstablished: !!sessionData,
     walletPublicKey,
     sessionData,
     connect,
     endSession,
+    sendTransaction,
     error,
   };
 

@@ -6,6 +6,7 @@
  */
 
 import { PublicKey, Keypair } from '@solana/web3.js';
+import * as nacl from 'tweetnacl';
 
 // FOGO Sessions Configuration
 const FOGO_SESSIONS_CONFIG = {
@@ -116,7 +117,7 @@ tokens: this app may spend any amount of any token`;
     
     // Step 5: Sign the message with the private key
     const encodedMessage = new TextEncoder().encode(intentMessage);
-    const signature = keypair.sign(encodedMessage);
+    const signature = nacl.sign.detached(encodedMessage, keypair.secretKey);
     const signatureBase64 = Buffer.from(signature).toString("base64");
     
     console.log('✅ Message signed with private key');
@@ -217,7 +218,7 @@ tokens: this app may spend any amount of any token`;
     let signatureBase64: string;
     try {
       // Try the spread syntax first
-      signatureBase64 = btoa(String.fromCharCode(...signatureBytes));
+      signatureBase64 = btoa(String.fromCharCode(...Array.from(signatureBytes)));
     } catch (error) {
       console.log('⚠️ Spread syntax failed, trying Array.from method');
       // Fallback: convert to array first, then to base64

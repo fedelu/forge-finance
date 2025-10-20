@@ -3,7 +3,7 @@
  * This focuses only on the core issue without complex logic
  */
 
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, Keypair } from '@solana/web3.js';
 
 export interface SimpleFogoSessionConfig {
   wallet?: string | Buffer | null;
@@ -41,7 +41,7 @@ export async function createSimpleFogoSession(config: SimpleFogoSessionConfig): 
       });
       
       // Create Keypair from Buffer
-      const keypair = PublicKey.fromSecretKey(privateKeyBuffer);
+      const keypair = Keypair.fromSecretKey(privateKeyBuffer);
       
       // Generate session
       const sessionId = crypto.randomUUID();
@@ -99,7 +99,7 @@ export async function createSimpleFogoSession(config: SimpleFogoSessionConfig): 
     let signatureBase64: string;
     try {
       // Try the spread syntax first
-      signatureBase64 = btoa(String.fromCharCode(...signature));
+      signatureBase64 = btoa(String.fromCharCode(...Array.from(signature)));
     } catch (error) {
       console.log('⚠️ Spread syntax failed, trying Array.from method');
       // Fallback: convert to array first, then to base64

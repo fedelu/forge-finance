@@ -8,17 +8,30 @@
 import React, { useState, useEffect } from 'react';
 import { PublicKey, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { useFogoSession, useFogoSessionStatus } from '../hooks/useFogoSession';
-import { FogoWallet } from '../utils/fogoSession';
+
+// Simple wallet interface for demonstration
+interface MockWallet {
+  publicKey: PublicKey | null;
+  isConnected: boolean;
+  connect(): Promise<void>;
+  disconnect(): Promise<void>;
+  signMessage(message: Uint8Array): Promise<Uint8Array>;
+  signTransaction<T extends any>(tx: T): Promise<T>;
+}
 
 // Mock wallet for demonstration
-const mockWallet: FogoWallet = {
+const mockWallet: MockWallet = {
   publicKey: null,
   isConnected: false,
   
   async connect() {
     this.publicKey = new PublicKey('11111111111111111111111111111111');
     this.isConnected = true;
-    return { publicKey: this.publicKey };
+  },
+  
+  async disconnect() {
+    this.publicKey = null;
+    this.isConnected = false;
   },
   
   async signMessage(message: Uint8Array): Promise<Uint8Array> {
@@ -49,17 +62,16 @@ export const FogoSessionsDemo: React.FC<FogoSessionsDemoProps> = ({ className = 
       'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'  // USDC
     ],
     limits: {
-      'So11111111111111111111111111111111111111112': BigInt(5) * BigInt(LAMPORTS_PER_SOL), // 5 SOL
-      'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v': BigInt(1000) * BigInt(1000000)    // 1000 USDC
+      'So11111111111111111111111111111111111111112': '5000000000', // 5 SOL limit (in lamports as string)
+      'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v': '1000000000' // 1000 USDC limit (in micro-units as string)
     },
     expiryMs: 24 * 60 * 60 * 1000, // 24 hours
-    autoRenew: true,
-    storageKey: 'forge-fogo-session'
+    autoRenew: true
   };
   
   // Use FOGO Sessions hook
   const fogoSession = useFogoSession(sessionConfig);
-  const sessionStatus = useFogoSessionStatus(fogoSession);
+  const sessionStatus = useFogoSessionStatus();
   
   // Connect wallet
   const connectWallet = async () => {
@@ -75,7 +87,7 @@ export const FogoSessionsDemo: React.FC<FogoSessionsDemoProps> = ({ className = 
   // Create FOGO Session
   const createSession = async () => {
     try {
-      await fogoSession.createSession(mockWallet);
+      await fogoSession.createSession();
       console.log('✅ FOGO Session created');
     } catch (error) {
       console.error('❌ Session creation failed:', error);
@@ -96,7 +108,7 @@ export const FogoSessionsDemo: React.FC<FogoSessionsDemoProps> = ({ className = 
         lamports: Math.floor(amount * LAMPORTS_PER_SOL)
       });
       
-      const signature = await fogoSession.sendTransaction(mockWallet, [instruction]);
+      const signature = await fogoSession.sendTransaction([instruction]);
       setLastTransactionSignature(signature);
       
       console.log('✅ Transaction sent:', signature);
@@ -146,25 +158,17 @@ export const FogoSessionsDemo: React.FC<FogoSessionsDemoProps> = ({ className = 
         <h3 className="text-lg font-semibold text-white mb-3">FOGO Session Status</h3>
         
         <div className="flex items-center space-x-3 mb-3">
-          <span className="text-2xl">{sessionStatus.icon}</span>
-          <span className={`font-medium ${sessionStatus.color}`}>
-            {sessionStatus.text}
+          <span className="text-2xl">🔥</span>
+          <span className="font-medium text-orange-400">
+            {sessionStatus.isActive ? 'FOGO Session Active' : 'FOGO Session Inactive'}
           </span>
         </div>
         
-        {fogoSession.hasSession && (
+        {fogoSession.isActive && (
           <div className="space-y-2 text-sm text-gray-300">
-            <div>Session Key: {fogoSession.session?.sessionKey.slice(0, 16)}...</div>
-            <div>Public Key: {fogoSession.session?.sessionPublicKey.toString().slice(0, 16)}...</div>
-            {fogoSession.expiryTime && (
-              <div>Expires: {new Date(fogoSession.expiryTime).toLocaleString()}</div>
-            )}
-            {fogoSession.remainingTime && (
-              <div>Remaining: {fogoSession.formatRemainingTime()}</div>
-            )}
-            {fogoSession.isNearExpiry && (
-              <div className="text-yellow-400">⚠️ Session expires soon!</div>
-            )}
+            <div>Session ID: {fogoSession.session?.sessionId?.slice(0, 16)}...</div>
+            <div>Public Key: {fogoSession.walletPublicKey?.toString().slice(0, 16)}...</div>
+            <div>Status: Active</div>
           </div>
         )}
         
@@ -173,10 +177,10 @@ export const FogoSessionsDemo: React.FC<FogoSessionsDemoProps> = ({ className = 
             <div className="text-red-400 font-medium">Error:</div>
             <div className="text-red-300 text-sm">{fogoSession.error}</div>
             <button
-              onClick={fogoSession.clearError}
+              onClick={() => window.location.reload()}
               className="mt-2 px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
             >
-              Clear Error
+              Reload Page
             </button>
           </div>
         )}
@@ -187,7 +191,7 @@ export const FogoSessionsDemo: React.FC<FogoSessionsDemoProps> = ({ className = 
         <h3 className="text-lg font-semibold text-white mb-3">Session Actions</h3>
         
         <div className="space-y-3">
-          {!fogoSession.hasSession ? (
+          {!fogoSession.isActive ? (
             <button
               onClick={createSession}
               disabled={!isWalletConnected || fogoSession.isLoading}
@@ -210,7 +214,7 @@ export const FogoSessionsDemo: React.FC<FogoSessionsDemoProps> = ({ className = 
       </div>
       
       {/* Transaction Testing */}
-      {fogoSession.canTransact && (
+      {fogoSession.isActive && (
         <div className="mb-6 p-4 bg-gray-800 rounded-lg">
           <h3 className="text-lg font-semibold text-white mb-3">Test Transaction</h3>
           
@@ -254,7 +258,7 @@ export const FogoSessionsDemo: React.FC<FogoSessionsDemoProps> = ({ className = 
       )}
       
       {/* Session Info */}
-      {fogoSession.hasSession && (
+      {fogoSession.isActive && (
         <div className="p-4 bg-gray-800 rounded-lg">
           <h3 className="text-lg font-semibold text-white mb-3">Session Details</h3>
           

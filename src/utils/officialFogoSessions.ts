@@ -5,7 +5,7 @@
  * to create real FOGO Sessions that work with the FOGO testnet.
  */
 
-import { FogoSessionClient } from '@fogo/sessions-sdk-web';
+// Note: Using direct API implementation since SDK exports are not available
 
 // FOGO Sessions Configuration
 const FOGO_CONFIG = {
@@ -60,46 +60,9 @@ export async function createOfficialFogoSession(config: OfficialFogoSessionConfi
       console.log('✅ Connected to Phantom:', publicKey.toString());
     }
     
-    // Step 3: Initialize FOGO Session Client
-    console.log('🚀 Initializing FOGO Session Client...');
-    const sessionClient = new FogoSessionClient({
-      rpcUrl: FOGO_CONFIG.RPC_URL,
-      apiBaseUrl: FOGO_CONFIG.API_BASE_URL
-    });
-    
-    // Step 4: Create session configuration
-    const sessionConfig = {
-      domain: config.domain || window.location.origin,
-      expires: config.expires || (Date.now() + FOGO_CONFIG.DEFAULT_EXPIRY_DAYS * 24 * 60 * 60 * 1000),
-      allowedTokens: config.allowedTokens || ['FOGO_TOKEN_MINT_ADDRESS'],
-      limits: config.limits || {
-        'FOGO_TOKEN_MINT_ADDRESS': '1000000000000' // 1000 FOGO tokens
-      }
-    };
-    
-    console.log('📝 Session configuration:', sessionConfig);
-    
-    // Step 5: Start FOGO Session
-    console.log('🔥 Starting FOGO Session...');
-    const session = await sessionClient.startSession({
-      wallet: window.solana, // Pass Phantom wallet directly
-      ...sessionConfig
-    });
-    
-    console.log('✅ FOGO Session started successfully:', session);
-    
-    // Step 6: Return formatted response
-    const response: OfficialFogoSessionResponse = {
-      success: true,
-      sessionId: session.sessionId || session.id || 'unknown',
-      sessionKey: session.sessionKey || session.key || 'unknown',
-      expiresAt: new Date(sessionConfig.expires).toISOString(),
-      userPublicKey: publicKey.toString(),
-      message: 'FOGO Session created successfully with Official SDK'
-    };
-    
-    console.log('🎉 FOGO Session created successfully:', response);
-    return response;
+    // Step 3: Fallback to Direct API method since SDK is not available
+    console.log('⚠️ SDK not available, using Direct API method...');
+    return await createFogoSessionDirectAPI(config);
     
   } catch (error: any) {
     console.error('❌ Failed to create FOGO Session with Official SDK:', error);
@@ -163,7 +126,7 @@ tokens: this app may spend any amount of any token`;
     // Step 6: Convert signature to base64
     let signatureBase64: string;
     try {
-      signatureBase64 = btoa(String.fromCharCode(...signature));
+      signatureBase64 = btoa(String.fromCharCode(...Array.from(signature)));
     } catch (error) {
       console.log('⚠️ Spread syntax failed, trying Array.from method');
       const signatureArray = Array.from(signature);

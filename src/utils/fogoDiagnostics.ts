@@ -27,7 +27,7 @@ export function diagnoseFogoSessions() {
       publicKey: window.solana?.publicKey?.toString() || null,
       hasSignMessage: typeof window.solana?.signMessage === 'function',
       hasConnect: typeof window.solana?.connect === 'function',
-      hasDisconnect: typeof window.solana?.disconnect === 'function'
+      hasDisconnect: typeof (window.solana as any)?.disconnect === 'function'
     },
     textEncoder: {
       available: typeof TextEncoder !== 'undefined',
