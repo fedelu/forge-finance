@@ -69,11 +69,20 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose, c
       
       // Update balances
       const withdrawAmount = parseFloat(amount);
-      addToBalance('SOL', withdrawAmount);
+      
+      console.log('WithdrawModal: Processing withdrawal:', {
+        withdrawAmount,
+        sparkToRemove: withdrawAmount * 10,
+        heatToRemove: withdrawAmount * 5,
+        solToAdd: withdrawAmount
+      });
       
       // Remove from crucible balance (simulated)
       subtractFromBalance('SPARK', withdrawAmount * 10); // 10 SPARK per SOL withdrawn
       subtractFromBalance('HEAT', withdrawAmount * 5); // 5 HEAT per SOL withdrawn
+      
+      // Add SOL back to wallet (simulated)
+      addToBalance('SOL', withdrawAmount);
       
       // Update crucible
       updateCrucibleWithdraw(crucibleId, withdrawAmount);

@@ -63,6 +63,14 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose, cru
       
       // Update balances
       const depositAmount = parseFloat(amount);
+      
+      console.log('DepositModal: Processing deposit:', {
+        depositAmount,
+        solToRemove: depositAmount,
+        sparkToAdd: depositAmount * 10,
+        heatToAdd: depositAmount * 5
+      });
+      
       subtractFromBalance('SOL', depositAmount);
       
       // Add to crucible balance (simulated)
