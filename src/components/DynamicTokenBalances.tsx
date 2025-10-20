@@ -18,10 +18,6 @@ export const DynamicTokenBalances: React.FC<DynamicTokenBalancesProps> = ({ clas
   const { balances } = useBalance();
   const { analytics } = useAnalytics();
   
-  console.log('DynamicTokenBalances: Current balances:', balances);
-  console.log('DynamicTokenBalances: Current analytics:', analytics);
-  console.log('DynamicTokenBalances: Portfolio Value (SOL):', getTotalPortfolioValue());
-  console.log('DynamicTokenBalances: Active Tokens:', balances.filter(b => b.amount > 0).length);
 
   const formatNumber = (num: number, decimals: number = 2) => {
     return num.toLocaleString('en-US', {
@@ -76,6 +72,12 @@ export const DynamicTokenBalances: React.FC<DynamicTokenBalancesProps> = ({ clas
   const getHeatBalance = () => {
     return balances.find(b => b.symbol === 'HEAT')?.amount || 0;
   };
+
+  // Debug logs (placed after helpers to avoid temporal dead zone issues)
+  console.log('DynamicTokenBalances: Current balances:', balances);
+  console.log('DynamicTokenBalances: Current analytics:', analytics);
+  console.log('DynamicTokenBalances: Portfolio Value (SOL):', getTotalPortfolioValue());
+  console.log('DynamicTokenBalances: Active Tokens:', balances.filter(b => b.amount > 0).length);
 
   return (
     <div className={`space-y-6 ${className}`}>
