@@ -34,11 +34,8 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose, c
     if (id.toLowerCase().includes('sol')) return 'SOL';
     return 'SOL';
   };
-  const targetSymbol = useMemo(() => {
-    const fromContext = normalizeSymbol(crucible?.symbol);
-    if (fromContext && price(fromContext)) return fromContext;
-    return normalizeSymbol(inferSymbol(crucibleId));
-  }, [crucible?.symbol, crucibleId]);
+  // Always infer token from crucibleId to avoid stale/missing symbols
+  const targetSymbol = useMemo(() => normalizeSymbol(inferSymbol(crucibleId)), [crucibleId]);
   // Compute MAX SOL strictly from crucible token balance
   const maxSolFromCrucible = useMemo(() => {
     if (!crucible) return 0;
@@ -194,7 +191,7 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose, c
               </button>
             </div>
             <div className="text-xs text-gray-400 mt-1">
-              Available: {maxSolFromCrucible.toFixed(6)} SOL
+              Available: {maxSolFromCrucible.toFixed(6)} SOL (from {crucible?.userDeposit?.toFixed?.(6) || crucible?.userDeposit || 0} {targetSymbol})
             </div>
           </div>
 
