@@ -16,6 +16,7 @@ import { BalanceProvider } from '../contexts/BalanceContext'
 import { CrucibleProvider } from '../contexts/CrucibleContext'
 import { AnalyticsProvider } from '../contexts/AnalyticsContext'
 import { GovernanceProvider } from '../contexts/GovernanceContext'
+import { CrucibleCreationProvider } from '../contexts/CrucibleCreationContext'
 import { DynamicTokenBalances } from '../components/DynamicTokenBalances'
 import { AnalyticsDashboard } from '../components/AnalyticsDashboard'
 
@@ -183,7 +184,9 @@ export default function Demo() {
         <CrucibleProvider>
           <AnalyticsProvider>
             <GovernanceProvider>
-              <DemoContent />
+              <CrucibleCreationProvider>
+                <DemoContent />
+              </CrucibleCreationProvider>
             </GovernanceProvider>
           </AnalyticsProvider>
         </CrucibleProvider>
