@@ -20,6 +20,8 @@ export const DynamicTokenBalances: React.FC<DynamicTokenBalancesProps> = ({ clas
   
   console.log('DynamicTokenBalances: Current balances:', balances);
   console.log('DynamicTokenBalances: Current analytics:', analytics);
+  console.log('DynamicTokenBalances: Portfolio Value (SOL):', getTotalPortfolioValue());
+  console.log('DynamicTokenBalances: Active Tokens:', balances.filter(b => b.amount > 0).length);
 
   const formatNumber = (num: number, decimals: number = 2) => {
     return num.toLocaleString('en-US', {
@@ -62,7 +64,9 @@ export const DynamicTokenBalances: React.FC<DynamicTokenBalancesProps> = ({ clas
   };
 
   const getTotalPortfolioValue = () => {
-    return balances.reduce((total, balance) => total + balance.usdValue, 0);
+    // Show SOL amount instead of USD value
+    const solBalance = balances.find(b => b.symbol === 'SOL')?.amount || 0;
+    return solBalance;
   };
 
   const getSparkBalance = () => {
@@ -87,7 +91,7 @@ export const DynamicTokenBalances: React.FC<DynamicTokenBalancesProps> = ({ clas
           <div className="text-center p-4 bg-forge-gray/30 rounded-lg">
             <CurrencyDollarIcon className="h-8 w-8 text-forge-accent mx-auto mb-2" />
             <div className="text-2xl font-bold text-white">
-              {formatCurrency(getTotalPortfolioValue())}
+              {formatNumber(getTotalPortfolioValue(), 2)} SOL
             </div>
             <div className="text-sm text-gray-400">Portfolio Value</div>
           </div>
@@ -139,7 +143,7 @@ export const DynamicTokenBalances: React.FC<DynamicTokenBalancesProps> = ({ clas
               {balances.filter(b => b.amount > 0).length}
             </div>
             <div className="text-sm text-blue-400">Active Tokens</div>
-            <div className="text-xs text-gray-400">Holdings</div>
+            <div className="text-xs text-gray-400">In Crucibles</div>
           </div>
         </div>
       </div>
