@@ -10,7 +10,7 @@ import SimpleStats from '../components/SimpleStats'
 import CrucibleManager from '../components/CrucibleManager'
 import GovernancePanel from '../components/GovernancePanel'
 import MobileNav from '../components/MobileNav'
-import { PhantomWalletButton } from '../components/PhantomWalletButton'
+import { FogoSessionsProvider, FogoSessionsButton } from '../components/FogoSessions'
 import { WalletProvider, useWallet } from '../contexts/WalletContext'
 import { BalanceProvider } from '../contexts/BalanceContext'
 import { CrucibleProvider } from '../contexts/CrucibleContext'
@@ -80,16 +80,10 @@ function DemoContent() {
                 >
                   Analytics
                 </button>
-                <button
-                  onClick={() => setMainTab('fogo')}
-                  className={`transition-colors ${mainTab === 'fogo' ? 'text-white' : 'text-gray-300 hover:text-white'}`}
-                >
-                  🔥 FOGO
-                </button>
               </nav>
 
               <div className="flex items-center space-x-4">
-                <PhantomWalletButton />
+                <FogoSessionsButton />
               </div>
             </div>
           </div>
@@ -181,48 +175,6 @@ function DemoContent() {
                        <AnalyticsDashboard />
                      )}
 
-                     {mainTab === 'fogo' && (
-                       <div className="space-y-8">
-                         <div className="text-center">
-                           <h2 className="text-3xl font-bold text-white mb-4">🔥 FOGO Token Operations</h2>
-                           <p className="text-gray-400 text-lg">Connect Phantom wallet to use your FOGO tokens</p>
-                         </div>
-                         
-                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                           <div className="card bg-gradient-to-br from-orange-500/10 to-red-500/10 border-orange-500/20">
-                             <h3 className="text-xl font-semibold text-white mb-4">🔥 FOGO Features</h3>
-                             <ul className="space-y-2 text-gray-300">
-                               <li>• Phantom wallet integration</li>
-                               <li>• Real FOGO token deposits</li>
-                               <li>• APY rewards up to 25%</li>
-                               <li>• Secure blockchain transactions</li>
-                               <li>• FOGO testnet support</li>
-                             </ul>
-                           </div>
-                           
-                           <div className="card bg-gradient-to-br from-blue-500/10 to-purple-500/10 border-blue-500/20">
-                             <h3 className="text-xl font-semibold text-white mb-4">📊 How to Use</h3>
-                             <ul className="space-y-2 text-gray-300">
-                               <li>1. Connect Phantom wallet</li>
-                               <li>2. Switch to FOGO testnet</li>
-                               <li>3. Deposit FOGO tokens</li>
-                               <li>4. Earn APY rewards</li>
-                               <li>5. Withdraw anytime</li>
-                             </ul>
-                           </div>
-                         </div>
-
-                         <div className="card bg-gray-800 border-gray-600">
-                           <h3 className="text-xl font-semibold text-white mb-4">🎯 Ready to Start?</h3>
-                           <p className="text-gray-400 mb-4">
-                             Connect your Phantom wallet and switch to FOGO testnet to start depositing your FOGO tokens into our crucibles.
-                           </p>
-                           <div className="flex justify-center">
-                             <PhantomWalletButton />
-                           </div>
-                         </div>
-                       </div>
-                     )}
         </main>
       </div>
     </>
@@ -231,19 +183,21 @@ function DemoContent() {
 
 export default function Demo() {
   return (
-    <WalletProvider>
-      <BalanceProvider>
-        <CrucibleProvider>
-          <AnalyticsProvider>
-            <GovernanceProvider>
-              <CrucibleCreationProvider>
-                <DemoContent />
-              </CrucibleCreationProvider>
-            </GovernanceProvider>
-          </AnalyticsProvider>
-        </CrucibleProvider>
-      </BalanceProvider>
-    </WalletProvider>
+    <FogoSessionsProvider>
+      <WalletProvider>
+        <BalanceProvider>
+          <CrucibleProvider>
+            <AnalyticsProvider>
+              <GovernanceProvider>
+                <CrucibleCreationProvider>
+                  <DemoContent />
+                </CrucibleCreationProvider>
+              </GovernanceProvider>
+            </AnalyticsProvider>
+          </CrucibleProvider>
+        </BalanceProvider>
+      </WalletProvider>
+    </FogoSessionsProvider>
   )
 }
 

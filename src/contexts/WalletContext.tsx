@@ -69,6 +69,32 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
       }
     }
+
+    // Listen for wallet connection events from FOGO Sessions
+    const handleWalletConnected = (event: CustomEvent) => {
+      console.log('Wallet connected event received:', event.detail);
+      if (event.detail?.publicKey) {
+        const publicKey = new PublicKey(event.detail.publicKey);
+        setPublicKey(publicKey);
+        setConnected(true);
+        console.log('Wallet context synced with FOGO Sessions');
+      }
+    };
+
+    const handleWalletDisconnected = () => {
+      console.log('Wallet disconnected event received');
+      setPublicKey(null);
+      setConnected(false);
+      console.log('Wallet context synced with FOGO Sessions disconnection');
+    };
+
+    window.addEventListener('walletConnected', handleWalletConnected as EventListener);
+    window.addEventListener('walletDisconnected', handleWalletDisconnected);
+    
+    return () => {
+      window.removeEventListener('walletConnected', handleWalletConnected as EventListener);
+      window.removeEventListener('walletDisconnected', handleWalletDisconnected);
+    };
   }, []);
 
   const connect = async () => {
@@ -82,6 +108,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       setPublicKey(response.publicKey);
       setConnected(true);
       console.log('Connected to Phantom wallet:', response.publicKey.toString());
+      
+      // Force switch to FOGO testnet after connection
+      console.log('Forcing switch to FOGO testnet...');
+      await switchNetwork('fogo-testnet');
     } catch (error) {
       console.error('Failed to connect wallet:', error);
       throw error;
@@ -135,26 +165,27 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     if (!publicKey || !wallet) {
       throw new Error('Wallet not connected');
     }
-    
+
     try {
-      // Get recent blockhash
+      // Get recent blockhash from FOGO testnet
       const { blockhash } = await connection.getLatestBlockhash();
       transaction.recentBlockhash = blockhash;
       transaction.feePayer = publicKey;
-      
+
       // Sign the transaction
       const signedTransaction = await wallet.signTransaction(transaction);
-      
-      // Send the signed transaction
+
+      // Send the signed transaction to FOGO testnet
       const signature = await connection.sendRawTransaction(signedTransaction.serialize());
-      
+
       // Wait for confirmation
       await connection.confirmTransaction(signature, 'confirmed');
-      
-      console.log('Transaction sent to Solana devnet:', signature);
+
+      console.log('Transaction sent to FOGO testnet:', signature);
+      console.log('View on FOGO Explorer:', `https://fogoscan.com/tx/${signature}?cluster=testnet`);
       return signature;
     } catch (error) {
-      console.error('Failed to send transaction to Solana:', error);
+      console.error('Failed to send transaction to FOGO testnet:', error);
       throw error;
     }
   }, [publicKey, wallet, connection]);
@@ -192,12 +223,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const getFogoBalance = useCallback(async (): Promise<number | null> => {
     if (!publicKey || !wallet) return null;
     try {
-      console.log('=== FOGO BALANCE CHECK ===');
+      console.log('=== FOGO BALANCE CHECK (Pyron-style) ===');
       console.log('Your wallet address:', publicKey.toString());
       console.log('Current network:', network);
       console.log('Connection URL:', connection.rpcEndpoint);
 
-      // Get all token accounts for the user
+      // Get all token accounts for the user (like Pyron does)
       const tokenAccounts = await connection.getTokenAccountsByOwner(publicKey, {
         programId: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA')
       });
@@ -205,48 +236,53 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       console.log('Found token accounts:', tokenAccounts.value.length);
 
       // Log all token accounts for debugging
-      tokenAccounts.value.forEach((accountInfo, index) => {
-        const accountData = accountInfo.account.data;
-        if (accountData.parsed) {
-          const mint = accountData.parsed.info.mint;
-          const amount = accountData.parsed.info.tokenAmount.uiAmount;
-          const decimals = accountData.parsed.info.tokenAmount.decimals;
-          
-          console.log(`Token Account ${index + 1}:`, {
-            mint,
-            amount,
-            decimals,
-            rawAmount: accountData.parsed.info.tokenAmount.amount
-          });
-        }
-      });
+        tokenAccounts.value.forEach((accountInfo, index) => {
+          const accountData = accountInfo.account.data;
+          if (accountData && typeof accountData === 'object' && 'parsed' in accountData) {
+            const parsedData = accountData as any;
+            if (parsedData.parsed) {
+              const mint = parsedData.parsed.info.mint;
+              const amount = parsedData.parsed.info.tokenAmount.uiAmount;
+              const decimals = parsedData.parsed.info.tokenAmount.decimals;
+              
+              console.log(`Token Account ${index + 1}:`, {
+                mint,
+                amount,
+                decimals,
+                rawAmount: parsedData.parsed.info.tokenAmount.amount
+              });
+            }
+          }
+        });
 
-      // Look for FOGO token account
+      // Look for any token with balance (like Pyron does)
       for (const accountInfo of tokenAccounts.value) {
         const accountData = accountInfo.account.data;
-        if (accountData.parsed) {
-          const mint = accountData.parsed.info.mint;
-          const amount = accountData.parsed.info.tokenAmount.uiAmount;
+        if (accountData && typeof accountData === 'object' && 'parsed' in accountData) {
+          const parsedData = accountData as any;
+          if (parsedData.parsed) {
+            const mint = parsedData.parsed.info.mint;
+            const amount = parsedData.parsed.info.tokenAmount.uiAmount;
           
-          // Check if this looks like a FOGO token account
-          if (amount && amount > 0) {
-            console.log('Found token with balance:', { mint, amount });
-            
-            // Look for tokens with significant balance (your 1000 FOGO tokens)
-            if (amount >= 1000) {
-              console.log('🎯 POTENTIAL FOGO TOKEN FOUND:', { mint, amount });
-              console.log('This might be your FOGO token!');
+            // Check if this token has a balance
+            if (amount && amount > 0) {
+              console.log('Found token with balance:', { mint, amount });
+              
+              // For now, return the first token with balance (like Pyron does)
+              // In production, you'd identify FOGO by mint address
+              console.log('🎯 TOKEN FOUND (Pyron-style):', { mint, amount });
+              console.log('This is how Pyron detects your tokens!');
               return amount;
             }
           }
         }
       }
 
-      console.log('No FOGO token account found with 1000+ balance');
-      console.log('Make sure you are connected to FOGO testnet in Phantom wallet');
+      console.log('No token accounts found with balance');
+      console.log('This is normal if you have no tokens in this wallet');
       return 0;
     } catch (error) {
-      console.error('Error getting FOGO balance:', error);
+      console.error('Error getting token balance:', error);
       return null;
     }
   }, [publicKey, wallet, connection, network]);

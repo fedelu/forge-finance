@@ -1,8 +1,16 @@
 export const FOGO_TESTNET_CONFIG = {
-  // Fogo Testnet RPC endpoints
+  // Fogo Testnet RPC endpoints (official FOGO testnet)
   RPC_URL: 'https://testnet.fogo.io',
   WS_URL: 'wss://testnet.fogo.io',
   NETWORK: 'fogo-testnet',
+  CHAIN_ID: 'fogo-testnet',
+  
+  // Alternative RPC endpoints to try
+  ALTERNATIVE_RPCS: [
+    'https://testnet.fogo.io',
+    'https://api.testnet.fogo.io',
+    'https://rpc.testnet.fogo.io'
+  ],
   
   // Fogo-specific program IDs (to be updated after deployment)
   PROGRAM_IDS: {

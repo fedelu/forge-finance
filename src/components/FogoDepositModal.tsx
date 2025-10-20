@@ -3,6 +3,7 @@ import { useWallet } from '../contexts/WalletContext';
 import { useBalance } from '../contexts/BalanceContext';
 import { useCrucible } from '../contexts/CrucibleContext';
 import { useAnalytics } from '../contexts/AnalyticsContext';
+import { useSession } from './FogoSessions';
 import { Transaction, SystemProgram, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 
 interface FogoDepositModalProps {
@@ -16,6 +17,7 @@ export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onCl
   const { subtractFromBalance, addToBalance } = useBalance();
   const { updateCrucibleDeposit, getCrucible } = useCrucible();
   const { addTransaction } = useAnalytics();
+  const fogoSession = useSession();
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -91,23 +93,38 @@ export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onCl
           await new Promise(resolve => setTimeout(resolve, 1000));
         }
 
-        // Create real transaction for FOGO deposit
-        const transaction = new Transaction();
+        let signature: string;
 
-        // For now, we'll simulate a FOGO token transfer
-        // In production, this would be a proper token transfer instruction
-        transaction.add(
-          SystemProgram.transfer({
-            fromPubkey: publicKey,
+        // Use FOGO Sessions if available for gasless transactions (official API)
+        if (fogoSession.isEstablished && fogoSession.sendTransaction) {
+          console.log('Using official FOGO Sessions for gasless transaction');
+          
+          // Create transaction instruction for FOGO deposit
+          const instruction = SystemProgram.transfer({
+            fromPubkey: fogoSession.walletPublicKey,
             toPubkey: new PublicKey('11111111111111111111111111111111'), // Mock crucible vault
             lamports: Math.floor(depositAmount * LAMPORTS_PER_SOL), // Convert FOGO to lamports
-          })
-        );
+          });
 
-        // Send transaction
-        const signature = await sendTransaction(transaction);
-        
-        console.log('Real FOGO deposit successful:', signature);
+          // Send via official FOGO Sessions (gasless)
+          signature = await fogoSession.sendTransaction([instruction]);
+          console.log('Official FOGO Sessions transaction successful:', signature);
+        } else {
+          // Fallback to regular transaction
+          console.log('Using regular transaction (no FOGO Sessions)');
+          
+          const transaction = new Transaction();
+          transaction.add(
+            SystemProgram.transfer({
+              fromPubkey: publicKey,
+              toPubkey: new PublicKey('11111111111111111111111111111111'), // Mock crucible vault
+              lamports: Math.floor(depositAmount * LAMPORTS_PER_SOL), // Convert FOGO to lamports
+            })
+          );
+
+          signature = await sendTransaction(transaction);
+          console.log('Regular transaction successful:', signature);
+        }
 
         // Update local state
         subtractFromBalance('SOL', depositAmount * 0.5); // Convert FOGO to SOL for balance tracking
@@ -127,7 +144,8 @@ export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onCl
           signature
         });
 
-        alert(`🔥 REAL FOGO DEPOSIT\n\n✅ ${depositAmount} FOGO deposited\n✅ ${depositAmount * 10} SPARK earned\n✅ ${depositAmount * 5} HEAT earned\n\nTransaction: ${signature}\n\nView on Fogo Explorer: https://explorer.fogo.io/tx/${signature}`);
+        const sessionUsed = fogoSession.isEstablished;
+        alert(`🔥 REAL FOGO DEPOSIT\n\n✅ ${depositAmount} FOGO deposited\n✅ ${depositAmount * 10} SPARK earned\n✅ ${depositAmount * 5} HEAT earned\n\n${sessionUsed ? '🚀 Gasless via FOGO Sessions!' : '⛽ Regular transaction'}\n\nTransaction: ${signature}\n\nView on FOGO Explorer: https://fogoscan.com/tx/${signature}?cluster=testnet`);
       }
 
       setAmount('');

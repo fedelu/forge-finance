@@ -77,6 +77,7 @@ export const PhantomWalletButton: React.FC<PhantomWalletButtonProps> = ({ classN
           </span>
         </div>
 
+
         {/* Disconnect Button */}
         <button
           onClick={handleDisconnect}

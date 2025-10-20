@@ -19,7 +19,7 @@ forge_engineers = "99hNfvzEBChK3XHYxMKWoUXmLXABmLYjZEu1P3wSaH68"
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "testnet"
+cluster = "https://testnet.fogo.io"
 wallet = "/Users/federicodelucchi/.config/solana/fogo-testnet-keypair.json"
 
 [scripts]
