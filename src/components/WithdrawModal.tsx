@@ -15,7 +15,7 @@ interface WithdrawModalProps {
 export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose, crucibleId, maxAmount }) => {
   const { connection, publicKey, signTransaction, sendTransaction } = useWallet();
   const { addToBalance, subtractFromBalance } = useBalance();
-  const { updateCrucibleWithdraw } = useCrucible();
+  const { updateCrucibleWithdraw, getCrucible } = useCrucible();
   const { addTransaction } = useAnalytics();
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
@@ -87,18 +87,18 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose, c
       // Update crucible
       updateCrucibleWithdraw(crucibleId, withdrawAmount);
       
-      // Record transaction in analytics
+      // Record transaction in analytics (token-aware)
       console.log('Recording withdrawal transaction in analytics:', {
         type: 'withdraw',
         amount: withdrawAmount,
-        token: 'SOL',
+        token: (getCrucible(crucibleId)?.symbol || 'SOL'),
         crucibleId,
         signature: mockSignature
       });
       addTransaction({
         type: 'withdraw',
         amount: withdrawAmount,
-        token: 'SOL',
+        token: (getCrucible(crucibleId)?.symbol || 'SOL'),
         crucibleId,
         signature: mockSignature
       });

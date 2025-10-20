@@ -68,14 +68,18 @@ export default function SimpleStats({ className = '' }: SimpleStatsProps) {
     const averageAPR = crucibles.length > 0 
       ? crucibles.reduce((sum, crucible) => sum + crucible.apr, 0) / crucibles.length 
       : 8.5
-    const volume24h = analytics.totalVolume
+    // Compute 24h volume in SOL (token-aware; here we aggregate SOL only)
+    const now = Date.now()
+    const txs = (analytics as any).transactions || []
+    const volume24h = txs
+      .filter((tx: any) => tx.token === 'SOL' && now - tx.timestamp <= 24 * 60 * 60 * 1000)
+      .reduce((sum: number, tx: any) => sum + tx.amount, 0)
     const priceChange24h = 0.05 // Mock for now
     const tvlChange = 5.2 // Mock for now
     const userChange = 12 // Mock for now
     const aprChange = 0.2 // Mock for now
-    // Calculate volume change based on actual volume vs target
-    const targetVolume = 1000000 // Target volume for 100%
-    const volumeChange = volume24h > 0 ? ((volume24h / targetVolume) * 100) : 0
+    // No percentage for 24h volume; keep 0 for change to render neutral
+    const volumeChange = 0
 
     return {
       totalCrucibles,
@@ -239,28 +243,16 @@ export default function SimpleStats({ className = '' }: SimpleStatsProps) {
         {/* Volume Card */}
         <div className="card-glow">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold text-white">24h Volume</h3>
+            <h3 className="text-xl font-semibold text-white">24h Volume (SOL)</h3>
             <div className="flex items-center space-x-2">
               <div className="status-online" />
-              <span className="text-forge-success text-sm font-medium">
-                {stats.volumeChange > 0 ? '+' : ''}{stats.volumeChange.toFixed(1)}%
-              </span>
             </div>
           </div>
           <div className="space-y-4">
             <div className="text-3xl font-bold text-white">
-              {formatCurrency(stats.volume24h)}
+              {stats.volume24h.toFixed(2)} SOL
             </div>
-            <div className="w-full h-3 bg-forge-gray-700 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-forge-success to-green-400 transition-all duration-500 ease-out animate-pulse-glow"
-                style={{ width: `${Math.min(stats.volumeChange, 100)}%` }}
-              />
-            </div>
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-forge-gray-400">Progress</span>
-              <span className="text-white font-semibold">{Math.min(stats.volumeChange, 100).toFixed(1)}%</span>
-            </div>
+            {/* Removed percentage/progress bar as requested */}
           </div>
         </div>
         

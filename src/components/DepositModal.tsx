@@ -14,7 +14,7 @@ interface DepositModalProps {
 export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose, crucibleId }) => {
   const { connection, publicKey, signTransaction, sendTransaction } = useWallet();
   const { subtractFromBalance, addToBalance } = useBalance();
-  const { updateCrucibleDeposit } = useCrucible();
+  const { updateCrucibleDeposit, getCrucible } = useCrucible();
   const { addTransaction } = useAnalytics();
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
@@ -81,10 +81,13 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose, cru
       updateCrucibleDeposit(crucibleId, depositAmount);
       
       // Record transaction in analytics
+      // Derive token from crucible for analytics
+      const crucible = getCrucible(crucibleId)
+      const token = crucible?.symbol || 'SOL'
       addTransaction({
         type: 'deposit',
         amount: depositAmount,
-        token: 'SOL',
+        token,
         crucibleId,
         signature: mockSignature
       });
