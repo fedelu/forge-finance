@@ -88,7 +88,9 @@ export const FogoWithdrawModal: React.FC<FogoWithdrawModalProps> = ({ isOpen, on
           amount: withdrawAmount,
           token: targetSymbol,
           crucibleId,
-          signature: mockSignature
+          signature: mockSignature,
+          apyRewards: apyRewards,
+          totalWithdrawal: totalWithdrawal
         });
 
         alert(`🎮 SIMULATION WITHDRAWAL\n\n✅ Principal: ${withdrawAmount.toFixed(6)} FOGO\n✅ APY Rewards: ${apyRewards.toFixed(6)} FOGO\n✅ Total Withdrawn: ${totalWithdrawal.toFixed(6)} FOGO\n✅ Credited: ${solCredited.toFixed(6)} SOL\n\nTransaction: ${mockSignature}\n\nThis is a test - no real tokens were used!`);
@@ -135,7 +137,9 @@ export const FogoWithdrawModal: React.FC<FogoWithdrawModalProps> = ({ isOpen, on
           amount: withdrawAmount,
           token: targetSymbol,
           crucibleId,
-          signature
+          signature,
+          apyRewards: apyRewards,
+          totalWithdrawal: totalWithdrawal
         });
 
         alert(`🔥 REAL FOGO WITHDRAWAL\n\n✅ Principal: ${withdrawAmount.toFixed(6)} FOGO\n✅ APY Rewards: ${apyRewards.toFixed(6)} FOGO\n✅ Total Withdrawn: ${totalWithdrawal.toFixed(6)} FOGO\n✅ Credited: ${solCredited.toFixed(6)} SOL\n\nTransaction: ${signature}\n\nView on Fogo Explorer: https://explorer.fogo.io/tx/${signature}`);

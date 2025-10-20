@@ -9,6 +9,8 @@ interface Transaction {
   crucibleId: string;
   timestamp: number;
   signature?: string;
+  apyRewards?: number; // APY rewards earned/withdrawn
+  totalWithdrawal?: number; // Total amount including APY rewards
 }
 
 interface AnalyticsData {
@@ -21,6 +23,8 @@ interface AnalyticsData {
   transactions: Transaction[];
   dailyVolume: { [key: string]: number }; // USD per day
   tokenDistribution: { [key: string]: number }; // token amounts
+  totalAPYRewards: number; // Total APY rewards earned (USD)
+  totalAPYWithdrawn: number; // Total APY rewards withdrawn (USD)
 }
 
 interface AnalyticsContextType {
@@ -55,7 +59,9 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({ children }
     averageWithdrawal: 0,
     transactions: [],
     dailyVolume: {},
-    tokenDistribution: {}
+    tokenDistribution: {},
+    totalAPYRewards: 0,
+    totalAPYWithdrawn: 0
   });
 
   const addTransaction = useCallback((transaction: Omit<Transaction, 'id' | 'timestamp'>) => {
@@ -78,6 +84,15 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({ children }
       const totalWithdrawals = newTransactions
         .filter(tx => tx.type === 'withdraw')
         .reduce((sum, tx) => sum + toUsd(tx), 0);
+
+      // Calculate APY rewards tracking
+      const totalAPYRewards = newTransactions
+        .filter(tx => tx.apyRewards && tx.apyRewards > 0)
+        .reduce((sum, tx) => sum + (tx.apyRewards || 0) * price(tx.token), 0);
+
+      const totalAPYWithdrawn = newTransactions
+        .filter(tx => tx.type === 'withdraw' && tx.apyRewards && tx.apyRewards > 0)
+        .reduce((sum, tx) => sum + (tx.apyRewards || 0) * price(tx.token), 0);
       
       // Net volume = deposits - withdrawals (USD)
       const totalVolume = totalDeposits - totalWithdrawals;
@@ -118,7 +133,9 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({ children }
         averageWithdrawal,
         transactions: newTransactions,
         dailyVolume,
-        tokenDistribution
+        tokenDistribution,
+        totalAPYRewards,
+        totalAPYWithdrawn
       };
     });
   }, []);

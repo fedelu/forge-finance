@@ -11,11 +11,13 @@ export interface APYCalculation {
 export const calculateAPYRewards = (
   principal: number,
   apyRate: number,
-  timeInDays: number
+  timeInDays: number = 365 // Default to 1 year
 ): APYCalculation => {
+  // Use compound interest formula: A = P(1 + r/n)^(nt)
+  // For daily compounding: A = P(1 + r/365)^(365 * t)
   const dailyRate = apyRate / 365;
-  const totalRewards = principal * dailyRate * timeInDays;
-  const totalWithdrawal = principal + totalRewards;
+  const totalWithdrawal = principal * Math.pow(1 + dailyRate, timeInDays);
+  const totalRewards = totalWithdrawal - principal;
 
   return {
     principal,
@@ -41,18 +43,18 @@ export const formatAPYBreakdown = (calculation: APYCalculation) => {
 export const getTimeInCrucible = (crucibleId: string): number => {
   // For demo purposes, simulate time based on crucible ID
   const timeMap: { [key: string]: number } = {
-    'fogo-stable-crucible': 45,    // 45 days - stable strategy
-    'fogo-growth-crucible': 30,    // 30 days - growth strategy
-    'fogo-premium-crucible': 60,   // 60 days - premium strategy
-    'fogo-yield-crucible': 20,     // 20 days - high yield strategy
-    'fogo-defi-crucible': 15,      // 15 days - DeFi strategy
+    'fogo-stable-crucible': 365,    // 1 year - stable strategy
+    'fogo-growth-crucible': 365,    // 1 year - growth strategy
+    'fogo-premium-crucible': 365,   // 1 year - premium strategy
+    'fogo-yield-crucible': 365,     // 1 year - high yield strategy
+    'fogo-defi-crucible': 365,      // 1 year - DeFi strategy
     // Legacy crucibles (for backward compatibility)
-    'sol-crucible': 30,
-    'eth-crucible': 45,
-    'usdc-crucible': 20,
-    'btc-crucible': 60,
-    'fogo-crucible': 15,
+    'sol-crucible': 365,
+    'eth-crucible': 365,
+    'usdc-crucible': 365,
+    'btc-crucible': 365,
+    'fogo-crucible': 365,
   };
   
-  return timeMap[crucibleId] || 30; // Default to 30 days
+  return timeMap[crucibleId] || 365; // Default to 1 year (365 days)
 };

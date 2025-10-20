@@ -114,14 +114,16 @@ export const WorkingWithdrawModal: React.FC<WorkingWithdrawModalProps> = ({ isOp
       // Update crucible (deduct token units)
       updateCrucibleWithdraw(crucibleId, withdrawTokenAmount);
       
-      // Record transaction in analytics in token units (USD conversion handled in context)
-      addTransaction({
-        type: 'withdraw',
-        amount: withdrawTokenAmount,
-        token: targetSymbol,
-        crucibleId,
-        signature: mockSignature
-      });
+             // Record transaction in analytics in token units (USD conversion handled in context)
+             addTransaction({
+               type: 'withdraw',
+               amount: withdrawTokenAmount,
+               token: targetSymbol,
+               crucibleId,
+               signature: mockSignature,
+               apyRewards: apyRewards,
+               totalWithdrawal: totalWithdrawal
+             });
       
       alert(`✅ Withdrawal successful!\n\nMock Transaction: ${mockSignature}\nPrincipal: ${withdrawTokenAmount.toFixed(6)} ${targetSymbol}\nAPY Rewards: ${apyRewards.toFixed(6)} ${targetSymbol}\nTotal Withdrawn: ${totalWithdrawal.toFixed(6)} ${targetSymbol}\nCredited: ${solCredited.toFixed(6)} SOL`);
       
