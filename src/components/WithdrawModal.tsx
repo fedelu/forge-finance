@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useWallet } from '../contexts/WalletContext';
 import { useBalance } from '../contexts/BalanceContext';
 import { useCrucible } from '../contexts/CrucibleContext';
@@ -41,6 +41,14 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose, c
     const sol = usd / price('SOL');
     return sol;
   }, [crucible, targetSymbol]);
+
+  // Reset modal state when opening or switching crucible to avoid stale values
+  useEffect(() => {
+    if (isOpen) {
+      setAmount('');
+      setError(null);
+    }
+  }, [isOpen, crucibleId]);
 
   const handleWithdraw = async () => {
     if (!publicKey) {
