@@ -89,30 +89,30 @@ function DemoContent() {
         </header>
 
         <main className="container mx-auto px-4 py-8">
-                  {/* Debug Panel */}
+                  {/* FOGO Testnet Status */}
                   <div className="card mb-8 bg-gray-800 border-gray-600">
-                    <h3 className="text-lg font-semibold text-white mb-4">🔗 Solana Devnet Status</h3>
+                    <h3 className="text-lg font-semibold text-white mb-4">🔥 FOGO Testnet Status</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
                         <span className="text-gray-400">Network:</span>
-                        <span className="ml-2 text-green-400">Solana Devnet</span>
+                        <span className="ml-2 text-orange-400">FOGO Testnet</span>
                       </div>
                       <div>
                         <span className="text-gray-400">RPC:</span>
                         <span className="ml-2 text-green-400">Connected</span>
                       </div>
                       <div>
-                        <span className="text-gray-400">Protocol Stats:</span>
-                        <span className="ml-2 text-green-400">Loaded</span>
+                        <span className="text-gray-400">FOGO Crucibles:</span>
+                        <span className="ml-2 text-green-400">5 Active</span>
                       </div>
                       <div>
                         <span className="text-gray-400">Status:</span>
                         <span className="ml-2 text-green-400">Ready</span>
                       </div>
                     </div>
-                    <div className="mt-4 p-3 bg-green-900/30 rounded-lg">
-                      <p className="text-sm text-green-300">
-                        💡 <strong>Get SOL for testing:</strong> Visit <a href="https://faucet.solana.com" target="_blank" className="text-green-400 underline">https://faucet.solana.com</a> and select "Devnet"
+                    <div className="mt-4 p-3 bg-orange-900/30 rounded-lg">
+                      <p className="text-sm text-orange-300">
+                        🔥 <strong>FOGO Ecosystem:</strong> Deposit your FOGO tokens into specialized crucibles with APY ranging from 12% to 25%
                       </p>
                     </div>
                   </div>

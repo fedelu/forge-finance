@@ -77,7 +77,7 @@ export default function CrucibleManager({ className = '', onDeposit, onWithdraw,
     if (action === 'deposit') {
       setSelectedCrucible(crucibleId);
       
-      // Check if this is the FOGO crucible
+      // Check if this is a FOGO crucible
       const isFogoCrucible = crucibleId.toLowerCase().includes('fogo');
       
       if (isFogoCrucible) {

@@ -37,59 +37,59 @@ interface CrucibleProviderProps {
 export const CrucibleProvider: React.FC<CrucibleProviderProps> = ({ children }) => {
   const [crucibles, setCrucibles] = useState<Crucible[]>([
     {
-      id: 'usdc-crucible',
-      name: 'USDC Crucible',
-      symbol: 'USDC',
-      tvl: 1_300_000,
-      apr: 0.085,
+      id: 'fogo-stable-crucible',
+      name: 'FOGO Stable',
+      symbol: 'FOGO',
+      tvl: 2_500_000,
+      apr: 0.12, // 12% APY - Stable strategy
       status: 'active',
-      userDeposit: 0, // Start with 0
-      userShares: 0, // Start with 0
+      userDeposit: 0,
+      userShares: 0,
+      icon: '🔥'
+    },
+    {
+      id: 'fogo-growth-crucible',
+      name: 'FOGO Growth',
+      symbol: 'FOGO',
+      tvl: 1_800_000,
+      apr: 0.18, // 18% APY - Growth strategy
+      status: 'active',
+      userDeposit: 0,
+      userShares: 0,
+      icon: '🚀'
+    },
+    {
+      id: 'fogo-premium-crucible',
+      name: 'FOGO Premium',
+      symbol: 'FOGO',
+      tvl: 3_200_000,
+      apr: 0.15, // 15% APY - Premium strategy
+      status: 'active',
+      userDeposit: 0,
+      userShares: 0,
       icon: '💎'
     },
     {
-      id: 'sol-crucible',
-      name: 'SOL Crucible',
-      symbol: 'SOL',
-      tvl: 900_000,
-      apr: 0.123,
-      status: 'active',
-      userDeposit: 0, // Start with 0
-      userShares: 0, // Start with 0
-      icon: '☀️'
-    },
-    {
-      id: 'eth-crucible',
-      name: 'ETH Crucible',
-      symbol: 'ETH',
-      tvl: 2_100_000,
-      apr: 0.067,
-      status: 'active',
-      userDeposit: 0, // Start with 0
-      userShares: 0, // Start with 0
-      icon: '🔷'
-    },
-    {
-      id: 'btc-crucible',
-      name: 'BTC Crucible',
-      symbol: 'BTC',
-      tvl: 800_000,
-      apr: 0.092,
-      status: 'paused',
-      userDeposit: 0, // Start with 0
-      userShares: 0, // Start with 0
-      icon: '₿'
-    },
-    {
-      id: 'fogo-crucible',
-      name: 'FOGO Crucible',
+      id: 'fogo-yield-crucible',
+      name: 'FOGO Yield',
       symbol: 'FOGO',
-      tvl: 500_000,
-      apr: 0.15, // 15% APY for FOGO
+      tvl: 1_500_000,
+      apr: 0.22, // 22% APY - High yield strategy
       status: 'active',
-      userDeposit: 0, // Start with 0
-      userShares: 0, // Start with 0
-      icon: '🔥'
+      userDeposit: 0,
+      userShares: 0,
+      icon: '⚡'
+    },
+    {
+      id: 'fogo-defi-crucible',
+      name: 'FOGO DeFi',
+      symbol: 'FOGO',
+      tvl: 900_000,
+      apr: 0.25, // 25% APY - DeFi strategy
+      status: 'active',
+      userDeposit: 0,
+      userShares: 0,
+      icon: '🏦'
     }
   ]);
 
