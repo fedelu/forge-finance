@@ -101,53 +101,61 @@ export const DynamicTokenBalances: React.FC<DynamicTokenBalancesProps> = ({ clas
           <h3 className="text-xl font-semibold text-white">Portfolio Overview</h3>
         </div>
         
-               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-          {/* 1) USD Balance (sum of crucibles) */}
-          <div className="text-center p-4 bg-forge-gray/30 rounded-lg">
-            <CurrencyDollarIcon className="h-8 w-8 text-forge-accent mx-auto mb-2" />
-            <div className="text-2xl font-bold text-white">{formatCurrency(getUsdBalance())}</div>
-            <div className="text-sm text-gray-400">USD Balance</div>
-          </div>
-
-          {/* SPARK Balance */}
-          <div className="text-center p-4 bg-forge-gray/30 rounded-lg">
-            <BoltIcon className="h-8 w-8 text-forge-accent mx-auto mb-2" />
-            <div className="text-2xl font-bold text-white">
-              {formatNumber(getSparkBalance(), 0)}
+        <div className="space-y-6">
+          {/* Main Portfolio Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* USD Balance */}
+            <div className="text-center p-6 bg-gradient-to-br from-forge-primary/20 to-forge-accent/20 rounded-lg border border-forge-primary/30">
+              <CurrencyDollarIcon className="h-10 w-10 text-forge-accent mx-auto mb-3" />
+              <div className="text-3xl font-bold text-white">{formatCurrency(getUsdBalance())}</div>
+              <div className="text-sm text-gray-400 mt-1">Total Portfolio Value</div>
             </div>
-            <div className="text-sm text-forge-accent">SPARK</div>
-            <div className="text-xs text-gray-400">Governance</div>
-          </div>
 
-          {/* HEAT Balance */}
-          <div className="text-center p-4 bg-forge-gray/30 rounded-lg">
-            <FireIcon className="h-8 w-8 text-yellow-400 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-white">
-              {formatNumber(getHeatBalance(), 0)}
+            {/* SPARK Balance */}
+            <div className="text-center p-6 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-lg border border-blue-500/30">
+              <BoltIcon className="h-10 w-10 text-forge-accent mx-auto mb-3" />
+              <div className="text-3xl font-bold text-white">{formatNumber(getSparkBalance(), 0)}</div>
+              <div className="text-sm text-forge-accent mt-1">SPARK Tokens</div>
+              <div className="text-xs text-gray-400">Governance Power</div>
             </div>
-            <div className="text-sm text-yellow-400">HEAT</div>
-            <div className="text-xs text-gray-400">Rewards</div>
+
+            {/* HEAT Balance */}
+            <div className="text-center p-6 bg-gradient-to-br from-yellow-500/20 to-orange-500/20 rounded-lg border border-yellow-500/30">
+              <FireIcon className="h-10 w-10 text-yellow-400 mx-auto mb-3" />
+              <div className="text-3xl font-bold text-white">{formatNumber(getHeatBalance(), 0)}</div>
+              <div className="text-sm text-yellow-400 mt-1">HEAT Tokens</div>
+              <div className="text-xs text-gray-400">Reward Points</div>
+            </div>
           </div>
 
-          {/* FOGO Stable Crucible */}
-          <div className="text-center p-4 bg-forge-gray/30 rounded-lg">
-            <div className="text-2xl font-bold text-white">{formatNumber(getCrucibleDeposit('fogo-stable-crucible'), 2)} FOGO</div>
-            <div className="text-sm text-gray-400">FOGO Stable</div>
-            <div className="text-xs text-green-400">12% APY</div>
-          </div>
-
-          {/* FOGO Growth Crucible */}
-          <div className="text-center p-4 bg-forge-gray/30 rounded-lg">
-            <div className="text-2xl font-bold text-white">{formatNumber(getCrucibleDeposit('fogo-growth-crucible'), 2)} FOGO</div>
-            <div className="text-sm text-gray-400">FOGO Growth</div>
-            <div className="text-xs text-blue-400">18% APY</div>
-          </div>
-
-          {/* FOGO Premium Crucible */}
-          <div className="text-center p-4 bg-forge-gray/30 rounded-lg">
-            <div className="text-2xl font-bold text-white">{formatNumber(getCrucibleDeposit('fogo-premium-crucible'), 2)} FOGO</div>
-            <div className="text-sm text-gray-400">FOGO Premium</div>
-            <div className="text-xs text-purple-400">15% APY</div>
+          {/* FOGO Crucibles Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <FireIcon className="h-6 w-6 text-orange-400" />
+                <h4 className="text-lg font-semibold text-white">🔥 FOGO Crucibles</h4>
+                <div className="text-sm text-gray-400">({crucibles.filter(c => c.symbol === 'FOGO').length} active)</div>
+              </div>
+              <div className="text-right">
+                <div className="text-sm text-gray-400">Total FOGO Deposited</div>
+                <div className="text-lg font-bold text-orange-400">
+                  {formatNumber(crucibles.filter(c => c.symbol === 'FOGO').reduce((sum, c) => sum + c.userDeposit, 0), 2)} FOGO
+                </div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+              {crucibles.filter(c => c.symbol === 'FOGO').map((crucible) => (
+                <div key={crucible.id} className="text-center p-4 bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-lg border border-orange-500/20 hover:border-orange-500/40 transition-colors">
+                  <div className="text-2xl mb-2">{crucible.icon}</div>
+                  <div className="text-lg font-bold text-white">{formatNumber(crucible.userDeposit, 2)}</div>
+                  <div className="text-sm text-gray-300">FOGO</div>
+                  <div className="text-xs text-gray-400 mt-1">{crucible.name}</div>
+                  <div className="text-xs font-semibold text-orange-400 mt-1">{(crucible.apr * 100).toFixed(1)}% APY</div>
+                  <div className="text-xs text-gray-500 mt-1">{crucible.userShares.toLocaleString()} shares</div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
