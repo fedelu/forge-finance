@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useWallet } from '../contexts/WalletContext';
 import { useBalance } from '../contexts/BalanceContext';
 import { useCrucible } from '../contexts/CrucibleContext';
@@ -25,11 +25,14 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose, c
   const price = (symbol: string) => ({ SOL: 200, USDC: 1, ETH: 4000, BTC: 110000 } as any)[symbol] || 1;
   const crucible = getCrucible(crucibleId);
   const targetSymbol = crucible?.symbol || 'SOL';
-  // Backward-compatible: some older deposits may have been stored in SOL units.
-  // Compute both interpretations and take the larger as the safe max.
-  const maxAsTokenUnits = crucible ? (crucible.userDeposit * price(targetSymbol)) / price('SOL') : 0;
-  const maxAsSolUnits = crucible ? crucible.userDeposit : 0;
-  const maxSolFromCrucible = Math.max(maxAsTokenUnits, maxAsSolUnits);
+  // Compute MAX SOL strictly from crucible token balance
+  const maxSolFromCrucible = useMemo(() => {
+    if (!crucible) return 0;
+    const tokenUnits = crucible.userDeposit || 0;
+    const usd = tokenUnits * price(targetSymbol);
+    const sol = usd / price('SOL');
+    return sol;
+  }, [crucible, targetSymbol]);
 
   const handleWithdraw = async () => {
     if (!publicKey) {
@@ -93,6 +96,9 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose, c
       
       // Convert SOL to crucible token units to reduce userDeposit in that crucible
       const withdrawInTarget = (withdrawAmount * price('SOL')) / price(targetSymbol);
+      if (withdrawInTarget > (crucible?.userDeposit || 0)) {
+        throw new Error(`Insufficient ${targetSymbol} in crucible to withdraw ${withdrawAmount} SOL`);
+      }
       
       // Add SOL back to wallet (simulated)
       addToBalance('SOL', withdrawAmount);
