@@ -68,17 +68,18 @@ export default function SimpleStats({ className = '' }: SimpleStatsProps) {
     const averageAPR = crucibles.length > 0 
       ? crucibles.reduce((sum, crucible) => sum + crucible.apr, 0) / crucibles.length 
       : 8.5
-    // Compute 24h volume in SOL (token-aware; here we aggregate SOL only)
+    // Compute 24h volume in USD using token prices
     const now = Date.now()
     const txs = (analytics as any).transactions || []
+    const price = (token: string) => ({ SOL: 200, USDC: 1, ETH: 2000, BTC: 50000 } as any)[token] || 1
     const volume24h = txs
-      .filter((tx: any) => tx.token === 'SOL' && now - tx.timestamp <= 24 * 60 * 60 * 1000)
-      .reduce((sum: number, tx: any) => sum + tx.amount, 0)
+      .filter((tx: any) => now - tx.timestamp <= 24 * 60 * 60 * 1000)
+      .reduce((sum: number, tx: any) => sum + tx.amount * price(tx.token), 0)
     const priceChange24h = 0.05 // Mock for now
     const tvlChange = 5.2 // Mock for now
     const userChange = 12 // Mock for now
     const aprChange = 0.2 // Mock for now
-    // No percentage for 24h volume; keep 0 for change to render neutral
+    // No percentage for 24h volume
     const volumeChange = 0
 
     return {
@@ -243,14 +244,14 @@ export default function SimpleStats({ className = '' }: SimpleStatsProps) {
         {/* Volume Card */}
         <div className="card-glow">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold text-white">24h Volume (SOL)</h3>
+            <h3 className="text-xl font-semibold text-white">24h Volume</h3>
             <div className="flex items-center space-x-2">
               <div className="status-online" />
             </div>
           </div>
           <div className="space-y-4">
             <div className="text-3xl font-bold text-white">
-              {stats.volume24h.toFixed(2)} SOL
+              {formatCurrency(stats.volume24h)}
             </div>
             {/* Removed percentage/progress bar as requested */}
           </div>

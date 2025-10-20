@@ -60,9 +60,8 @@ export const DynamicTokenBalances: React.FC<DynamicTokenBalancesProps> = ({ clas
   };
 
   const getTotalPortfolioValue = () => {
-    // Show SOL amount instead of USD value
-    const solBalance = balances.find(b => b.symbol === 'SOL')?.amount || 0;
-    return solBalance;
+    // Sum USD values across all tokens
+    return balances.reduce((total, b) => total + b.usdValue, 0);
   };
 
   const getSparkBalance = () => {
@@ -93,9 +92,9 @@ export const DynamicTokenBalances: React.FC<DynamicTokenBalancesProps> = ({ clas
           <div className="text-center p-4 bg-forge-gray/30 rounded-lg">
             <CurrencyDollarIcon className="h-8 w-8 text-forge-accent mx-auto mb-2" />
             <div className="text-2xl font-bold text-white">
-              {formatNumber(getTotalPortfolioValue(), 2)} SOL
+              {formatCurrency(getTotalPortfolioValue())}
             </div>
-            <div className="text-sm text-gray-400">Portfolio Value</div>
+            <div className="text-sm text-gray-400">Portfolio Value (USD)</div>
           </div>
 
           {/* SPARK Balance */}

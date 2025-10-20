@@ -103,7 +103,7 @@ export const BalanceProvider: React.FC<BalanceProviderProps> = ({ children }) =>
 
   const getTokenPrice = (symbol: string): number => {
     const prices: { [key: string]: number } = {
-      'SOL': 100,
+      'SOL': 200,
       'USDC': 1,
       'ETH': 2000,
       'BTC': 50000,

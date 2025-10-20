@@ -11,15 +11,15 @@ interface Transaction {
 }
 
 interface AnalyticsData {
-  totalDeposits: number;
-  totalWithdrawals: number;
-  totalVolume: number;
+  totalDeposits: number; // USD
+  totalWithdrawals: number; // USD
+  totalVolume: number; // USD
   transactionCount: number;
-  averageDeposit: number;
-  averageWithdrawal: number;
+  averageDeposit: number; // USD
+  averageWithdrawal: number; // USD
   transactions: Transaction[];
-  dailyVolume: { [key: string]: number };
-  tokenDistribution: { [key: string]: number };
+  dailyVolume: { [key: string]: number }; // USD per day
+  tokenDistribution: { [key: string]: number }; // token amounts
 }
 
 interface AnalyticsContextType {
@@ -67,13 +67,16 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({ children }
     setAnalytics(prev => {
       const newTransactions = [newTransaction, ...prev.transactions].slice(0, 100); // Keep last 100
       
+      const price = (token: string) => ({ SOL: 200, USDC: 1, ETH: 2000, BTC: 50000 } as any)[token] || 1;
+      const toUsd = (tx: Transaction) => tx.amount * price(tx.token);
+
       const totalDeposits = newTransactions
         .filter(tx => tx.type === 'deposit')
-        .reduce((sum, tx) => sum + tx.amount, 0);
+        .reduce((sum, tx) => sum + toUsd(tx), 0);
       
       const totalWithdrawals = newTransactions
         .filter(tx => tx.type === 'withdraw')
-        .reduce((sum, tx) => sum + tx.amount, 0);
+        .reduce((sum, tx) => sum + toUsd(tx), 0);
       
       const totalVolume = totalDeposits + totalWithdrawals;
       
@@ -92,7 +95,7 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({ children }
       const dailyVolume: { [key: string]: number } = {};
       newTransactions.forEach(tx => {
         const date = new Date(tx.timestamp).toISOString().split('T')[0];
-        dailyVolume[date] = (dailyVolume[date] || 0) + tx.amount;
+        dailyVolume[date] = (dailyVolume[date] || 0) + toUsd(tx);
       });
 
       // Calculate token distribution
