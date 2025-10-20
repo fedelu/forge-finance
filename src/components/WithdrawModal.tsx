@@ -43,13 +43,10 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose, c
   };
   // Always infer token from crucibleId to avoid stale/missing symbols
   const targetSymbol = useMemo(() => normalizeSymbol(inferSymbol(crucibleId)), [crucibleId]);
-  // Compute MAX SOL strictly from crucible token balance
-  const maxSolFromCrucible = useMemo(() => {
-    if (!crucible) return 0;
-    const units = Number(crucible.userDeposit || 0);
-    const convertedToSol = (units * price(targetSymbol)) / price('SOL');
-    return convertedToSol; // strictly convert token -> SOL
-  }, [crucible?.userDeposit, targetSymbol]);
+  // Available token units in the crucible (native token)
+  const availableTokenUnits = useMemo(() => {
+    return Number(crucible?.userDeposit || 0);
+  }, [crucible?.userDeposit]);
 
   // Reset modal state when opening or switching crucible to avoid stale values
   useEffect(() => {
@@ -70,8 +67,8 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose, c
       return;
     }
 
-    if (parseFloat(amount) > maxSolFromCrucible) {
-      setError(`Maximum withdrawable amount is ${maxSolFromCrucible.toFixed(6)} SOL`);
+    if (parseFloat(amount) > availableTokenUnits) {
+      setError(`Maximum withdrawable amount is ${availableTokenUnits.toFixed(6)} ${targetSymbol}`);
       return;
     }
 
@@ -105,51 +102,48 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose, c
       
       console.log('Withdrawal simulated successfully:', mockSignature);
       
-      // Update balances (input in SOL)
-      const withdrawAmount = parseFloat(amount); // in SOL
+      // Update balances (input in crucible token units)
+      const withdrawTokenAmount = parseFloat(amount); // in target token
       
       console.log('WithdrawModal: Processing withdrawal:', {
-        withdrawAmount,
-        sparkToRemove: withdrawAmount * 10,
-        heatToRemove: withdrawAmount * 5,
-        solToAdd: withdrawAmount
+        withdrawTokenAmount,
+        sparkToRemove: withdrawTokenAmount * 10,
+        heatToRemove: withdrawTokenAmount * 5
       });
       
       // Remove from crucible balance (simulated)
-      subtractFromBalance('SPARK', withdrawAmount * 10); // 10 SPARK per SOL withdrawn
-      subtractFromBalance('HEAT', withdrawAmount * 5); // 5 HEAT per SOL withdrawn
+      subtractFromBalance('SPARK', withdrawTokenAmount * 10);
+      subtractFromBalance('HEAT', withdrawTokenAmount * 5);
       
-      // Convert SOL to crucible token units to reduce userDeposit in that crucible
-      const withdrawInTarget = (withdrawAmount * price('SOL')) / price(targetSymbol);
-      if (withdrawInTarget > (crucible?.userDeposit || 0)) {
-        throw new Error(`Insufficient ${targetSymbol} in crucible to withdraw ${withdrawAmount} SOL`);
+      // Check availability in token units
+      if (withdrawTokenAmount > (crucible?.userDeposit || 0)) {
+        throw new Error(`Insufficient ${targetSymbol} in crucible to withdraw ${withdrawTokenAmount} ${targetSymbol}`);
       }
       
-      // Add SOL back to wallet (simulated)
-      addToBalance('SOL', withdrawAmount);
+      // Credit SOL based on USD parity
+      const solCredited = (withdrawTokenAmount * price(targetSymbol)) / price('SOL');
+      addToBalance('SOL', solCredited);
       
       // Update crucible
-      updateCrucibleWithdraw(crucibleId, withdrawInTarget);
+      updateCrucibleWithdraw(crucibleId, withdrawTokenAmount);
       
       // Record transaction in analytics (token-aware)
       console.log('Recording withdrawal transaction in analytics:', {
         type: 'withdraw',
-        amount: withdrawAmount,
-        token: 'SOL',
-        distToken: targetSymbol,
+        amount: withdrawTokenAmount,
+        token: targetSymbol,
         crucibleId,
         signature: mockSignature
       });
       addTransaction({
         type: 'withdraw',
-        amount: withdrawAmount,
-        token: 'SOL',
-        distToken: targetSymbol,
+        amount: withdrawTokenAmount,
+        token: targetSymbol,
         crucibleId,
         signature: mockSignature
       });
       
-      alert(`Withdrawal simulated successfully! Mock Transaction: ${mockSignature}\n\n✅ ${withdrawAmount} SOL withdrawn\n✅ ${withdrawAmount * 10} SPARK spent\n✅ ${withdrawAmount * 5} HEAT spent\n\nNote: This is a demo. In production, this would be a real transaction on Solana testnet.`);
+      alert(`Withdrawal simulated successfully! Mock Transaction: ${mockSignature}\n\n✅ ${withdrawTokenAmount} ${targetSymbol} withdrawn\n✅ Credited ${(solCredited).toFixed(2)} SOL\n\nNote: This is a demo. In production, this would be a real transaction on Solana testnet.`);
       
       // Reset form
       setAmount('');
@@ -163,7 +157,7 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose, c
   };
 
   const handleMax = () => {
-    setAmount(maxSolFromCrucible.toFixed(6));
+    setAmount(availableTokenUnits.toFixed(6));
   };
 
   if (!isOpen) return null;
@@ -176,14 +170,14 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose, c
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Amount (SOL)
+              Amount ({targetSymbol})
             </label>
             <div className="flex space-x-2">
               <input
                 type="number"
                 step="0.01"
                 min="0"
-              max={maxSolFromCrucible}
+              max={availableTokenUnits}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
@@ -197,7 +191,7 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose, c
               </button>
             </div>
             <div className="text-xs text-gray-400 mt-1">
-              Available: {maxSolFromCrucible.toFixed(6)} SOL (from {crucible?.userDeposit?.toFixed?.(6) || crucible?.userDeposit || 0} {targetSymbol})
+              Available: {availableTokenUnits.toFixed(6)} {targetSymbol}
             </div>
           </div>
 
@@ -217,7 +211,7 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose, c
               disabled={loading}
               className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
             >
-              {loading ? 'Withdrawing...' : 'Withdraw'}
+              {loading ? 'Withdrawing...' : `Withdraw ${targetSymbol}`}
             </button>
           </div>
         </div>
