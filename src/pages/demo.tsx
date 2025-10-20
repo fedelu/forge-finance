@@ -102,9 +102,7 @@ function DemoContent() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
                         <span className="text-gray-400">Current Network:</span>
-                        <span className={`ml-2 ${network === 'fogo-testnet' ? 'text-orange-400' : 'text-blue-400'}`}>
-                          {network === 'fogo-testnet' ? 'FOGO Testnet' : 'Solana Testnet'}
-                        </span>
+                        <span className="ml-2 text-orange-400">FOGO Testnet</span>
                       </div>
                       <div>
                         <span className="text-gray-400">Wallet:</span>
@@ -125,11 +123,6 @@ function DemoContent() {
                       <p className="text-sm text-orange-300">
                         🔥 <strong>FOGO Ecosystem:</strong> Deposit your FOGO tokens into specialized crucibles with APY ranging from 12% to 25%
                       </p>
-                      {network !== 'fogo-testnet' && (
-                        <p className="text-sm text-yellow-300 mt-2">
-                          💡 <strong>Tip:</strong> Switch to FOGO Testnet for real FOGO token transactions
-                        </p>
-                      )}
                     </div>
                   </div>
 

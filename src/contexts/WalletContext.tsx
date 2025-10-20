@@ -48,8 +48,8 @@ interface WalletProviderProps {
 }
 
 export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
-  const [network, setNetwork] = useState<'solana-testnet' | 'fogo-testnet'>('solana-testnet');
-  const [connection, setConnection] = useState(() => new Connection(SOLANA_TESTNET_CONFIG.RPC_URL, 'confirmed'));
+  const [network, setNetwork] = useState<'solana-testnet' | 'fogo-testnet'>('fogo-testnet'); // Default to FOGO testnet
+  const [connection, setConnection] = useState(() => new Connection(FOGO_TESTNET_CONFIG.RPC_URL, 'confirmed')); // Default to FOGO connection
   const [publicKey, setPublicKey] = useState<PublicKey | null>(null);
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(false);
@@ -61,7 +61,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       const phantom = (window as any).solana as PhantomWallet;
       if (phantom.isPhantom) {
         setWallet(phantom);
-        
+
         // Check if already connected
         if (phantom.isConnected && phantom.publicKey) {
           setPublicKey(phantom.publicKey);
@@ -192,14 +192,17 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const getFogoBalance = useCallback(async (): Promise<number | null> => {
     if (!publicKey || !wallet) return null;
     try {
+      console.log('=== FOGO BALANCE CHECK ===');
+      console.log('Your wallet address:', publicKey.toString());
+      console.log('Current network:', network);
+      console.log('Connection URL:', connection.rpcEndpoint);
+
       // Get all token accounts for the user
       const tokenAccounts = await connection.getTokenAccountsByOwner(publicKey, {
         programId: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA')
       });
 
-      console.log('=== DEBUGGING TOKEN ACCOUNTS ===');
       console.log('Found token accounts:', tokenAccounts.value.length);
-      console.log('Your wallet address:', publicKey.toString());
 
       // Log all token accounts for debugging
       tokenAccounts.value.forEach((accountInfo, index) => {
@@ -218,8 +221,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
       });
 
-      // Look for FOGO token account using Pyron's approach
-      // Pyron queries banks by token symbol "FOGO" - we need to find the actual FOGO mint
+      // Look for FOGO token account
       for (const accountInfo of tokenAccounts.value) {
         const accountData = accountInfo.account.data;
         if (accountData.parsed) {
@@ -227,30 +229,27 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           const amount = accountData.parsed.info.tokenAmount.uiAmount;
           
           // Check if this looks like a FOGO token account
-          // We'll look for tokens with significant balance that might be FOGO
           if (amount && amount > 0) {
             console.log('Found token with balance:', { mint, amount });
             
-            // If you have 1000 FOGO tokens, this should show the mint address
-            // Please check the console logs and tell me the mint address for your FOGO tokens
+            // Look for tokens with significant balance (your 1000 FOGO tokens)
             if (amount >= 1000) {
               console.log('🎯 POTENTIAL FOGO TOKEN FOUND:', { mint, amount });
-              console.log('This might be your FOGO token! Please verify the mint address.');
+              console.log('This might be your FOGO token!');
+              return amount;
             }
           }
         }
       }
 
-      // For now, return 0 until we identify the correct FOGO mint address
-      console.log('No FOGO token account identified yet');
-      console.log('Please check the console logs above to find your FOGO token mint address');
-      console.log('Once you find it, we can update the code to detect it properly');
+      console.log('No FOGO token account found with 1000+ balance');
+      console.log('Make sure you are connected to FOGO testnet in Phantom wallet');
       return 0;
     } catch (error) {
       console.error('Error getting FOGO balance:', error);
       return null;
     }
-  }, [publicKey, wallet, connection]);
+  }, [publicKey, wallet, connection, network]);
 
   const value = useMemo(() => ({
     connection,
