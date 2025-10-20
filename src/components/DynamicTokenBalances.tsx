@@ -101,7 +101,7 @@ export const DynamicTokenBalances: React.FC<DynamicTokenBalancesProps> = ({ clas
           <h3 className="text-xl font-semibold text-white">Portfolio Overview</h3>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4">
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-8 gap-4">
           {/* 1) USD Balance (sum of crucibles) */}
           <div className="text-center p-4 bg-forge-gray/30 rounded-lg">
             <CurrencyDollarIcon className="h-8 w-8 text-forge-accent mx-auto mb-2" />
@@ -147,11 +147,17 @@ export const DynamicTokenBalances: React.FC<DynamicTokenBalancesProps> = ({ clas
             <div className="text-sm text-gray-400">Crucible USDC</div>
           </div>
 
-          {/* 7) Crucible BTC */}
-          <div className="text-center p-4 bg-forge-gray/30 rounded-lg">
-            <div className="text-2xl font-bold text-white">{formatNumber(getCrucibleDeposit('BTC'), 2)} BTC</div>
-            <div className="text-sm text-gray-400">Crucible BTC</div>
-          </div>
+                 {/* 7) Crucible BTC */}
+                 <div className="text-center p-4 bg-forge-gray/30 rounded-lg">
+                   <div className="text-2xl font-bold text-white">{formatNumber(getCrucibleDeposit('BTC'), 2)} BTC</div>
+                   <div className="text-sm text-gray-400">Crucible BTC</div>
+                 </div>
+
+                 {/* 8) Crucible FOGO */}
+                 <div className="text-center p-4 bg-forge-gray/30 rounded-lg">
+                   <div className="text-2xl font-bold text-white">{formatNumber(getCrucibleDeposit('FOGO'), 2)} FOGO</div>
+                   <div className="text-sm text-gray-400">Crucible FOGO</div>
+                 </div>
         </div>
       </div>
 

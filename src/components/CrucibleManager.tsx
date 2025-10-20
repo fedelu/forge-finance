@@ -10,7 +10,9 @@ import { useCrucible } from '../contexts/CrucibleContext'
 import { DepositModal } from './DepositModal'
 import { UltraSimpleModal } from './UltraSimpleModal'
 import { RealSolModal } from './RealSolModal'
+import { FogoDepositModal } from './FogoDepositModal'
 import { WorkingWithdrawModal } from './WorkingWithdrawModal'
+import { RealFogoWithdrawModal } from './RealFogoWithdrawModal'
 import { CrucibleCreationModal } from './CrucibleCreationModal'
 
 interface Crucible {
@@ -40,6 +42,7 @@ export default function CrucibleManager({ className = '', onDeposit, onWithdraw,
   const [showDepositModal, setShowDepositModal] = useState(false)
   const [showUltraSimpleModal, setShowUltraSimpleModal] = useState(false)
   const [showRealSolModal, setShowRealSolModal] = useState(false)
+  const [showFogoDepositModal, setShowFogoDepositModal] = useState(false)
   const [showWorkingWithdrawModal, setShowWorkingWithdrawModal] = useState(false)
   const [showCrucibleCreationModal, setShowCrucibleCreationModal] = useState(false)
 
@@ -73,17 +76,26 @@ export default function CrucibleManager({ className = '', onDeposit, onWithdraw,
 
     if (action === 'deposit') {
       setSelectedCrucible(crucibleId);
-      // Show three options: basic, ultra simple, and real SOL
-      const choice = prompt('Choose transaction type:\n\n1 = Basic simulation\n2 = Ultra simple (no errors, no real SOL)\n3 = Real SOL transaction (uses your SOL)\n\nEnter 1, 2, or 3:');
       
-      if (choice === '1') {
-        setShowDepositModal(true);
-      } else if (choice === '2') {
-        setShowUltraSimpleModal(true);
-      } else if (choice === '3') {
-        setShowRealSolModal(true);
+      // Check if this is the FOGO crucible
+      const isFogoCrucible = crucibleId.toLowerCase().includes('fogo');
+      
+      if (isFogoCrucible) {
+        // For FOGO crucible, show FOGO deposit option
+        setShowFogoDepositModal(true);
       } else {
-        alert('Invalid choice. Please try again.');
+        // For other crucibles, show the existing options
+        const choice = prompt('Choose transaction type:\n\n1 = Basic simulation\n2 = Ultra simple (no errors, no real SOL)\n3 = Real SOL transaction (uses your SOL)\n\nEnter 1, 2, or 3:');
+        
+        if (choice === '1') {
+          setShowDepositModal(true);
+        } else if (choice === '2') {
+          setShowUltraSimpleModal(true);
+        } else if (choice === '3') {
+          setShowRealSolModal(true);
+        } else {
+          alert('Invalid choice. Please try again.');
+        }
       }
     } else if (action === 'withdraw') {
       setSelectedCrucible(crucibleId);
@@ -197,6 +209,11 @@ export default function CrucibleManager({ className = '', onDeposit, onWithdraw,
           <RealSolModal
             isOpen={showRealSolModal}
             onClose={() => setShowRealSolModal(false)}
+            crucibleId={selectedCrucible}
+          />
+          <FogoDepositModal
+            isOpen={showFogoDepositModal}
+            onClose={() => setShowFogoDepositModal(false)}
             crucibleId={selectedCrucible}
           />
           <WorkingWithdrawModal

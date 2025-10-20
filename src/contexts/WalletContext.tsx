@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
 import { Connection, PublicKey, Transaction, VersionedTransaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { SOLANA_TESTNET_CONFIG } from '../config/solana-testnet';
+import { FOGO_TESTNET_CONFIG } from '../config/fogo-testnet';
 
 // Phantom wallet types
 interface PhantomWallet {
@@ -18,12 +19,15 @@ interface WalletContextType {
   publicKey: PublicKey | null;
   connected: boolean;
   connecting: boolean;
+  network: 'solana-testnet' | 'fogo-testnet';
   connect: () => Promise<void>;
   disconnect: () => void;
+  switchNetwork: (network: 'solana-testnet' | 'fogo-testnet') => void;
   signTransaction: (transaction: Transaction) => Promise<Transaction>;
   signAllTransactions: (transactions: Transaction[]) => Promise<Transaction[]>;
   sendTransaction: (transaction: Transaction) => Promise<string>;
   getBalance: () => Promise<number | null>;
+  getTokenBalance: (tokenMint: string) => Promise<number | null>;
   wallet: PhantomWallet | null;
 }
 
@@ -42,7 +46,8 @@ interface WalletProviderProps {
 }
 
 export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
-  const [connection] = useState(() => new Connection(SOLANA_TESTNET_CONFIG.RPC_URL, 'confirmed'));
+  const [network, setNetwork] = useState<'solana-testnet' | 'fogo-testnet'>('solana-testnet');
+  const [connection, setConnection] = useState(() => new Connection(SOLANA_TESTNET_CONFIG.RPC_URL, 'confirmed'));
   const [publicKey, setPublicKey] = useState<PublicKey | null>(null);
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(false);
@@ -152,6 +157,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     }
   }, [publicKey, wallet, connection]);
 
+  const switchNetwork = useCallback((newNetwork: 'solana-testnet' | 'fogo-testnet') => {
+    setNetwork(newNetwork);
+    const config = newNetwork === 'fogo-testnet' ? FOGO_TESTNET_CONFIG : SOLANA_TESTNET_CONFIG;
+    setConnection(new Connection(config.RPC_URL, 'confirmed'));
+  }, []);
+
   const getBalance = useCallback(async (): Promise<number | null> => {
     if (!publicKey) {
       return null;
@@ -165,19 +176,33 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     }
   }, [publicKey, connection]);
 
+  const getTokenBalance = useCallback(async (tokenMint: string): Promise<number | null> => {
+    if (!publicKey) return null;
+    try {
+      // For now, return mock balance - in production, this would fetch actual token balance
+      return Math.random() * 100; // Mock token balance
+    } catch (error) {
+      console.error('Error getting token balance:', error);
+      return null;
+    }
+  }, [publicKey]);
+
   const value = useMemo(() => ({
     connection,
     publicKey,
     connected,
     connecting,
+    network,
     connect,
     disconnect,
+    switchNetwork,
     signTransaction,
     signAllTransactions,
     sendTransaction,
     getBalance,
+    getTokenBalance,
     wallet,
-  }), [connection, publicKey, connected, connecting, connect, disconnect, signTransaction, signAllTransactions, sendTransaction, getBalance, wallet]);
+  }), [connection, publicKey, connected, connecting, network, connect, disconnect, switchNetwork, signTransaction, signAllTransactions, sendTransaction, getBalance, getTokenBalance, wallet]);
 
   return (
     <WalletContext.Provider value={value}>

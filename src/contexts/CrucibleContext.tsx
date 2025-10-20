@@ -79,10 +79,21 @@ export const CrucibleProvider: React.FC<CrucibleProviderProps> = ({ children }) 
       userDeposit: 0, // Start with 0
       userShares: 0, // Start with 0
       icon: '₿'
+    },
+    {
+      id: 'fogo-crucible',
+      name: 'FOGO Crucible',
+      symbol: 'FOGO',
+      tvl: 500_000,
+      apr: 0.15, // 15% APY for FOGO
+      status: 'active',
+      userDeposit: 0, // Start with 0
+      userShares: 0, // Start with 0
+      icon: '🔥'
     }
   ]);
 
-  const price = (symbol: string) => ({ SOL: 200, USDC: 1, ETH: 2000, BTC: 50000 } as any)[symbol] || 1;
+  const price = (symbol: string) => ({ SOL: 200, USDC: 1, ETH: 4000, BTC: 110000, FOGO: 0.5 } as any)[symbol] || 1;
 
   const updateCrucibleDeposit = useCallback((crucibleId: string, amount: number) => {
     console.log(`CrucibleContext: Adding deposit of ${amount} to ${crucibleId}`);
