@@ -25,7 +25,11 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose, c
   const price = (symbol: string) => ({ SOL: 200, USDC: 1, ETH: 4000, BTC: 110000 } as any)[symbol] || 1;
   const crucible = getCrucible(crucibleId);
   const targetSymbol = crucible?.symbol || 'SOL';
-  const maxSolFromCrucible = crucible ? (crucible.userDeposit * price(targetSymbol)) / price('SOL') : 0;
+  // Backward-compatible: some older deposits may have been stored in SOL units.
+  // Compute both interpretations and take the larger as the safe max.
+  const maxAsTokenUnits = crucible ? (crucible.userDeposit * price(targetSymbol)) / price('SOL') : 0;
+  const maxAsSolUnits = crucible ? crucible.userDeposit : 0;
+  const maxSolFromCrucible = Math.max(maxAsTokenUnits, maxAsSolUnits);
 
   const handleWithdraw = async () => {
     if (!publicKey) {

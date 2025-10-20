@@ -4,7 +4,7 @@ interface Crucible {
   id: string;
   name: string;
   symbol: string;
-  tvl: number;
+  tvl: number; // USD
   apr: number;
   status: 'active' | 'paused' | 'maintenance';
   userDeposit: number;
@@ -82,6 +82,8 @@ export const CrucibleProvider: React.FC<CrucibleProviderProps> = ({ children }) 
     }
   ]);
 
+  const price = (symbol: string) => ({ SOL: 200, USDC: 1, ETH: 2000, BTC: 50000 } as any)[symbol] || 1;
+
   const updateCrucibleDeposit = useCallback((crucibleId: string, amount: number) => {
     console.log(`CrucibleContext: Adding deposit of ${amount} to ${crucibleId}`);
     setCrucibles(prev => {
@@ -89,7 +91,7 @@ export const CrucibleProvider: React.FC<CrucibleProviderProps> = ({ children }) 
         if (crucible.id === crucibleId) {
           const newDeposit = crucible.userDeposit + amount;
           const newShares = crucible.userShares + amount; // 1:1 ratio for simplicity
-          const newTVL = crucible.tvl + amount; // Update TVL with deposit
+          const newTVL = crucible.tvl + amount * price(crucible.symbol); // TVL in USD
           console.log(`CrucibleContext: Updated ${crucibleId} - deposit: ${newDeposit}, shares: ${newShares}, TVL: ${newTVL}`);
           return {
             ...crucible,
@@ -110,7 +112,7 @@ export const CrucibleProvider: React.FC<CrucibleProviderProps> = ({ children }) 
         if (crucible.id === crucibleId) {
           const newDeposit = Math.max(0, crucible.userDeposit - amount);
           const newShares = Math.max(0, crucible.userShares - amount);
-          const newTVL = Math.max(0, crucible.tvl - amount); // Update TVL with withdrawal
+          const newTVL = Math.max(0, crucible.tvl - amount * price(crucible.symbol)); // TVL in USD
           console.log(`CrucibleContext: Updated ${crucibleId} - deposit: ${newDeposit}, shares: ${newShares}, TVL: ${newTVL}`);
           return {
             ...crucible,
