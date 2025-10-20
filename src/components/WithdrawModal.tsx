@@ -27,11 +27,18 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose, c
   const price = (symbol: string) => (priceTable as any)[normalizeSymbol(symbol)] || 1;
   const crucible = getCrucible(crucibleId);
   const inferSymbol = (id?: string) => {
-    if (!id) return 'SOL';
-    if (id.toLowerCase().includes('eth')) return 'ETH';
-    if (id.toLowerCase().includes('btc')) return 'BTC';
-    if (id.toLowerCase().includes('usdc')) return 'USDC';
-    if (id.toLowerCase().includes('sol')) return 'SOL';
+    const key = (id || '').trim().toLowerCase();
+    const explicit: { [k: string]: string } = {
+      'eth-crucible': 'ETH',
+      'btc-crucible': 'BTC',
+      'usdc-crucible': 'USDC',
+      'sol-crucible': 'SOL'
+    };
+    if (explicit[key]) return explicit[key];
+    if (key.includes('eth')) return 'ETH';
+    if (key.includes('btc')) return 'BTC';
+    if (key.includes('usdc')) return 'USDC';
+    if (key.includes('sol')) return 'SOL';
     return 'SOL';
   };
   // Always infer token from crucibleId to avoid stale/missing symbols
@@ -41,8 +48,7 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose, c
     if (!crucible) return 0;
     const units = Number(crucible.userDeposit || 0);
     const convertedToSol = (units * price(targetSymbol)) / price('SOL');
-    // Fallback for legacy data where units may already be SOL
-    return Math.max(convertedToSol, units);
+    return convertedToSol; // strictly convert token -> SOL
   }, [crucible?.userDeposit, targetSymbol]);
 
   // Reset modal state when opening or switching crucible to avoid stale values
