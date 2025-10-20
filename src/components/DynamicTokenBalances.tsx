@@ -68,7 +68,8 @@ export const DynamicTokenBalances: React.FC<DynamicTokenBalancesProps> = ({ clas
 
   const price = (symbol: string): number => ({ SOL: 200, USDC: 1, ETH: 2000, BTC: 50000 } as any)[symbol] || 1;
 
-  const getUsdDeposited = () => {
+  const getUsdBalance = () => {
+    // Sum current crucible holdings in USD (token units * token price)
     return crucibles.reduce((sum, c) => sum + c.userDeposit * price(c.symbol), 0);
   };
 
@@ -101,11 +102,11 @@ export const DynamicTokenBalances: React.FC<DynamicTokenBalancesProps> = ({ clas
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4">
-          {/* 1) USD Deposited (sum of crucibles) */}
+          {/* 1) USD Balance (sum of crucibles) */}
           <div className="text-center p-4 bg-forge-gray/30 rounded-lg">
             <CurrencyDollarIcon className="h-8 w-8 text-forge-accent mx-auto mb-2" />
-            <div className="text-2xl font-bold text-white">{formatCurrency(getUsdDeposited())}</div>
-            <div className="text-sm text-gray-400">USD Deposited</div>
+            <div className="text-2xl font-bold text-white">{formatCurrency(getUsdBalance())}</div>
+            <div className="text-sm text-gray-400">USD Balance</div>
           </div>
 
           {/* SPARK Balance */}
