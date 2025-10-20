@@ -39,11 +39,11 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose, c
   // Compute MAX SOL strictly from crucible token balance
   const maxSolFromCrucible = useMemo(() => {
     if (!crucible) return 0;
-    const tokenUnits = crucible.userDeposit || 0;
-    const usd = tokenUnits * price(targetSymbol);
-    const sol = usd / price('SOL');
-    return sol;
-  }, [crucible, targetSymbol]);
+    const units = Number(crucible.userDeposit || 0);
+    const convertedToSol = (units * price(targetSymbol)) / price('SOL');
+    // Fallback for legacy data where units may already be SOL
+    return Math.max(convertedToSol, units);
+  }, [crucible?.userDeposit, targetSymbol]);
 
   // Reset modal state when opening or switching crucible to avoid stale values
   useEffect(() => {
