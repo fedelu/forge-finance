@@ -15,11 +15,26 @@ interface WorkingWithdrawModalProps {
 export const WorkingWithdrawModal: React.FC<WorkingWithdrawModalProps> = ({ isOpen, onClose, crucibleId, maxAmount }) => {
   const { connection, publicKey, sendTransaction } = useWallet();
   const { addToBalance, subtractFromBalance } = useBalance();
-  const { updateCrucibleWithdraw } = useCrucible();
+  const { updateCrucibleWithdraw, getCrucible } = useCrucible();
   const { addTransaction } = useAnalytics();
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const priceTable = { SOL: 200, USDC: 1, ETH: 4000, BTC: 110000 } as const;
+  const normalizeSymbol = (s?: string) => (s || 'SOL').toUpperCase().trim();
+  const price = (symbol: string) => (priceTable as any)[normalizeSymbol(symbol)] || 1;
+  const crucible = getCrucible(crucibleId);
+  const inferSymbol = (id?: string) => {
+    const key = (id || '').trim().toLowerCase();
+    if (key.includes('eth')) return 'ETH';
+    if (key.includes('btc')) return 'BTC';
+    if (key.includes('usdc')) return 'USDC';
+    if (key.includes('sol')) return 'SOL';
+    return 'SOL';
+  };
+  const targetSymbol = normalizeSymbol(inferSymbol(crucibleId));
+  const availableTokenUnits = Number(crucible?.userDeposit || 0);
 
   const handleWithdraw = async () => {
     if (!publicKey) {
@@ -32,8 +47,8 @@ export const WorkingWithdrawModal: React.FC<WorkingWithdrawModalProps> = ({ isOp
       return;
     }
 
-    if (parseFloat(amount) > maxAmount) {
-      setError(`Maximum withdrawable amount is ${maxAmount} SOL`);
+    if (parseFloat(amount) > availableTokenUnits) {
+      setError(`Maximum withdrawable amount is ${availableTokenUnits.toFixed(6)} ${targetSymbol}`);
       return;
     }
 
@@ -67,27 +82,28 @@ export const WorkingWithdrawModal: React.FC<WorkingWithdrawModalProps> = ({ isOp
       
       console.log('Withdrawal simulated successfully:', mockSignature);
       
-      // Update balances
-      const withdrawAmount = parseFloat(amount);
-      addToBalance('SOL', withdrawAmount);
+      // Update balances: input is in crucible token units
+      const withdrawTokenAmount = parseFloat(amount);
+      const solCredited = (withdrawTokenAmount * price(targetSymbol)) / price('SOL');
+      addToBalance('SOL', solCredited);
       
-      // Remove from crucible balance (simulated)
-      subtractFromBalance('SPARK', withdrawAmount * 10); // 10 SPARK per SOL withdrawn
-      subtractFromBalance('HEAT', withdrawAmount * 5); // 5 HEAT per SOL withdrawn
+      // Remove from crucible-linked rewards (demo logic)
+      subtractFromBalance('SPARK', withdrawTokenAmount * 10);
+      subtractFromBalance('HEAT', withdrawTokenAmount * 5);
       
-      // Update crucible
-      updateCrucibleWithdraw(crucibleId, withdrawAmount);
+      // Update crucible (deduct token units)
+      updateCrucibleWithdraw(crucibleId, withdrawTokenAmount);
       
-      // Record transaction in analytics
+      // Record transaction in analytics in token units (USD conversion handled in context)
       addTransaction({
         type: 'withdraw',
-        amount: withdrawAmount,
-        token: 'SOL',
+        amount: withdrawTokenAmount,
+        token: targetSymbol,
         crucibleId,
         signature: mockSignature
       });
       
-      alert(`✅ Withdrawal successful!\n\nMock Transaction: ${mockSignature}\nSOL withdrawn: ${withdrawAmount}\nSPARK spent: ${withdrawAmount * 10}\nHEAT spent: ${withdrawAmount * 5}\n\nNote: This is a demo. In production, this would be a real transaction on Solana testnet.`);
+      alert(`✅ Withdrawal successful!\n\nMock Transaction: ${mockSignature}\nWithdrawn: ${withdrawTokenAmount} ${targetSymbol}\nCredited: ${solCredited.toFixed(2)} SOL`);
       
       // Reset form
       setAmount('');
@@ -101,7 +117,7 @@ export const WorkingWithdrawModal: React.FC<WorkingWithdrawModalProps> = ({ isOp
   };
 
   const handleMax = () => {
-    setAmount(maxAmount.toString());
+    setAmount(availableTokenUnits.toString());
   };
 
   if (!isOpen) return null;
@@ -114,14 +130,14 @@ export const WorkingWithdrawModal: React.FC<WorkingWithdrawModalProps> = ({ isOp
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Amount (SOL)
+              Amount ({targetSymbol})
             </label>
             <div className="flex space-x-2">
               <input
                 type="number"
                 step="0.01"
                 min="0"
-                max={maxAmount}
+                max={availableTokenUnits}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
@@ -135,7 +151,7 @@ export const WorkingWithdrawModal: React.FC<WorkingWithdrawModalProps> = ({ isOp
               </button>
             </div>
             <div className="text-xs text-gray-400 mt-1">
-              Available: {maxAmount} SOL
+              Available: {availableTokenUnits} {targetSymbol}
             </div>
           </div>
 
@@ -169,7 +185,7 @@ export const WorkingWithdrawModal: React.FC<WorkingWithdrawModalProps> = ({ isOp
                   <span>Withdrawing...</span>
                 </div>
               ) : (
-                'Withdraw SOL'
+                <span>Withdraw {targetSymbol}</span>
               )}
             </button>
           </div>
