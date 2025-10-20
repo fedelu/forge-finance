@@ -66,7 +66,7 @@ export const DynamicTokenBalances: React.FC<DynamicTokenBalancesProps> = ({ clas
     return balances.reduce((total, b) => total + b.usdValue, 0);
   };
 
-  const price = (symbol: string): number => ({ SOL: 200, USDC: 1, ETH: 2000, BTC: 50000 } as any)[symbol] || 1;
+  const price = (symbol: string): number => ({ SOL: 200, USDC: 1, ETH: 4000, BTC: 110000 } as any)[symbol] || 1;
 
   const getUsdBalance = () => {
     // Sum current crucible holdings in USD (token units * token price)

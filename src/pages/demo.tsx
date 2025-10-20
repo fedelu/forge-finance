@@ -3,12 +3,8 @@ import Head from 'next/head'
 import { 
   FireIcon, 
   BoltIcon, 
-  BanknotesIcon, 
   UserGroupIcon, 
-  ChartBarIcon,
-  ArrowUpIcon,
-  ArrowDownIcon,
-  PlusIcon
+  ChartBarIcon
 } from '@heroicons/react/24/outline'
 import SimpleStats from '../components/SimpleStats'
 import CrucibleManager from '../components/CrucibleManager'
@@ -20,14 +16,11 @@ import { BalanceProvider } from '../contexts/BalanceContext'
 import { CrucibleProvider } from '../contexts/CrucibleContext'
 import { AnalyticsProvider } from '../contexts/AnalyticsContext'
 import { GovernanceProvider } from '../contexts/GovernanceContext'
-import { CrucibleCreationProvider } from '../contexts/CrucibleCreationContext'
 import { DynamicTokenBalances } from '../components/DynamicTokenBalances'
 import { AnalyticsDashboard } from '../components/AnalyticsDashboard'
 
 function DemoContent() {
-  const [activeTab, setActiveTab] = useState('deposit')
   const [mainTab, setMainTab] = useState('dashboard')
-  const [amount, setAmount] = useState('')
 
   // Mock protocol stats
   const protocolStats = {
@@ -190,9 +183,7 @@ export default function Demo() {
         <CrucibleProvider>
           <AnalyticsProvider>
             <GovernanceProvider>
-              <CrucibleCreationProvider>
-                <DemoContent />
-              </CrucibleCreationProvider>
+              <DemoContent />
             </GovernanceProvider>
           </AnalyticsProvider>
         </CrucibleProvider>
