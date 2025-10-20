@@ -30,12 +30,12 @@ interface BalanceProviderProps {
 
 export const BalanceProvider: React.FC<BalanceProviderProps> = ({ children }) => {
   const [balances, setBalances] = useState<TokenBalance[]>([
-    { symbol: 'SOL', amount: 0, usdValue: 0 }, // Start with 0 SOL
+    { symbol: 'SOL', amount: 1, usdValue: 100 }, // Start with 1 SOL = $100
     { symbol: 'USDC', amount: 0, usdValue: 0 }, // Start with 0 USDC
     { symbol: 'ETH', amount: 0, usdValue: 0 }, // Start with 0 ETH
     { symbol: 'BTC', amount: 0, usdValue: 0 }, // Start with 0 BTC
-    { symbol: 'SPARK', amount: 0, usdValue: 0 }, // Start with 0 SPARK
-    { symbol: 'HEAT', amount: 0, usdValue: 0 }, // Start with 0 HEAT
+    { symbol: 'SPARK', amount: 10, usdValue: 10 }, // Start with 10 SPARK = $10
+    { symbol: 'HEAT', amount: 5, usdValue: 5 }, // Start with 5 HEAT = $5
   ]);
 
   const updateBalance = (symbol: string, amount: number) => {

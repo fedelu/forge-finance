@@ -19,6 +19,7 @@ export const DynamicTokenBalances: React.FC<DynamicTokenBalancesProps> = ({ clas
   const { analytics } = useAnalytics();
   
   console.log('DynamicTokenBalances: Current balances:', balances);
+  console.log('DynamicTokenBalances: Current analytics:', analytics);
 
   const formatNumber = (num: number, decimals: number = 2) => {
     return num.toLocaleString('en-US', {
