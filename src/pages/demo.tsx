@@ -22,6 +22,7 @@ import { AnalyticsDashboard } from '../components/AnalyticsDashboard'
 
 function DemoContent() {
   const [mainTab, setMainTab] = useState('dashboard')
+  const { network, connected } = useWallet()
 
   // Mock protocol stats
   const protocolStats = {
@@ -89,17 +90,21 @@ function DemoContent() {
         </header>
 
         <main className="container mx-auto px-4 py-8">
-                  {/* FOGO Testnet Status */}
+                  {/* Network Status */}
                   <div className="card mb-8 bg-gray-800 border-gray-600">
-                    <h3 className="text-lg font-semibold text-white mb-4">🔥 FOGO Testnet Status</h3>
+                    <h3 className="text-lg font-semibold text-white mb-4">🌐 Network Status</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
-                        <span className="text-gray-400">Network:</span>
-                        <span className="ml-2 text-orange-400">FOGO Testnet</span>
+                        <span className="text-gray-400">Current Network:</span>
+                        <span className={`ml-2 ${network === 'fogo-testnet' ? 'text-orange-400' : 'text-blue-400'}`}>
+                          {network === 'fogo-testnet' ? 'FOGO Testnet' : 'Solana Testnet'}
+                        </span>
                       </div>
                       <div>
-                        <span className="text-gray-400">RPC:</span>
-                        <span className="ml-2 text-green-400">Connected</span>
+                        <span className="text-gray-400">Wallet:</span>
+                        <span className={`ml-2 ${connected ? 'text-green-400' : 'text-red-400'}`}>
+                          {connected ? 'Connected' : 'Disconnected'}
+                        </span>
                       </div>
                       <div>
                         <span className="text-gray-400">FOGO Crucibles:</span>
@@ -114,6 +119,11 @@ function DemoContent() {
                       <p className="text-sm text-orange-300">
                         🔥 <strong>FOGO Ecosystem:</strong> Deposit your FOGO tokens into specialized crucibles with APY ranging from 12% to 25%
                       </p>
+                      {network !== 'fogo-testnet' && (
+                        <p className="text-sm text-yellow-300 mt-2">
+                          💡 <strong>Tip:</strong> Switch to FOGO Testnet for real FOGO token transactions
+                        </p>
+                      )}
                     </div>
                   </div>
 

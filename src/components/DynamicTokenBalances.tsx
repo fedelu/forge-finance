@@ -66,16 +66,16 @@ export const DynamicTokenBalances: React.FC<DynamicTokenBalancesProps> = ({ clas
     return balances.reduce((total, b) => total + b.usdValue, 0);
   };
 
-  const price = (symbol: string): number => ({ SOL: 200, USDC: 1, ETH: 4000, BTC: 110000 } as any)[symbol] || 1;
+  const price = (symbol: string): number => ({ SOL: 200, USDC: 1, ETH: 4000, BTC: 110000, FOGO: 0.5 } as any)[symbol] || 1;
 
   const getUsdBalance = () => {
     // Sum current crucible holdings in USD (token units * token price)
     return crucibles.reduce((sum, c) => sum + c.userDeposit * price(c.symbol), 0);
   };
 
-  const getCrucibleDeposit = (symbol: string) => {
-    const c = crucibles.find(x => x.symbol === symbol);
-    return c ? c.userDeposit : 0;
+  const getCrucibleDeposit = (crucibleId: string) => {
+    const crucible = crucibles.find(c => c.id === crucibleId);
+    return crucible ? crucible.userDeposit : 0;
   };
 
   const getSparkBalance = () => {
@@ -131,21 +131,21 @@ export const DynamicTokenBalances: React.FC<DynamicTokenBalancesProps> = ({ clas
 
           {/* FOGO Stable Crucible */}
           <div className="text-center p-4 bg-forge-gray/30 rounded-lg">
-            <div className="text-2xl font-bold text-white">{formatNumber(getCrucibleDeposit('FOGO'), 2)} FOGO</div>
+            <div className="text-2xl font-bold text-white">{formatNumber(getCrucibleDeposit('fogo-stable-crucible'), 2)} FOGO</div>
             <div className="text-sm text-gray-400">FOGO Stable</div>
             <div className="text-xs text-green-400">12% APY</div>
           </div>
 
           {/* FOGO Growth Crucible */}
           <div className="text-center p-4 bg-forge-gray/30 rounded-lg">
-            <div className="text-2xl font-bold text-white">{formatNumber(getCrucibleDeposit('FOGO'), 2)} FOGO</div>
+            <div className="text-2xl font-bold text-white">{formatNumber(getCrucibleDeposit('fogo-growth-crucible'), 2)} FOGO</div>
             <div className="text-sm text-gray-400">FOGO Growth</div>
             <div className="text-xs text-blue-400">18% APY</div>
           </div>
 
           {/* FOGO Premium Crucible */}
           <div className="text-center p-4 bg-forge-gray/30 rounded-lg">
-            <div className="text-2xl font-bold text-white">{formatNumber(getCrucibleDeposit('FOGO'), 2)} FOGO</div>
+            <div className="text-2xl font-bold text-white">{formatNumber(getCrucibleDeposit('fogo-premium-crucible'), 2)} FOGO</div>
             <div className="text-sm text-gray-400">FOGO Premium</div>
             <div className="text-xs text-purple-400">15% APY</div>
           </div>

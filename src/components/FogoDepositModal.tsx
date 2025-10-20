@@ -127,13 +127,16 @@ export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onCl
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
-        <h2 className="text-xl font-bold text-white mb-4">
-          Deposit FOGO Tokens - {crucible?.name}
-        </h2>
-
-        <div className="space-y-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-gray-800 rounded-lg w-full max-w-md max-h-[90vh] flex flex-col">
+        <div className="p-6 border-b border-gray-700">
+          <h2 className="text-xl font-bold text-white">
+            Deposit FOGO Tokens - {crucible?.name}
+          </h2>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="space-y-4">
           {/* Deposit Mode Selection */}
           <div className="p-4 bg-gray-700 rounded-lg">
             <h4 className="text-sm font-semibold text-white mb-3">Choose Deposit Mode</h4>
@@ -242,7 +245,10 @@ export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onCl
           {error && (
             <div className="text-red-400 text-sm">{error}</div>
           )}
+          </div>
+        </div>
 
+        <div className="p-6 border-t border-gray-700">
           <div className="flex space-x-3">
             <button
               onClick={onClose}
