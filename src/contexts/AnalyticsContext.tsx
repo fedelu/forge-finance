@@ -101,11 +101,12 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({ children }
         dailyVolume[date] = (dailyVolume[date] || 0) + signed;
       });
 
-      // Calculate token distribution in USD (by crucible token)
+      // Calculate token distribution in USD (DEPOSITS - WITHDRAWS) by token
       const tokenDistribution: { [key: string]: number } = {};
       newTransactions.forEach(tx => {
         const key = tx.distToken || tx.token;
-        tokenDistribution[key] = (tokenDistribution[key] || 0) + toUsd(tx);
+        const signed = (tx.type === 'deposit' ? 1 : -1) * toUsd(tx);
+        tokenDistribution[key] = (tokenDistribution[key] || 0) + signed;
       });
 
       return {
