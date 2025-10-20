@@ -22,7 +22,9 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose, c
   const [error, setError] = useState<string | null>(null);
 
   // Compute maximum SOL withdrawable based on crucible token holdings
-  const price = (symbol: string) => ({ SOL: 200, USDC: 1, ETH: 4000, BTC: 110000 } as any)[symbol] || 1;
+  const priceTable = { SOL: 200, USDC: 1, ETH: 4000, BTC: 110000 } as const;
+  const normalizeSymbol = (s?: string) => (s || 'SOL').toUpperCase().trim();
+  const price = (symbol: string) => (priceTable as any)[normalizeSymbol(symbol)] || 1;
   const crucible = getCrucible(crucibleId);
   const inferSymbol = (id?: string) => {
     if (!id) return 'SOL';
@@ -32,7 +34,11 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose, c
     if (id.toLowerCase().includes('sol')) return 'SOL';
     return 'SOL';
   };
-  const targetSymbol = crucible?.symbol || inferSymbol(crucibleId);
+  const targetSymbol = useMemo(() => {
+    const fromContext = normalizeSymbol(crucible?.symbol);
+    if (fromContext && price(fromContext)) return fromContext;
+    return normalizeSymbol(inferSymbol(crucibleId));
+  }, [crucible?.symbol, crucibleId]);
   // Compute MAX SOL strictly from crucible token balance
   const maxSolFromCrucible = useMemo(() => {
     if (!crucible) return 0;
