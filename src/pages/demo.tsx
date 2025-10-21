@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { 
   FireIcon,
+  BoltIcon,
   UserGroupIcon, 
   ChartBarIcon
 } from '@heroicons/react/24/outline'
@@ -117,7 +118,7 @@ function DemoContent() {
                 >
                   <div className="flex items-center space-x-2">
                     <ChartBarIcon className="w-4 h-4" />
-                    <span>Dashboard</span>
+                    <span>{isEstablished ? 'Dashboard' : 'Home'}</span>
                   </div>
                 </button>
                 {isEstablished && (
@@ -198,7 +199,7 @@ function DemoContent() {
                 }`}
               >
                 <ChartBarIcon className="w-5 h-5" />
-                <span>Dashboard</span>
+                <span>{isEstablished ? 'Dashboard' : 'Home'}</span>
               </button>
               {isEstablished && (
                 <>
@@ -256,14 +257,34 @@ function DemoContent() {
           {/* Tab Content */}
           {mainTab === 'dashboard' && (
             <div className="space-y-8">
-              {/* Hero Section - Removed welcome text */}
+              {/* Hero Section */}
+              {!isEstablished && (
+                <div className="text-center py-12">
+                  <div className="max-w-4xl mx-auto">
+                    <h1 className="text-4xl md:text-5xl font-inter-bold text-white mb-6">
+                      Welcome to <span className="text-fogo-primary">Forge</span>
+                    </h1>
+                    <p className="text-xl text-fogo-gray-300 font-inter-light mb-8 leading-relaxed">
+                      Real Yield, Reinvented. Turn market volatility into sustainable on-chain yield through our advanced DeFi protocol.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                      <FogoSessionsButton />
+                      <button className="px-8 py-3 bg-fogo-gray-800 hover:bg-fogo-gray-700 text-white rounded-lg border border-fogo-gray-600 transition-colors">
+                        Learn More
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
-                      {/* Real-time Stats */}
-                      <SimpleStats />
+              {/* Real-time Stats - Only show when connected */}
+              {isEstablished && <SimpleStats />}
 
               {/* Quick Actions */}
               <div className="card">
-                <h2 className="text-2xl font-bold text-white mb-6">Quick Actions</h2>
+                <h2 className="text-2xl font-bold text-white mb-6">
+                  {isEstablished ? 'Quick Actions' : 'Get Started'}
+                </h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <button 
                     onClick={() => {
@@ -276,8 +297,15 @@ function DemoContent() {
                     className="p-6 bg-fogo-gray-800 rounded-lg border border-fogo-gray-700 hover:border-fogo-primary transition-colors text-left group"
                   >
                     <FireIcon className="h-8 w-8 text-fogo-primary mb-4 group-hover:scale-110 transition-transform" />
-                    <h3 className="text-lg font-semibold text-white mb-2">Deposit Tokens</h3>
-                    <p className="text-fogo-gray-400">{isEstablished ? 'Add liquidity to earn yield' : 'Sign in with Forge to access crucibles'}</p>
+                    <h3 className="text-lg font-semibold text-white mb-2">
+                      {isEstablished ? 'Deposit Tokens' : 'Earn Yield'}
+                    </h3>
+                    <p className="text-fogo-gray-400">
+                      {isEstablished 
+                        ? 'Add liquidity to earn yield' 
+                        : 'Connect your wallet to start earning from market volatility'
+                      }
+                    </p>
                   </button>
                   <button 
                     onClick={() => {
@@ -290,8 +318,15 @@ function DemoContent() {
                     className="p-6 bg-fogo-gray-800 rounded-lg border border-fogo-gray-700 hover:border-fogo-primary transition-colors text-left group"
                   >
                     <ChartBarIcon className="h-8 w-8 text-fogo-accent mb-4 group-hover:scale-110 transition-transform" />
-                    <h3 className="text-lg font-semibold text-white mb-2">View Portfolio</h3>
-                    <p className="text-fogo-gray-400">{isEstablished ? 'Track your performance' : 'Sign in with Forge to view portfolio'}</p>
+                    <h3 className="text-lg font-semibold text-white mb-2">
+                      {isEstablished ? 'View Portfolio' : 'Track Performance'}
+                    </h3>
+                    <p className="text-fogo-gray-400">
+                      {isEstablished 
+                        ? 'Track your performance' 
+                        : 'Monitor your yield and portfolio growth'
+                      }
+                    </p>
                   </button>
                   <button 
                     onClick={() => {
@@ -303,9 +338,16 @@ function DemoContent() {
                     }}
                     className="p-6 bg-fogo-gray-800 rounded-lg border border-fogo-gray-700 hover:border-fogo-primary transition-colors text-left group"
                   >
-                    <UserGroupIcon className="h-8 w-8 text-green-400 mb-4 group-hover:scale-110 transition-transform" />
-                    <h3 className="text-lg font-semibold text-white mb-2">Governance</h3>
-                    <p className="text-fogo-gray-400">{isEstablished ? 'Vote on proposals' : 'Sign in with Forge to participate in governance'}</p>
+                    <UserGroupIcon className="h-8 w-8 text-fogo-accent mb-4 group-hover:scale-110 transition-transform" />
+                    <h3 className="text-lg font-semibold text-white mb-2">
+                      {isEstablished ? 'Governance' : 'Shape the Future'}
+                    </h3>
+                    <p className="text-fogo-gray-400">
+                      {isEstablished 
+                        ? 'Vote on proposals' 
+                        : 'Participate in protocol governance'
+                      }
+                    </p>
                   </button>
                 </div>
               </div>
