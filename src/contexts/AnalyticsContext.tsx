@@ -74,7 +74,7 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({ children }
     setAnalytics(prev => {
       const newTransactions = [newTransaction, ...prev.transactions].slice(0, 100); // Keep last 100
       
-      const price = (token: string) => ({ SOL: 200, USDC: 1, ETH: 4000, BTC: 110000 } as any)[token] || 1;
+      const price = (token: string) => ({ SOL: 200, USDC: 1, ETH: 4000, BTC: 110000, FOGO: 0.5 } as any)[token] || 1;
       const toUsd = (tx: Transaction) => tx.amount * price(tx.token);
 
       const totalDeposits = newTransactions
@@ -166,13 +166,14 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({ children }
   }, [analytics.tokenDistribution]);
 
   const getRecentTransactions = useCallback((limit: number = 10) => {
-    const price = (token: string) => ({ SOL: 200, USDC: 1, ETH: 4000, BTC: 110000 } as any)[token] || 1;
-    const toSol = (tx: Transaction) => {
-      const usd = tx.amount * price(tx.token);
-      const sol = usd / price('SOL');
-      return { ...tx, token: 'SOL', amount: parseFloat(sol.toFixed(6)) };
-    };
-    return analytics.transactions.slice(0, limit).map(toSol);
+    const price = (token: string) => ({ SOL: 200, USDC: 1, ETH: 4000, BTC: 110000, FOGO: 0.5 } as any)[token] || 1;
+    
+    return analytics.transactions
+      .slice(0, limit)
+      .map(tx => ({
+        ...tx,
+        usdValue: tx.amount * price(tx.token)
+      }));
   }, [analytics.transactions]);
 
   const value = {

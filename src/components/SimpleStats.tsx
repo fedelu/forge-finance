@@ -71,7 +71,7 @@ export default function SimpleStats({ className = '' }: SimpleStatsProps) {
     // Compute 24h volume in USD using token prices
     const now = Date.now()
     const txs = (analytics as any).transactions || []
-    const price = (token: string) => ({ SOL: 200, USDC: 1, ETH: 4000, BTC: 110000 } as any)[token] || 1
+    const price = (token: string) => ({ SOL: 200, USDC: 1, ETH: 4000, BTC: 110000, FOGO: 0.5 } as any)[token] || 1
     const volume24h = txs
       .filter((tx: any) => now - tx.timestamp <= 24 * 60 * 60 * 1000)
       .reduce((sum: number, tx: any) => sum + (tx.type === 'deposit' ? 1 : -1) * tx.amount * price(tx.token), 0)

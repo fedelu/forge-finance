@@ -171,7 +171,10 @@ export const AnalyticsDashboard: React.FC = () => {
                 </div>
                 <div className="text-right">
                   <p className="text-white font-medium">
-                    {formatCurrency(tx.amount)} {tx.token}
+                    {tx.amount.toFixed(2)} {tx.token}
+                  </p>
+                  <p className="text-gray-400 text-sm">
+                    {formatCurrency(tx.usdValue || tx.amount * (tx.token === 'FOGO' ? 0.5 : tx.token === 'SOL' ? 200 : tx.token === 'USDC' ? 1 : tx.token === 'ETH' ? 4000 : 110000))}
                   </p>
                   {tx.signature && (
                     <p className="text-gray-400 text-xs font-mono">
