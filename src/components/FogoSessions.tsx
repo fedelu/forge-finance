@@ -203,7 +203,7 @@ export function FogoSessionsButton() {
     setFlowStep('wallet');
   };
 
-  const handleWalletSelect = (wallet: 'phantom' | 'metamask') => {
+  const handleWalletSelect = (wallet: 'phantom') => {
     console.log(`Selected wallet: ${wallet}`);
     setFlowStep('session-limits');
   };
@@ -314,29 +314,7 @@ export function FogoSessionsButton() {
                 </div>
                 <span className="text-sm text-green-600 font-medium">Detected</span>
               </button>
-
-              <button
-                onClick={() => handleWalletSelect('metamask')}
-                className="w-full flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:border-orange-500 hover:bg-orange-50 transition-all duration-200"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                    <svg className="w-6 h-6 text-orange-600" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                    </svg>
-                  </div>
-                  <span className="font-medium text-gray-900">MetaMask</span>
-                </div>
-                <span className="text-sm text-green-600 font-medium">Detected</span>
-              </button>
             </div>
-
-            <button className="w-full mt-4 flex items-center justify-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors">
-              <span>More options</span>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
           </div>
         );
 
