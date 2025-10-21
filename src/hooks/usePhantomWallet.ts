@@ -9,6 +9,8 @@ interface PhantomProvider {
   connect: (opts?: { onlyIfTrusted?: boolean }) => Promise<{ publicKey: PublicKey }>;
   disconnect: () => Promise<void>;
   signMessage: (message: Uint8Array, display?: string) => Promise<{ signature: Uint8Array }>;
+  signTransaction: <T extends any>(transaction: T) => Promise<T>;
+  signAllTransactions: <T extends any>(transactions: T[]) => Promise<T[]>;
   on: (event: string, callback: (args: any) => void) => void;
   removeListener: (event: string, callback: (args: any) => void) => void;
 }
@@ -85,7 +87,7 @@ export const usePhantomWallet = () => {
 
         console.log('✅ usePhantomWallet: Phantom provider detected');
         
-        const provider = window.solana as PhantomProvider;
+        const provider = window.solana as any;
         
         // Check if already connected
         const isConnected = provider.isConnected && !!provider.publicKey;
