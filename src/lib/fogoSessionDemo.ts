@@ -1,7 +1,6 @@
 // Demo-ready Fogo Sessions implementation for investor presentation
 import { 
   establishSession, 
-  createSessionContext, 
   revokeSession,
   reestablishSession,
   getSessionAccount,
@@ -38,18 +37,27 @@ export function createFogoSessionClientDemo(opts?: {
   // Create connection to Fogo testnet
   const connection = new Connection(rpcUrl, 'confirmed');
   
-  // Create session context (without paymaster for demo)
-  let context;
-  try {
-    console.log('🔥 Creating demo session context (no paymaster)');
-    context = createSessionContext({
-      connection,
-    });
-    console.log('✅ Demo session context created successfully');
-  } catch (error) {
-    console.error('❌ Failed to create demo session context:', error);
-    throw new Error('Unable to create Fogo session context for demo');
-  }
+  // Create mock context for demo (bypass paymaster completely)
+  console.log('🔥 Creating mock demo session context (paymaster disabled)');
+  
+  const context = {
+    connection,
+    // Mock context properties
+    isMock: true,
+    mockMode: true,
+    // Mock the required methods to avoid paymaster calls
+    getSponsor: async () => {
+      console.log('🎮 Mock getSponsor called (demo mode)');
+      return null;
+    },
+    // Add other required methods as needed
+    createSession: async () => {
+      console.log('🎮 Mock createSession called (demo mode)');
+      return { type: 0, session: {} };
+    },
+  } as any;
+  
+  console.log('✅ Mock demo session context created');
 
   return {
     context,

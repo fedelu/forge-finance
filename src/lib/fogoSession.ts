@@ -1,7 +1,6 @@
 // src/lib/fogoSession.ts
 import { 
   establishSession, 
-  createSessionContext, 
   revokeSession,
   reestablishSession,
   getSessionAccount,
