@@ -167,7 +167,15 @@ function DemoContent() {
               </nav>
 
               <div className="flex items-center space-x-4">
-                <FogoSessionsButton />
+                {/* Wallet Status - Only show when connected */}
+                {isEstablished && (
+                  <div className="hidden md:flex items-center space-x-2 px-3 py-2 bg-fogo-primary/10 border border-fogo-primary/30 rounded-lg">
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                    <span className="text-sm text-fogo-gray-300 font-inter font-medium">
+                      Connected
+                    </span>
+                  </div>
+                )}
                 
                 {/* Mobile Menu Button */}
                 <button
