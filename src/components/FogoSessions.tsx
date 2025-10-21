@@ -167,22 +167,6 @@ export function FogoSessionsProvider({
       console.log('🔥 Connecting to FOGO Sessions...');
       setError(null);
       
-      if (isSimulationMode) {
-        console.log('🎮 Connecting in simulation mode');
-        setWalletPublicKey(new PublicKey(simulatedWallet));
-        setFogoBalance(simulatedBalance);
-        setIsEstablished(true);
-        setSessionData({
-          sessionId: 'simulation-session',
-          sessionKey: 'simulation-key',
-          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-          walletPublicKey: simulatedWallet,
-          success: true,
-          message: 'Simulation mode active'
-        });
-        return;
-      }
-      
       // Use Fogo wallet connection
       if (!fogoWallet.connected) {
         await fogoWallet.connect();

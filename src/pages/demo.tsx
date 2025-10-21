@@ -83,12 +83,6 @@ function DemoContent() {
               </nav>
 
               <div className="flex items-center space-x-4">
-                <a
-                  href="/demo-investor"
-                  className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg text-sm font-medium transition-colors"
-                >
-                  Investor Demo
-                </a>
                 <FogoSessionsButton />
               </div>
             </div>
@@ -96,36 +90,6 @@ function DemoContent() {
         </header>
 
         <main className="container mx-auto px-4 py-8">
-                  {/* Network Status */}
-                  <div className="card mb-8 bg-gray-800 border-gray-600">
-                    <h3 className="text-lg font-semibold text-white mb-4">🌐 Network Status</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div>
-                        <span className="text-gray-400">Current Network:</span>
-                        <span className="ml-2 text-orange-400">FOGO Testnet</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-400">Wallet:</span>
-                        <span className={`ml-2 ${connected ? 'text-green-400' : 'text-red-400'}`}>
-                          {connected ? 'Connected' : 'Disconnected'}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-gray-400">FOGO Crucibles:</span>
-                        <span className="ml-2 text-green-400">5 Active</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-400">Status:</span>
-                        <span className="ml-2 text-green-400">Ready</span>
-                      </div>
-                    </div>
-                    <div className="mt-4 p-3 bg-orange-900/30 rounded-lg">
-                      <p className="text-sm text-orange-300">
-                        🔥 <strong>FOGO Ecosystem:</strong> Deposit your FOGO tokens into specialized crucibles with APY ranging from 12% to 25%
-                      </p>
-                    </div>
-                  </div>
-
                   {/* Token balances moved to Analytics dashboard */}
 
           {/* Tab Content */}

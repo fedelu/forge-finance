@@ -108,20 +108,6 @@ export const RealFogoDepositModal: React.FC<RealFogoDepositModalProps> = ({ isOp
         </h2>
 
         <div className="space-y-4">
-          {/* Network Status */}
-          <div className="p-3 bg-blue-900/30 rounded-lg">
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-              <span className="text-sm text-blue-300">
-                Network: {network === 'fogo-testnet' ? 'Fogo Testnet' : 'Solana Testnet'}
-              </span>
-            </div>
-            {network !== 'fogo-testnet' && (
-              <p className="text-xs text-yellow-300 mt-1">
-                ⚠️ Switch to Fogo testnet for real deposits
-              </p>
-            )}
-          </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">

@@ -257,31 +257,6 @@ export default function SimpleStats({ className = '' }: SimpleStatsProps) {
           </div>
         </div>
         
-        {/* Network Status Card */}
-        <div className="card-glow">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold text-white">Network Status</h3>
-            <div className="flex items-center space-x-2">
-              <div className="status-online" />
-              <span className="text-forge-success text-sm font-medium">All Systems</span>
-            </div>
-          </div>
-          <div className="space-y-4">
-            <div className="text-3xl font-bold text-forge-success">
-              Operational
-            </div>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div className="flex justify-between">
-                <span className="text-forge-gray-400">Uptime</span>
-                <span className="text-white font-semibold">99.9%</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-forge-gray-400">Latency</span>
-                <span className="text-white font-semibold">12ms</span>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   )

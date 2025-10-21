@@ -268,18 +268,6 @@ export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onCl
             </div>
           )}
 
-          {/* Network Status */}
-          <div className="p-3 bg-gray-700 rounded-lg">
-            <div className="flex items-center space-x-2">
-              <div className={`w-2 h-2 rounded-full ${depositMode === 'real' && network === 'fogo-testnet' ? 'bg-orange-400' : 'bg-blue-400'}`}></div>
-              <span className="text-sm text-gray-300">
-                {depositMode === 'simulation' 
-                  ? 'Simulation Mode - No network required'
-                  : `Network: ${network === 'fogo-testnet' ? 'Fogo Testnet' : 'Will switch to Fogo Testnet'}`
-                }
-              </span>
-            </div>
-          </div>
 
           {/* FOGO Token Info */}
           <div className="p-3 bg-purple-900/30 rounded-lg">
