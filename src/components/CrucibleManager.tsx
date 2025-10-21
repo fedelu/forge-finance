@@ -128,7 +128,7 @@ export default function CrucibleManager({ className = '', onDeposit, onWithdraw,
                 <span className="font-medium text-white">{formatCurrency(crucible.tvl)}</span>
               </div>
               <div className="flex justify-between">
-                <span>APR:</span>
+                <span>APY:</span>
                 <span className="font-medium text-fogo-accent">{formatPercentage(crucible.apr)}</span>
               </div>
               <div className="flex justify-between">
@@ -177,7 +177,7 @@ export default function CrucibleManager({ className = '', onDeposit, onWithdraw,
             </p>
           </div>
           <div className="text-center p-4 bg-fogo-gray-800 rounded-xl">
-            <p className="text-fogo-gray-400 text-sm mb-2">Estimated APR</p>
+            <p className="text-fogo-gray-400 text-sm mb-2">Estimated APY</p>
             <p className="text-2xl font-bold text-fogo-primary">
               {formatPercentage(crucibles.reduce((sum, c) => sum + c.apr, 0) / crucibles.length)}
             </p>

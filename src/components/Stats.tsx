@@ -61,7 +61,7 @@ export const Stats: React.FC<StatsProps> = ({ stats }) => {
       color: 'text-green-400',
     },
     {
-      title: 'Average APR',
+      title: 'Average APY',
       value: `${stats.averageAPR.toFixed(2)}%`,
       icon: ChartBarIcon,
       color: 'text-blue-400',

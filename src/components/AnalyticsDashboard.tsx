@@ -47,7 +47,7 @@ export const AnalyticsDashboard: React.FC = () => {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         <div className="card bg-gradient-to-r from-forge-primary/20 to-forge-accent/20 border-forge-primary">
           <div className="flex items-center space-x-3">
             <CurrencyDollarIcon className="h-8 w-8 text-forge-primary" />
@@ -84,6 +84,19 @@ export const AnalyticsDashboard: React.FC = () => {
             <div>
               <p className="text-gray-400 text-sm">Transactions</p>
               <p className="text-2xl font-bold text-white">{analytics.transactionCount}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="card bg-gradient-to-r from-fogo-primary/20 to-fogo-secondary/20 border-fogo-primary">
+          <div className="flex items-center space-x-3">
+            <FireIcon className="h-8 w-8 text-fogo-primary" />
+            <div>
+              <p className="text-gray-400 text-sm">APY Earnings</p>
+              <p className="text-2xl font-bold text-white">{formatCurrency(analytics.totalAPYRewards)}</p>
+              <p className="text-xs text-fogo-primary mt-1">
+                {analytics.totalAPYWithdrawn > 0 ? `+${formatCurrency(analytics.totalAPYWithdrawn)} withdrawn` : 'All earned'}
+              </p>
             </div>
           </div>
         </div>

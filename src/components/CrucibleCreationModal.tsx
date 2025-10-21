@@ -150,7 +150,7 @@ export const CrucibleCreationModal: React.FC<CrucibleCreationModalProps> = ({ is
                   <p className="text-gray-300 text-sm mb-4">{template.description}</p>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-400">APR:</span>
+                      <span className="text-gray-400">APY:</span>
                       <span className="text-forge-accent font-medium">{formatPercentage(template.apr)}</span>
                     </div>
                     <div className="flex justify-between">

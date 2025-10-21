@@ -249,7 +249,7 @@ export default function RealTimeStats({ className = '' }: RealTimeStatsProps) {
         />
         
         <StatCard
-          title="Average APR"
+          title="Average APY"
           value={formatPercentage(stats.averageAPR)}
           change={stats.aprChange}
           changeType={stats.aprChange >= 0 ? "positive" : "negative"}

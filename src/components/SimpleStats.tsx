@@ -229,7 +229,7 @@ export default function SimpleStats({ className = '' }: SimpleStatsProps) {
         />
         
         <StatCard
-          title="Average APR"
+          title="Average APY"
           value={formatPercentage(stats.averageAPR)}
           change={stats.aprChange}
           changeType={stats.aprChange >= 0 ? "positive" : "negative"}
