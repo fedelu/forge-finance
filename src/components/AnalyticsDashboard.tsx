@@ -7,7 +7,6 @@ import {
   ChartBarIcon, 
   CurrencyDollarIcon, 
   ArrowTrendingUpIcon,
-  ClockIcon,
   BanknotesIcon,
   ArrowUpIcon,
   ArrowDownIcon
@@ -35,21 +34,6 @@ export const AnalyticsDashboard: React.FC = () => {
     return withdrawnAPY + currentAPY;
   };
 
-  // Calculate 24-hour volume
-  const get24HourVolume = () => {
-    const now = Date.now();
-    const twentyFourHoursAgo = now - (24 * 60 * 60 * 1000);
-    
-    return analytics.transactions
-      .filter(tx => tx.timestamp >= twentyFourHoursAgo)
-      .reduce((total, tx) => {
-        const price = (token: string) => ({ SOL: 200, USDC: 1, ETH: 4000, BTC: 110000, FOGO: 0.5 } as any)[token] || 1;
-        const usdValue = tx.amount * price(tx.token);
-        return tx.type === 'deposit' ? total + usdValue : total - usdValue;
-      }, 0);
-  };
-
-  const volume24h = get24HourVolume();
 
   // Update APY earnings when transactions change or every minute for real-time display
 
@@ -134,17 +118,6 @@ export const AnalyticsDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700 shadow-fogo hover:shadow-fogo-lg transition-all duration-300 hover:border-fogo-secondary/30">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-fogo-secondary/20 rounded-xl flex items-center justify-center">
-              <ClockIcon className="h-6 w-6 text-fogo-secondary" />
-            </div>
-            <div>
-              <p className="text-fogo-gray-400 text-sm font-satoshi-light">24h Volume</p>
-              <p className="text-2xl font-satoshi-bold text-white">{formatCurrency(volume24h)}</p>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Portfolio overview moved to DynamicTokenBalances component */}
