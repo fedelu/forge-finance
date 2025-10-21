@@ -12,25 +12,15 @@ export const Header: React.FC = () => {
           <div className="flex items-center space-x-3">
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8">
-                <svg viewBox="0 0 24 24" fill="none" className="w-full h-full">
-                  <path 
-                    d="M6 2h4l-2 4h4l-2 4h4l-2 4h4l-2 4H6l2-4H4l2-4H2l2-4H0l2-4z" 
-                    fill="url(#forgeGradient)"
-                    className="rounded-sm"
-                  />
-                  <defs>
-                    <linearGradient id="forgeGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor="#FFD700" />
-                      <stop offset="50%" stopColor="#FF6B35" />
-                      <stop offset="100%" stopColor="#DC2626" />
-                    </linearGradient>
-                  </defs>
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                  <circle cx="12" cy="12" r="10" stroke="#E85102" strokeWidth="2" fill="none"/>
+                  <path d="M12 6c-3.314 0-6 2.686-6 6s2.686 6 6 6 6-2.686 6-6-2.686-6-6-6zm0 2c2.209 0 4 1.791 4 4s-1.791 4-4 4-4-1.791-4-4 1.791-4 4-4z" fill="#E85102"/>
+                  <circle cx="12" cy="12" r="3" fill="#E85102"/>
                 </svg>
               </div>
             </div>
             <div>
               <h1 className="text-2xl font-inter-bold text-fogo-gray-50">Forge Protocol</h1>
-              <p className="text-xs font-inter-light text-fogo-gray-400">Decentralized Finance on Fogo</p>
             </div>
           </div>
           
