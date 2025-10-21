@@ -72,11 +72,11 @@ export default function GovernancePanel({ className = '', onVote, isConnected = 
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'bg-blue-900 text-blue-300'
-      case 'passed': return 'bg-green-900 text-green-300'
-      case 'rejected': return 'bg-red-900 text-red-300'
-      case 'pending': return 'bg-yellow-900 text-yellow-300'
-      default: return 'bg-gray-900 text-gray-300'
+      case 'active': return 'bg-fogo-info/20 text-fogo-info border border-fogo-info/30'
+      case 'passed': return 'bg-fogo-success/20 text-fogo-success border border-fogo-success/30'
+      case 'rejected': return 'bg-fogo-error/20 text-fogo-error border border-fogo-error/30'
+      case 'pending': return 'bg-fogo-warning/20 text-fogo-warning border border-fogo-warning/30'
+      default: return 'bg-fogo-gray-700 text-fogo-gray-300 border border-fogo-gray-600'
     }
   }
 
@@ -92,10 +92,10 @@ export default function GovernancePanel({ className = '', onVote, isConnected = 
 
   const getCategoryColor = (category: string) => {
     switch (category) {
-      case 'protocol': return 'bg-purple-900 text-purple-300'
-      case 'crucible': return 'bg-orange-900 text-orange-300'
-      case 'governance': return 'bg-blue-900 text-blue-300'
-      default: return 'bg-gray-900 text-gray-300'
+      case 'protocol': return 'bg-fogo-primary/20 text-fogo-primary border border-fogo-primary/30'
+      case 'crucible': return 'bg-fogo-secondary/20 text-fogo-secondary border border-fogo-secondary/30'
+      case 'governance': return 'bg-fogo-accent/20 text-fogo-accent border border-fogo-accent/30'
+      default: return 'bg-fogo-gray-700 text-fogo-gray-300 border border-fogo-gray-600'
     }
   }
 
@@ -119,17 +119,17 @@ export default function GovernancePanel({ className = '', onVote, isConnected = 
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-white">🔥 FOGO Governance</h2>
-          <p className="text-gray-400 text-sm mt-1">Shape the future of the FOGO ecosystem</p>
+          <p className="text-fogo-gray-400 text-sm mt-1">Shape the future of the FOGO ecosystem</p>
         </div>
-        <div className="flex items-center space-x-4">
-          <div className="text-right">
-            <p className="text-sm text-gray-400">Voting Power</p>
-            <p className="text-lg font-semibold text-white">{userVotingPower.toLocaleString()} SPARKS</p>
-            <p className="text-xs text-gray-500">1 SPARK = 1 Vote</p>
+        <div className="flex items-center space-x-6">
+          <div className="text-right p-4 bg-fogo-primary/10 rounded-xl border border-fogo-primary/20">
+            <p className="text-sm text-fogo-gray-400 mb-1">Voting Power</p>
+            <p className="text-lg font-semibold text-fogo-primary">{userVotingPower.toLocaleString()} SPARKS</p>
+            <p className="text-xs text-fogo-gray-500">1 SPARK = 1 Vote</p>
           </div>
           <button 
             onClick={() => setShowProposalCreationModal(true)}
-            className="btn-primary flex items-center space-x-2"
+            className="bg-gradient-to-r from-fogo-primary to-fogo-secondary hover:from-fogo-primary-dark hover:to-fogo-secondary-dark text-white px-6 py-3 rounded-2xl font-medium transition-all duration-200 flex items-center space-x-2 shadow-fogo hover:shadow-flame"
           >
             <PlusIcon className="h-5 w-5" />
             <span>Create Proposal</span>
@@ -138,11 +138,11 @@ export default function GovernancePanel({ className = '', onVote, isConnected = 
       </div>
 
       {/* Tabs */}
-      <div className="flex space-x-1 bg-gray-800 p-1 rounded-lg">
+      <div className="flex space-x-1 bg-fogo-gray-800 p-1 rounded-2xl">
         <button
           onClick={() => setActiveTab('proposals')}
-          className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
-            activeTab === 'proposals' ? 'bg-forge-primary text-white' : 'text-gray-400 hover:text-white'
+          className={`flex items-center space-x-2 px-4 py-3 rounded-xl transition-all duration-200 ${
+            activeTab === 'proposals' ? 'bg-fogo-primary text-white shadow-fogo' : 'text-fogo-gray-400 hover:text-white hover:bg-fogo-gray-700'
           }`}
         >
           <ChartBarIcon className="h-5 w-5" />
@@ -150,8 +150,8 @@ export default function GovernancePanel({ className = '', onVote, isConnected = 
         </button>
         <button
           onClick={() => setActiveTab('voting')}
-          className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
-            activeTab === 'voting' ? 'bg-forge-primary text-white' : 'text-gray-400 hover:text-white'
+          className={`flex items-center space-x-2 px-4 py-3 rounded-xl transition-all duration-200 ${
+            activeTab === 'voting' ? 'bg-fogo-primary text-white shadow-fogo' : 'text-fogo-gray-400 hover:text-white hover:bg-fogo-gray-700'
           }`}
         >
           <CheckCircleIcon className="h-5 w-5" />
@@ -159,8 +159,8 @@ export default function GovernancePanel({ className = '', onVote, isConnected = 
         </button>
         <button
           onClick={() => setActiveTab('delegation')}
-          className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
-            activeTab === 'delegation' ? 'bg-forge-primary text-white' : 'text-gray-400 hover:text-white'
+          className={`flex items-center space-x-2 px-4 py-3 rounded-xl transition-all duration-200 ${
+            activeTab === 'delegation' ? 'bg-fogo-primary text-white shadow-fogo' : 'text-fogo-gray-400 hover:text-white hover:bg-fogo-gray-700'
           }`}
         >
           <UserGroupIcon className="h-5 w-5" />
@@ -172,53 +172,53 @@ export default function GovernancePanel({ className = '', onVote, isConnected = 
       {activeTab === 'proposals' && (
         <div className="space-y-4">
           {convertedProposals.map((proposal) => (
-            <div key={proposal.id} className="card">
-              <div className="flex items-start justify-between mb-4">
+            <div key={proposal.id} className="bg-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700 shadow-fogo hover:shadow-fogo-lg transition-all duration-300 hover:border-fogo-primary/30">
+              <div className="flex items-start justify-between mb-6">
                 <div className="flex-1">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(proposal.status)}`}>
+                  <div className="flex items-center space-x-3 mb-3">
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center space-x-1 ${getStatusColor(proposal.status)}`}>
                       {getStatusIcon(proposal.status)}
-                      <span className="ml-1">{proposal.status.charAt(0).toUpperCase() + proposal.status.slice(1)}</span>
+                      <span>{proposal.status.charAt(0).toUpperCase() + proposal.status.slice(1)}</span>
                     </span>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(proposal.category)}`}>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getCategoryColor(proposal.category)}`}>
                       {proposal.category.charAt(0).toUpperCase() + proposal.category.slice(1)}
                     </span>
                   </div>
-                  <h3 className="text-lg font-semibold text-white mb-2">{proposal.title}</h3>
-                  <p className="text-gray-400 text-sm mb-3">{proposal.description}</p>
-                  <p className="text-xs text-gray-500">Proposed by {proposal.proposer}</p>
+                  <h3 className="text-lg font-semibold text-white mb-3">{proposal.title}</h3>
+                  <p className="text-fogo-gray-300 text-sm mb-4">{proposal.description}</p>
+                  <p className="text-xs text-fogo-gray-500">Proposed by {proposal.proposer}</p>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm text-gray-400">Time Remaining</p>
-                  <p className="text-lg font-semibold text-white">{formatTimeRemaining(proposal.endTime)}</p>
+                <div className="text-right p-3 bg-fogo-gray-800 rounded-xl">
+                  <p className="text-sm text-fogo-gray-400 mb-1">Time Remaining</p>
+                  <p className="text-lg font-semibold text-fogo-primary">{formatTimeRemaining(proposal.endTime)}</p>
                 </div>
               </div>
 
               {/* Voting Stats */}
-              <div className="grid grid-cols-3 gap-4 mb-4">
-                <div className="text-center">
-                  <p className="text-sm text-gray-400">For</p>
-                  <p className="text-lg font-semibold text-green-400">{proposal.votesFor.toLocaleString()}</p>
+              <div className="grid grid-cols-3 gap-4 mb-6">
+                <div className="text-center p-3 bg-fogo-success/10 rounded-xl border border-fogo-success/20">
+                  <p className="text-sm text-fogo-gray-400 mb-1">For</p>
+                  <p className="text-lg font-semibold text-fogo-success">{proposal.votesFor.toLocaleString()}</p>
                 </div>
-                <div className="text-center">
-                  <p className="text-sm text-gray-400">Against</p>
-                  <p className="text-lg font-semibold text-red-400">{proposal.votesAgainst.toLocaleString()}</p>
+                <div className="text-center p-3 bg-fogo-error/10 rounded-xl border border-fogo-error/20">
+                  <p className="text-sm text-fogo-gray-400 mb-1">Against</p>
+                  <p className="text-lg font-semibold text-fogo-error">{proposal.votesAgainst.toLocaleString()}</p>
                 </div>
-                <div className="text-center">
-                  <p className="text-sm text-gray-400">Total</p>
-                  <p className="text-lg font-semibold text-white">{proposal.totalVotes.toLocaleString()}</p>
+                <div className="text-center p-3 bg-fogo-primary/10 rounded-xl border border-fogo-primary/20">
+                  <p className="text-sm text-fogo-gray-400 mb-1">Total</p>
+                  <p className="text-lg font-semibold text-fogo-primary">{proposal.totalVotes.toLocaleString()}</p>
                 </div>
               </div>
 
               {/* Progress Bar */}
-              <div className="mb-4">
-                <div className="flex justify-between text-sm text-gray-400 mb-1">
+              <div className="mb-6">
+                <div className="flex justify-between text-sm text-fogo-gray-400 mb-2">
                   <span>Votes For</span>
                   <span>{((proposal.votesFor / proposal.totalVotes) * 100).toFixed(1)}%</span>
                 </div>
-                <div className="w-full bg-gray-700 rounded-full h-2">
+                <div className="w-full bg-fogo-gray-700 rounded-full h-3">
                   <div 
-                    className="bg-green-400 h-2 rounded-full transition-all duration-300"
+                    className="bg-gradient-to-r from-fogo-success to-fogo-primary h-3 rounded-full transition-all duration-300"
                     style={{ width: `${(proposal.votesFor / proposal.totalVotes) * 100}%` }}
                   ></div>
                 </div>
@@ -226,17 +226,17 @@ export default function GovernancePanel({ className = '', onVote, isConnected = 
 
               {/* Action Buttons */}
               {proposal.status === 'active' && (
-                <div className="flex space-x-2">
+                <div className="flex space-x-3">
                   <button
                     onClick={() => handleVote(proposal.id, 'for')}
-                    className="btn-primary flex-1 flex items-center justify-center space-x-2"
+                    className="flex-1 bg-gradient-to-r from-fogo-success to-fogo-primary hover:from-fogo-success-dark hover:to-fogo-primary-dark text-white px-4 py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center space-x-2 shadow-fogo hover:shadow-flame"
                   >
                     <CheckCircleIcon className="h-5 w-5" />
                     <span>Vote For</span>
                   </button>
                   <button
                     onClick={() => handleVote(proposal.id, 'against')}
-                    className="btn-secondary flex-1 flex items-center justify-center space-x-2"
+                    className="flex-1 bg-fogo-gray-700 hover:bg-fogo-gray-600 text-white px-4 py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center space-x-2 border border-fogo-gray-600 hover:border-fogo-error/30"
                   >
                     <XCircleIcon className="h-5 w-5" />
                     <span>Vote Against</span>
