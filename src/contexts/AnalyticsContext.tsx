@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
+import { calculateRealTimeAPY } from '../utils/apyCalculations';
 
 interface Transaction {
   id: string;
@@ -34,6 +35,7 @@ interface AnalyticsContextType {
   getDailyStats: (days: number) => any[];
   getTokenStats: () => any[];
   getRecentTransactions: (limit?: number) => Transaction[];
+  getRealTimeAPYEarnings: () => number;
 }
 
 const AnalyticsContext = createContext<AnalyticsContextType | undefined>(undefined);
@@ -177,12 +179,42 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({ children }
       }));
   }, [analytics.transactions]);
 
+  // Calculate real-time APY earnings from all active deposits
+  const getRealTimeAPYEarnings = useCallback(() => {
+    const price = (token: string) => ({ SOL: 200, USDC: 1, ETH: 4000, BTC: 110000, FOGO: 0.5 } as any)[token] || 1;
+    
+    // Get all deposits that haven't been fully withdrawn
+    const deposits = analytics.transactions.filter(tx => tx.type === 'deposit');
+    const withdrawals = analytics.transactions.filter(tx => tx.type === 'withdraw');
+    
+    let totalAPYEarnings = 0;
+    
+    deposits.forEach(deposit => {
+      // Calculate how much of this deposit has been withdrawn
+      const withdrawnAmount = withdrawals
+        .filter(w => w.crucibleId === deposit.crucibleId && w.token === deposit.token)
+        .reduce((sum, w) => sum + w.amount, 0);
+      
+      const remainingAmount = deposit.amount - withdrawnAmount;
+      
+      if (remainingAmount > 0) {
+        // Calculate APY earnings for the remaining amount
+        const apyRate = 0.15; // 15% APY (this should come from crucible data)
+        const apyEarnings = calculateRealTimeAPY(remainingAmount, apyRate, deposit.timestamp);
+        totalAPYEarnings += apyEarnings * price(deposit.token);
+      }
+    });
+    
+    return totalAPYEarnings;
+  }, [analytics.transactions]);
+
   const value = {
     analytics,
     addTransaction,
     getDailyStats,
     getTokenStats,
-    getRecentTransactions
+    getRecentTransactions,
+    getRealTimeAPYEarnings,
   };
 
   return (

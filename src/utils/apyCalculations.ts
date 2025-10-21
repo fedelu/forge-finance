@@ -39,22 +39,43 @@ export const formatAPYBreakdown = (calculation: APYCalculation) => {
   };
 };
 
-// Mock time tracking - in production, this would be stored on-chain
-export const getTimeInCrucible = (crucibleId: string): number => {
-  // For demo purposes, simulate time based on crucible ID
+// Real-time APY tracking - calculates time since deposit
+export const getTimeInCrucible = (crucibleId: string, depositTimestamp?: number): number => {
+  if (depositTimestamp) {
+    // Calculate actual time elapsed since deposit
+    const now = Date.now();
+    const timeElapsedMs = now - depositTimestamp;
+    const timeElapsedDays = timeElapsedMs / (1000 * 60 * 60 * 24); // Convert to days
+    return Math.max(0, timeElapsedDays); // Ensure non-negative
+  }
+  
+  // Fallback: simulate time based on crucible ID (for demo purposes)
   const timeMap: { [key: string]: number } = {
-    'fogo-stable-crucible': 365,    // 1 year - stable strategy
-    'fogo-growth-crucible': 365,    // 1 year - growth strategy
-    'fogo-premium-crucible': 365,   // 1 year - premium strategy
-    'fogo-yield-crucible': 365,     // 1 year - high yield strategy
-    'fogo-defi-crucible': 365,      // 1 year - DeFi strategy
+    'fogo-stable-crucible': 30,     // 30 days - stable strategy
+    'fogo-growth-crucible': 45,     // 45 days - growth strategy
+    'fogo-premium-crucible': 60,    // 60 days - premium strategy
+    'fogo-yield-crucible': 90,      // 90 days - high yield strategy
+    'fogo-defi-crucible': 120,      // 120 days - DeFi strategy
     // Legacy crucibles (for backward compatibility)
-    'sol-crucible': 365,
-    'eth-crucible': 365,
-    'usdc-crucible': 365,
-    'btc-crucible': 365,
-    'fogo-crucible': 365,
+    'sol-crucible': 30,
+    'eth-crucible': 30,
+    'usdc-crucible': 30,
+    'btc-crucible': 30,
+    'fogo-crucible': 30,
   };
   
-  return timeMap[crucibleId] || 365; // Default to 1 year (365 days)
+  return timeMap[crucibleId] || 30; // Default to 30 days
+};
+
+// Calculate real-time APY earnings for a deposit
+export const calculateRealTimeAPY = (
+  principal: number,
+  apyRate: number,
+  depositTimestamp: number
+): number => {
+  const timeInDays = getTimeInCrucible('', depositTimestamp);
+  const dailyRate = apyRate / 365;
+  const totalValue = principal * Math.pow(1 + dailyRate, timeInDays);
+  const earnedRewards = totalValue - principal;
+  return Math.max(0, earnedRewards); // Ensure non-negative
 };

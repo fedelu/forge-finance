@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAnalytics } from '../contexts/AnalyticsContext';
 import { useBalance } from '../contexts/BalanceContext';
 import { DynamicTokenBalances } from './DynamicTokenBalances';
@@ -11,12 +11,26 @@ import {
 } from '@heroicons/react/24/outline';
 
 export const AnalyticsDashboard: React.FC = () => {
-  const { analytics, getDailyStats, getTokenStats, getRecentTransactions } = useAnalytics();
+  const { analytics, getRecentTransactions, getRealTimeAPYEarnings } = useAnalytics();
   const { balances } = useBalance();
 
-  const dailyStats = getDailyStats(7);
-  const tokenStats = getTokenStats();
   const recentTransactions = getRecentTransactions(5);
+  const [realTimeAPYEarnings, setRealTimeAPYEarnings] = useState(0);
+
+  // Update APY earnings every minute for real-time display
+  useEffect(() => {
+    const updateAPYEarnings = () => {
+      setRealTimeAPYEarnings(getRealTimeAPYEarnings());
+    };
+
+    // Initial calculation
+    updateAPYEarnings();
+
+    // Update every minute
+    const interval = setInterval(updateAPYEarnings, 60000);
+
+    return () => clearInterval(interval);
+  }, [getRealTimeAPYEarnings]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -42,61 +56,64 @@ export const AnalyticsDashboard: React.FC = () => {
     <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center space-x-3">
-        <ChartBarIcon className="h-8 w-8 text-forge-primary" />
-        <h1 className="text-3xl font-bold text-white">Analytics Dashboard</h1>
+        <div className="w-10 h-10 bg-fogo-primary/20 rounded-2xl flex items-center justify-center">
+          <ChartBarIcon className="h-6 w-6 text-fogo-primary" />
+        </div>
+        <div>
+          <h1 className="text-3xl font-bold text-white">🔥 Portfolio</h1>
+          <p className="text-fogo-gray-400 text-sm">Track your FOGO portfolio performance</p>
+        </div>
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-        <div className="card bg-gradient-to-r from-forge-primary/20 to-forge-accent/20 border-forge-primary">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700 shadow-fogo hover:shadow-fogo-lg transition-all duration-300 hover:border-fogo-primary/30">
           <div className="flex items-center space-x-3">
-            <CurrencyDollarIcon className="h-8 w-8 text-forge-primary" />
+            <div className="w-10 h-10 bg-fogo-primary/20 rounded-xl flex items-center justify-center">
+              <FireIcon className="h-6 w-6 text-fogo-primary" />
+            </div>
             <div>
-              <p className="text-gray-400 text-sm">Total Volume</p>
-              <p className="text-2xl font-bold text-white">{formatCurrency(analytics.totalVolume)}</p>
+              <p className="text-fogo-gray-400 text-sm">APY Earnings</p>
+              <p className="text-2xl font-bold text-white">{formatCurrency(realTimeAPYEarnings)}</p>
+              <p className="text-xs text-fogo-primary mt-1">
+                {analytics.totalAPYWithdrawn > 0 ? `+${formatCurrency(analytics.totalAPYWithdrawn)} withdrawn` : 'Live earnings'}
+              </p>
             </div>
           </div>
         </div>
 
-        <div className="card bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-green-500">
+        <div className="bg-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700 shadow-fogo hover:shadow-fogo-lg transition-all duration-300 hover:border-fogo-success/30">
           <div className="flex items-center space-x-3">
-            <ArrowTrendingUpIcon className="h-8 w-8 text-green-400" />
+            <div className="w-10 h-10 bg-fogo-success/20 rounded-xl flex items-center justify-center">
+              <ArrowTrendingUpIcon className="h-6 w-6 text-fogo-success" />
+            </div>
             <div>
-              <p className="text-gray-400 text-sm">Total Deposits</p>
+              <p className="text-fogo-gray-400 text-sm">Total Deposits</p>
               <p className="text-2xl font-bold text-white">{formatCurrency(analytics.totalDeposits)}</p>
             </div>
           </div>
         </div>
 
-        <div className="card bg-gradient-to-r from-red-500/20 to-orange-500/20 border-red-500">
+        <div className="bg-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700 shadow-fogo hover:shadow-fogo-lg transition-all duration-300 hover:border-fogo-error/30">
           <div className="flex items-center space-x-3">
-            <ArrowTrendingUpIcon className="h-8 w-8 text-red-400 rotate-180" />
+            <div className="w-10 h-10 bg-fogo-error/20 rounded-xl flex items-center justify-center">
+              <ArrowTrendingUpIcon className="h-6 w-6 text-fogo-error rotate-180" />
+            </div>
             <div>
-              <p className="text-gray-400 text-sm">Total Withdrawals</p>
+              <p className="text-fogo-gray-400 text-sm">Total Withdrawals</p>
               <p className="text-2xl font-bold text-white">{formatCurrency(analytics.totalWithdrawals)}</p>
             </div>
           </div>
         </div>
 
-        <div className="card bg-gradient-to-r from-blue-500/20 to-purple-500/20 border-blue-500">
+        <div className="bg-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700 shadow-fogo hover:shadow-fogo-lg transition-all duration-300 hover:border-fogo-accent/30">
           <div className="flex items-center space-x-3">
-            <ClockIcon className="h-8 w-8 text-blue-400" />
-            <div>
-              <p className="text-gray-400 text-sm">Transactions</p>
-              <p className="text-2xl font-bold text-white">{analytics.transactionCount}</p>
+            <div className="w-10 h-10 bg-fogo-accent/20 rounded-xl flex items-center justify-center">
+              <ClockIcon className="h-6 w-6 text-fogo-accent" />
             </div>
-          </div>
-        </div>
-
-        <div className="card bg-gradient-to-r from-fogo-primary/20 to-fogo-secondary/20 border-fogo-primary">
-          <div className="flex items-center space-x-3">
-            <FireIcon className="h-8 w-8 text-fogo-primary" />
             <div>
-              <p className="text-gray-400 text-sm">APY Earnings</p>
-              <p className="text-2xl font-bold text-white">{formatCurrency(analytics.totalAPYRewards)}</p>
-              <p className="text-xs text-fogo-primary mt-1">
-                {analytics.totalAPYWithdrawn > 0 ? `+${formatCurrency(analytics.totalAPYWithdrawn)} withdrawn` : 'All earned'}
-              </p>
+              <p className="text-fogo-gray-400 text-sm">Transactions</p>
+              <p className="text-2xl font-bold text-white">{analytics.transactionCount}</p>
             </div>
           </div>
         </div>
@@ -107,69 +124,22 @@ export const AnalyticsDashboard: React.FC = () => {
       {/* Portfolio Overview */}
       <DynamicTokenBalances />
 
-      {/* Daily Volume Chart */}
-      <div className="card">
-        <h3 className="text-xl font-semibold text-white mb-4">7-Day Volume</h3>
-        <div className="space-y-4">
-          {dailyStats.map((stat, index) => (
-            <div key={stat.date} className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 text-sm text-gray-400">{stat.day}</div>
-                <div className="flex-1 bg-gray-700 rounded-full h-2">
-                  <div 
-                    className="bg-gradient-to-r from-forge-primary to-forge-accent h-2 rounded-full transition-all duration-300"
-                    style={{ 
-                      width: `${Math.max(5, (stat.volume / Math.max(...dailyStats.map(s => s.volume), 1)) * 100)}%` 
-                    }}
-                  />
-                </div>
-              </div>
-              <div className="text-sm font-medium text-white w-20 text-right">
-                {formatCurrency(stat.volume)}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Token Distribution */}
-      <div className="card">
-        <h3 className="text-xl font-semibold text-white mb-4">Token Distribution</h3>
-        <div className="space-y-3">
-          {tokenStats.map((stat, index) => (
-            <div key={stat.token} className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-forge-gray rounded-full flex items-center justify-center text-sm font-bold">
-                  {stat.token.charAt(0)}
-                </div>
-                <span className="text-white font-medium">{stat.token}</span>
-              </div>
-              <div className="flex items-center space-x-4">
-                <div className="text-sm text-gray-400">
-                  {formatNumber(stat.amount)} ({formatNumber(stat.percentage)}%)
-                </div>
-                <div className="w-24 bg-gray-700 rounded-full h-2">
-                  <div 
-                    className="bg-gradient-to-r from-forge-primary to-forge-accent h-2 rounded-full"
-                    style={{ width: `${stat.percentage}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
 
       {/* Recent Transactions */}
-      <div className="card">
-        <h3 className="text-xl font-semibold text-white mb-4">Recent Transactions</h3>
+      <div className="bg-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700 shadow-fogo">
+        <div className="flex items-center space-x-3 mb-6">
+          <div className="w-8 h-8 bg-fogo-secondary/20 rounded-xl flex items-center justify-center">
+            <ClockIcon className="h-5 w-5 text-fogo-secondary" />
+          </div>
+          <h3 className="text-xl font-semibold text-white">Recent Transactions</h3>
+        </div>
         <div className="space-y-3">
           {recentTransactions.length > 0 ? (
             recentTransactions.map((tx) => (
-              <div key={tx.id} className="flex items-center justify-between p-3 bg-forge-gray rounded-lg">
+              <div key={tx.id} className="flex items-center justify-between p-4 bg-fogo-gray-800 rounded-xl hover:bg-fogo-gray-700 transition-all duration-200">
                 <div className="flex items-center space-x-3">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                    tx.type === 'deposit' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                    tx.type === 'deposit' ? 'bg-fogo-success/20 text-fogo-success' : 'bg-fogo-error/20 text-fogo-error'
                   }`}>
                     {tx.type === 'deposit' ? '↑' : '↓'}
                   </div>
@@ -177,7 +147,7 @@ export const AnalyticsDashboard: React.FC = () => {
                     <p className="text-white font-medium">
                       {tx.type === 'deposit' ? 'Deposit' : 'Withdrawal'} - {tx.crucibleId}
                     </p>
-                    <p className="text-gray-400 text-sm">
+                    <p className="text-fogo-gray-400 text-sm">
                       {new Date(tx.timestamp).toLocaleString()}
                     </p>
                   </div>
@@ -186,11 +156,11 @@ export const AnalyticsDashboard: React.FC = () => {
                   <p className="text-white font-medium">
                     {tx.amount.toFixed(2)} {tx.token}
                   </p>
-                  <p className="text-gray-400 text-sm">
+                  <p className="text-fogo-gray-400 text-sm">
                     {formatCurrency(tx.usdValue || tx.amount * (tx.token === 'FOGO' ? 0.5 : tx.token === 'SOL' ? 200 : tx.token === 'USDC' ? 1 : tx.token === 'ETH' ? 4000 : 110000))}
                   </p>
                   {tx.signature && (
-                    <p className="text-gray-400 text-xs font-mono">
+                    <p className="text-fogo-gray-500 text-xs font-mono">
                       {tx.signature.slice(0, 8)}...{tx.signature.slice(-8)}
                     </p>
                   )}
@@ -198,10 +168,12 @@ export const AnalyticsDashboard: React.FC = () => {
               </div>
             ))
           ) : (
-            <div className="text-center py-8">
-              <FireIcon className="h-12 w-12 text-gray-500 mx-auto mb-4" />
-              <p className="text-gray-400">No transactions yet</p>
-              <p className="text-sm text-gray-500">Make your first deposit to see analytics!</p>
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-fogo-primary/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <FireIcon className="h-8 w-8 text-fogo-primary" />
+              </div>
+              <p className="text-fogo-gray-300 text-lg mb-2">No transactions yet</p>
+              <p className="text-fogo-gray-500 text-sm">Make your first deposit to see analytics!</p>
             </div>
           )}
         </div>

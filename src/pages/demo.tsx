@@ -112,7 +112,7 @@ function DemoContent() {
                       onClick={() => setMainTab('analytics')}
                       className={`transition-colors ${mainTab === 'analytics' ? 'text-white' : 'text-gray-300 hover:text-white'}`}
                     >
-                      Analytics
+                      Portfolio
                     </button>
                   </>
                 )}
@@ -159,14 +159,14 @@ function DemoContent() {
                       if (isEstablished) {
                         setMainTab('analytics');
                       } else {
-                        alert('Please sign in with FOGO to view analytics and track performance.');
+                        alert('Please sign in with FOGO to view portfolio and track performance.');
                       }
                     }}
                     className="p-6 bg-fogo-gray-800 rounded-lg border border-fogo-gray-700 hover:border-fogo-primary transition-colors text-left group"
                   >
                     <ChartBarIcon className="h-8 w-8 text-fogo-accent mb-4 group-hover:scale-110 transition-transform" />
-                    <h3 className="text-lg font-semibold text-white mb-2">View Analytics</h3>
-                    <p className="text-fogo-gray-400">{isEstablished ? 'Track your performance' : 'Sign in with FOGO to view analytics'}</p>
+                    <h3 className="text-lg font-semibold text-white mb-2">View Portfolio</h3>
+                    <p className="text-fogo-gray-400">{isEstablished ? 'Track your performance' : 'Sign in with FOGO to view portfolio'}</p>
                   </button>
                   <button 
                     onClick={() => {
