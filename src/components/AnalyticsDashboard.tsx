@@ -76,14 +76,9 @@ export const AnalyticsDashboard: React.FC = () => {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center space-x-3">
-        <div className="w-10 h-10 bg-fogo-primary/20 rounded-2xl flex items-center justify-center">
-          <BanknotesIcon className="h-6 w-6 text-fogo-primary" />
-        </div>
-        <div>
-          <h1 className="text-3xl font-inter-bold text-white mb-2">Portfolio</h1>
-          <p className="text-fogo-gray-400 font-inter-light">Track your Forge portfolio performance</p>
-        </div>
+      <div>
+        <h1 className="text-3xl font-inter-bold text-white mb-2">Portfolio</h1>
+        <p className="text-fogo-gray-400 font-inter-light">Track your Forge portfolio performance</p>
       </div>
 
       {/* Key Metrics */}
