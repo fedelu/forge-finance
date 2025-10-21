@@ -72,11 +72,11 @@ export default function GovernancePanel({ className = '', onVote, isConnected = 
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'bg-fogo-info/20 text-fogo-info border border-fogo-info/30'
-      case 'passed': return 'bg-fogo-success/20 text-fogo-success border border-fogo-success/30'
-      case 'rejected': return 'bg-fogo-error/20 text-fogo-error border border-fogo-error/30'
-      case 'pending': return 'bg-fogo-warning/20 text-fogo-warning border border-fogo-warning/30'
-      default: return 'bg-fogo-gray-700 text-fogo-gray-300 border border-fogo-gray-600'
+      case 'active': return 'bg-fogo-primary/10 text-fogo-primary border border-fogo-primary/20'
+      case 'passed': return 'bg-fogo-gray-800 text-fogo-gray-300 border border-fogo-gray-600'
+      case 'rejected': return 'bg-fogo-gray-800 text-fogo-gray-300 border border-fogo-gray-600'
+      case 'pending': return 'bg-fogo-gray-800 text-fogo-gray-300 border border-fogo-gray-600'
+      default: return 'bg-fogo-gray-800 text-fogo-gray-300 border border-fogo-gray-600'
     }
   }
 
@@ -92,10 +92,10 @@ export default function GovernancePanel({ className = '', onVote, isConnected = 
 
   const getCategoryColor = (category: string) => {
     switch (category) {
-      case 'protocol': return 'bg-fogo-primary/20 text-fogo-primary border border-fogo-primary/30'
-      case 'crucible': return 'bg-fogo-secondary/20 text-fogo-secondary border border-fogo-secondary/30'
-      case 'governance': return 'bg-fogo-accent/20 text-fogo-accent border border-fogo-accent/30'
-      default: return 'bg-fogo-gray-700 text-fogo-gray-300 border border-fogo-gray-600'
+      case 'protocol': return 'bg-fogo-gray-800 text-fogo-gray-300 border border-fogo-gray-600'
+      case 'crucible': return 'bg-fogo-gray-800 text-fogo-gray-300 border border-fogo-gray-600'
+      case 'governance': return 'bg-fogo-gray-800 text-fogo-gray-300 border border-fogo-gray-600'
+      default: return 'bg-fogo-gray-800 text-fogo-gray-300 border border-fogo-gray-600'
     }
   }
 
@@ -122,9 +122,9 @@ export default function GovernancePanel({ className = '', onVote, isConnected = 
           <p className="text-fogo-gray-400 text-sm mt-1">Shape the future of the FOGO ecosystem</p>
         </div>
         <div className="flex items-center space-x-6">
-          <div className="text-right p-4 bg-fogo-primary/10 rounded-xl border border-fogo-primary/20">
+          <div className="text-right p-4 bg-fogo-gray-800 rounded-xl">
             <p className="text-sm text-fogo-gray-400 mb-1">Voting Power</p>
-            <p className="text-lg font-semibold text-fogo-primary">{userVotingPower.toLocaleString()} SPARKS</p>
+            <p className="text-lg font-semibold text-white">{userVotingPower.toLocaleString()} SPARKS</p>
             <p className="text-xs text-fogo-gray-500">1 SPARK = 1 Vote</p>
           </div>
           <button 
@@ -196,15 +196,15 @@ export default function GovernancePanel({ className = '', onVote, isConnected = 
 
               {/* Voting Stats */}
               <div className="grid grid-cols-3 gap-4 mb-6">
-                <div className="text-center p-3 bg-fogo-success/10 rounded-xl border border-fogo-success/20">
+                <div className="text-center p-4 bg-fogo-gray-800 rounded-xl border border-fogo-gray-700">
                   <p className="text-sm text-fogo-gray-400 mb-1">For</p>
-                  <p className="text-lg font-semibold text-fogo-success">{proposal.votesFor.toLocaleString()}</p>
+                  <p className="text-lg font-semibold text-white">{proposal.votesFor.toLocaleString()}</p>
                 </div>
-                <div className="text-center p-3 bg-fogo-error/10 rounded-xl border border-fogo-error/20">
+                <div className="text-center p-4 bg-fogo-gray-800 rounded-xl border border-fogo-gray-700">
                   <p className="text-sm text-fogo-gray-400 mb-1">Against</p>
-                  <p className="text-lg font-semibold text-fogo-error">{proposal.votesAgainst.toLocaleString()}</p>
+                  <p className="text-lg font-semibold text-white">{proposal.votesAgainst.toLocaleString()}</p>
                 </div>
-                <div className="text-center p-3 bg-fogo-primary/10 rounded-xl border border-fogo-primary/20">
+                <div className="text-center p-4 bg-fogo-gray-800 rounded-xl border border-fogo-gray-700">
                   <p className="text-sm text-fogo-gray-400 mb-1">Total</p>
                   <p className="text-lg font-semibold text-fogo-primary">{proposal.totalVotes.toLocaleString()}</p>
                 </div>
@@ -216,9 +216,9 @@ export default function GovernancePanel({ className = '', onVote, isConnected = 
                   <span>Votes For</span>
                   <span>{((proposal.votesFor / proposal.totalVotes) * 100).toFixed(1)}%</span>
                 </div>
-                <div className="w-full bg-fogo-gray-700 rounded-full h-3">
+                <div className="w-full bg-fogo-gray-700 rounded-full h-2">
                   <div 
-                    className="bg-gradient-to-r from-fogo-success to-fogo-primary h-3 rounded-full transition-all duration-300"
+                    className="bg-fogo-primary h-2 rounded-full transition-all duration-300"
                     style={{ width: `${(proposal.votesFor / proposal.totalVotes) * 100}%` }}
                   ></div>
                 </div>
@@ -229,14 +229,14 @@ export default function GovernancePanel({ className = '', onVote, isConnected = 
                 <div className="flex space-x-3">
                   <button
                     onClick={() => handleVote(proposal.id, 'for')}
-                    className="flex-1 bg-gradient-to-r from-fogo-success to-fogo-primary hover:from-fogo-success-dark hover:to-fogo-primary-dark text-white px-4 py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center space-x-2 shadow-fogo hover:shadow-flame"
+                    className="flex-1 bg-fogo-primary hover:bg-fogo-primary-dark text-white px-4 py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center space-x-2 shadow-fogo hover:shadow-flame"
                   >
                     <CheckCircleIcon className="h-5 w-5" />
                     <span>Vote For</span>
                   </button>
                   <button
                     onClick={() => handleVote(proposal.id, 'against')}
-                    className="flex-1 bg-fogo-gray-700 hover:bg-fogo-gray-600 text-white px-4 py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center space-x-2 border border-fogo-gray-600 hover:border-fogo-error/30"
+                    className="flex-1 bg-fogo-gray-700 hover:bg-fogo-gray-600 text-white px-4 py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center space-x-2 border border-fogo-gray-600 hover:border-fogo-gray-500"
                   >
                     <XCircleIcon className="h-5 w-5" />
                     <span>Vote Against</span>
@@ -249,52 +249,54 @@ export default function GovernancePanel({ className = '', onVote, isConnected = 
       )}
 
       {activeTab === 'voting' && (
-        <div className="card">
+        <div className="bg-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700 shadow-fogo">
           <h3 className="text-lg font-semibold text-white mb-4">Your Voting History</h3>
           <div className="space-y-3">
-            <div className="flex items-center justify-between py-2 border-b border-gray-700">
-              <span className="text-gray-300">Increase USDC Crucible APR</span>
-              <span className="text-green-400 font-semibold">Voted For</span>
+            <div className="flex items-center justify-between py-3 px-4 bg-fogo-gray-800 rounded-xl border border-fogo-gray-700">
+              <span className="text-fogo-gray-300">Increase USDC Crucible APR</span>
+              <span className="text-fogo-primary font-semibold">Voted For</span>
             </div>
-            <div className="flex items-center justify-between py-2 border-b border-gray-700">
-              <span className="text-gray-300">Add ETH Crucible</span>
-              <span className="text-green-400 font-semibold">Voted For</span>
+            <div className="flex items-center justify-between py-3 px-4 bg-fogo-gray-800 rounded-xl border border-fogo-gray-700">
+              <span className="text-fogo-gray-300">Add ETH Crucible</span>
+              <span className="text-fogo-primary font-semibold">Voted For</span>
             </div>
-            <div className="flex items-center justify-between py-2">
-              <span className="text-gray-300">Reduce Protocol Fees</span>
-              <span className="text-red-400 font-semibold">Voted Against</span>
+            <div className="flex items-center justify-between py-3 px-4 bg-fogo-gray-800 rounded-xl border border-fogo-gray-700">
+              <span className="text-fogo-gray-300">Reduce Protocol Fees</span>
+              <span className="text-fogo-gray-400 font-semibold">Voted Against</span>
             </div>
           </div>
         </div>
       )}
 
       {activeTab === 'delegation' && (
-        <div className="card">
+        <div className="bg-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700 shadow-fogo">
           <h3 className="text-lg font-semibold text-white mb-4">Delegate Voting Power</h3>
           <div className="space-y-4">
             <div>
-              <label htmlFor="delegate-address" className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="delegate-address" className="block text-sm font-medium text-fogo-gray-300 mb-2">
                 Delegate Address
               </label>
               <input
                 type="text"
                 id="delegate-address"
                 placeholder="Enter delegate address"
-                className="input"
+                className="w-full px-4 py-3 bg-fogo-gray-800 border border-fogo-gray-600 rounded-xl text-white focus:outline-none focus:border-fogo-primary focus:ring-2 focus:ring-fogo-primary/20 transition-all duration-200"
               />
             </div>
             <div>
-              <label htmlFor="delegate-amount" className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="delegate-amount" className="block text-sm font-medium text-fogo-gray-300 mb-2">
                 Amount to Delegate
               </label>
               <input
                 type="number"
                 id="delegate-amount"
                 placeholder="0"
-                className="input"
+                className="w-full px-4 py-3 bg-fogo-gray-800 border border-fogo-gray-600 rounded-xl text-white focus:outline-none focus:border-fogo-primary focus:ring-2 focus:ring-fogo-primary/20 transition-all duration-200"
               />
             </div>
-            <button className="btn-primary w-full">Delegate Voting Power</button>
+            <button className="w-full bg-fogo-primary hover:bg-fogo-primary-dark text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 shadow-fogo hover:shadow-flame">
+              Delegate Voting Power
+            </button>
           </div>
         </div>
       )}
