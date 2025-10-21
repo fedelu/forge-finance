@@ -24,8 +24,10 @@ interface FogoSessionContextType {
   connect: () => Promise<void>;
   endSession: () => Promise<void>;
   sendTransaction: (instructions: any[]) => Promise<string>;
-  depositToCrucible: (crucibleId: string, amount: number) => Promise<{ success: boolean; transactionId: string }>;
-  withdrawFromCrucible: (crucibleId: string, amount: number) => Promise<{ success: boolean; transactionId: string }>;
+  depositToCrucible: (amount: number) => Promise<{ success: boolean; transactionId: string }>;
+  withdrawFromCrucible: (amount: number) => Promise<{ success: boolean; transactionId: string }>;
+  calculateAPY: (principal: number, timeInDays: number) => number;
+  calculateCompoundInterest: (principal: number, apy: number, timeInDays: number) => number;
   refreshBalance: () => Promise<void>;
   error: string | null;
 }
@@ -174,13 +176,17 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
     }
   };
 
-  // Function to simulate depositing FOGO tokens to a crucible
-  const depositToCrucible = async (crucibleId: string, amount: number) => {
+  // Single deposit function for FOGO tokens
+  const depositToCrucible = async (amount: number) => {
     if (amount > fogoBalance) {
       throw new Error('Insufficient FOGO balance');
     }
     
-    console.log(`🏛️ Simulating deposit of ${amount} FOGO to crucible ${crucibleId}`);
+    if (amount <= 0) {
+      throw new Error('Deposit amount must be greater than 0');
+    }
+    
+    console.log(`🏛️ Depositing ${amount} FOGO tokens`);
     
     // Simulate transaction processing
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -194,13 +200,17 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
       localStorage.setItem(`fogo_balance_${walletPublicKey.toString()}`, newBalance.toString());
     }
     
-    console.log(`✅ Successfully deposited ${amount} FOGO to crucible ${crucibleId} (simulation)`);
+    console.log(`✅ Successfully deposited ${amount} FOGO tokens (simulation)`);
     return { success: true, transactionId: `sim_${Date.now()}` };
   };
 
-  // Function to simulate withdrawing FOGO tokens from a crucible
-  const withdrawFromCrucible = async (crucibleId: string, amount: number) => {
-    console.log(`🏛️ Simulating withdrawal of ${amount} FOGO from crucible ${crucibleId}`);
+  // Single withdraw function for FOGO tokens
+  const withdrawFromCrucible = async (amount: number) => {
+    if (amount <= 0) {
+      throw new Error('Withdrawal amount must be greater than 0');
+    }
+    
+    console.log(`🏛️ Withdrawing ${amount} FOGO tokens`);
     
     // Simulate transaction processing
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -214,7 +224,7 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
       localStorage.setItem(`fogo_balance_${walletPublicKey.toString()}`, newBalance.toString());
     }
     
-    console.log(`✅ Successfully withdrew ${amount} FOGO from crucible ${crucibleId} (simulation)`);
+    console.log(`✅ Successfully withdrew ${amount} FOGO tokens (simulation)`);
     return { success: true, transactionId: `sim_${Date.now()}` };
   };
 
@@ -230,6 +240,52 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
     }
   };
 
+  // Calculate APY based on crucible type and time
+  const calculateAPY = (principal: number, timeInDays: number): number => {
+    // Base APY rates for different crucible types (simulation)
+    const baseAPY = 0.12; // 12% base APY
+    
+    // Time-based multiplier (longer staking = higher APY)
+    let timeMultiplier = 1;
+    if (timeInDays >= 365) timeMultiplier = 1.5; // 50% bonus for 1+ year
+    else if (timeInDays >= 180) timeMultiplier = 1.3; // 30% bonus for 6+ months
+    else if (timeInDays >= 90) timeMultiplier = 1.2; // 20% bonus for 3+ months
+    else if (timeInDays >= 30) timeMultiplier = 1.1; // 10% bonus for 1+ month
+    
+    // Principal-based multiplier (larger deposits = slightly higher APY)
+    let principalMultiplier = 1;
+    if (principal >= 10000) principalMultiplier = 1.1; // 10% bonus for 10k+ FOGO
+    else if (principal >= 5000) principalMultiplier = 1.05; // 5% bonus for 5k+ FOGO
+    else if (principal >= 1000) principalMultiplier = 1.02; // 2% bonus for 1k+ FOGO
+    
+    const finalAPY = baseAPY * timeMultiplier * principalMultiplier;
+    
+    console.log(`📊 APY Calculation: ${principal} FOGO for ${timeInDays} days`);
+    console.log(`   Base APY: ${(baseAPY * 100).toFixed(2)}%`);
+    console.log(`   Time Multiplier: ${timeMultiplier}x`);
+    console.log(`   Principal Multiplier: ${principalMultiplier}x`);
+    console.log(`   Final APY: ${(finalAPY * 100).toFixed(2)}%`);
+    
+    return finalAPY;
+  };
+
+  // Calculate compound interest with APY
+  const calculateCompoundInterest = (principal: number, apy: number, timeInDays: number): number => {
+    // Convert APY to daily rate
+    const dailyRate = apy / 365;
+    
+    // Calculate compound interest
+    const finalAmount = principal * Math.pow(1 + dailyRate, timeInDays);
+    const interest = finalAmount - principal;
+    
+    console.log(`💰 Interest Calculation: ${principal} FOGO at ${(apy * 100).toFixed(2)}% APY for ${timeInDays} days`);
+    console.log(`   Daily Rate: ${(dailyRate * 100).toFixed(4)}%`);
+    console.log(`   Final Amount: ${finalAmount.toFixed(6)} FOGO`);
+    console.log(`   Interest Earned: ${interest.toFixed(6)} FOGO`);
+    
+    return interest;
+  };
+
   const value: FogoSessionContextType = {
     isEstablished: !!sessionData,
     walletPublicKey,
@@ -240,6 +296,8 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
     sendTransaction,
     depositToCrucible,
     withdrawFromCrucible,
+    calculateAPY,
+    calculateCompoundInterest,
     refreshBalance,
     error,
   };
