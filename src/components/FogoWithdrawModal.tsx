@@ -72,26 +72,25 @@ export const FogoWithdrawModal: React.FC<FogoWithdrawModalProps> = ({ isOpen, on
 
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Use FOGO Sessions context for withdrawal
-      await fogoSession.withdrawFromCrucible(withdrawAmount);
+      // Use FOGO Sessions context for withdrawal (including APY rewards)
+      await fogoSession.withdrawFromCrucible(withdrawAmount, apyRewards);
       
       const mockSignature = 'sim_withdraw_fogo_' + Math.random().toString(36).substr(2, 9);
       console.log('FOGO withdrawal successful:', mockSignature);
 
-      // Update local state
-      const solCredited = totalWithdrawal * 0.5; // Convert FOGO to SOL for simulation
-      addToBalance('SOL', solCredited);
+      // Update local state - add total withdrawal (principal + APY rewards) to FOGO balance
+      addToBalance('FOGO', totalWithdrawal);
       subtractFromBalance('SPARK', withdrawAmount * 10);
       subtractFromBalance('HEAT', withdrawAmount * 5);
 
       // Update crucible
       updateCrucibleWithdraw(crucibleId, withdrawAmount);
 
-      // Record transaction
+      // Record transaction with APY rewards
       addTransaction({
         type: 'withdraw',
-        amount: withdrawAmount,
-        token: targetSymbol,
+        amount: totalWithdrawal, // Record total withdrawal amount (principal + APY)
+        token: 'FOGO',
         crucibleId,
         signature: mockSignature,
         apyRewards: apyRewards,

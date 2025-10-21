@@ -30,6 +30,7 @@ interface BalanceProviderProps {
 
 export const BalanceProvider: React.FC<BalanceProviderProps> = ({ children }) => {
   const [balances, setBalances] = useState<TokenBalance[]>([
+    { symbol: 'FOGO', amount: 10000, usdValue: 5000 }, // Start with 10,000 FOGO ($5,000)
     { symbol: 'SOL', amount: 0, usdValue: 0 }, // Start with 0 SOL
     { symbol: 'USDC', amount: 0, usdValue: 0 }, // Start with 0 USDC
     { symbol: 'ETH', amount: 0, usdValue: 0 }, // Start with 0 ETH
@@ -103,6 +104,7 @@ export const BalanceProvider: React.FC<BalanceProviderProps> = ({ children }) =>
 
   const getTokenPrice = (symbol: string): number => {
     const prices: { [key: string]: number } = {
+      'FOGO': 0.5,
       'SOL': 200,
       'USDC': 1,
       'ETH': 4000,

@@ -308,13 +308,14 @@ export function FogoSessionsProvider({
     return { success: true, transactionId: signature };
   };
 
-  const withdrawFromCrucible = async (amount: number) => {
-    console.log(`🎮 Simulating withdrawal of ${amount} FOGO from crucible`);
+  const withdrawFromCrucible = async (amount: number, apyRewards: number = 0) => {
+    const totalWithdrawal = amount + apyRewards;
+    console.log(`🎮 Simulating withdrawal of ${amount} FOGO + ${apyRewards} APY rewards = ${totalWithdrawal} total from crucible`);
     // Simulate a transaction
     const signature = await sendTransaction([]); // Send a mock transaction
     // Update simulated balance (withdrawal increases wallet balance)
-    setFogoBalance(prev => prev + amount);
-    console.log(`💰 Updated FOGO balance after withdrawal: ${fogoBalance + amount}`);
+    setFogoBalance(prev => prev + totalWithdrawal);
+    console.log(`💰 Updated FOGO balance after withdrawal: ${fogoBalance + totalWithdrawal}`);
     return { success: true, transactionId: signature };
   };
 
