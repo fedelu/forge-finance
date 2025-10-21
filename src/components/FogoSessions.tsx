@@ -75,10 +75,9 @@ export function FogoSessionsProvider({
   useEffect(() => {
     const syncWithFogoWallet = async () => {
       if (fogoWallet.connected && fogoWallet.publicKey && fogoClient) {
-        console.log('🔄 Syncing with Fogo wallet:', fogoWallet.publicKey);
+        console.log('🔄 Syncing with Fogo wallet:', fogoWallet.publicKey.toString());
         
-        const publicKey = new PublicKey(fogoWallet.publicKey);
-        setWalletPublicKey(publicKey);
+        setWalletPublicKey(fogoWallet.publicKey);
         
         // Set fake FOGO balance
         setFogoBalance(10000);
@@ -167,7 +166,7 @@ export function FogoSessionsProvider({
         throw new Error('Failed to get public key from wallet');
       }
       
-      const connectedPublicKey = new PublicKey(fogoWallet.publicKey);
+      const connectedPublicKey = fogoWallet.publicKey;
       setWalletPublicKey(connectedPublicKey);
       console.log('✅ Connected to wallet:', connectedPublicKey.toString());
       
@@ -228,7 +227,14 @@ export function FogoSessionsProvider({
         await endFogoSession(fogoClient.context, sessionToRevoke as any);
       }
       await fogoWallet.disconnect();
-      await clearStoredFogoSession(fogoWallet.publicKey || new PublicKey('11111111111111111111111111111111')); // Fallback public key
+      // Only clear stored session if we have a valid public key
+      if (fogoWallet.publicKey) {
+        try {
+          await clearStoredFogoSession(new PublicKey(fogoWallet.publicKey));
+        } catch (e) {
+          console.warn('Could not clear stored session:', e);
+        }
+      }
       console.log('✅ FOGO Sessions ended');
     } catch (error: any) {
       console.error('❌ Error ending FOGO Session:', error);

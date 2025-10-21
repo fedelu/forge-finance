@@ -22,7 +22,7 @@ export const FogoWithdrawModal: React.FC<FogoWithdrawModalProps> = ({ isOpen, on
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [withdrawMode, setWithdrawMode] = useState<'simulation' | 'real'>('simulation');
+  // Removed withdraw mode - always use simulation
 
   const crucible = getCrucible(crucibleId);
   const targetSymbol = useMemo(() => crucible?.symbol || 'FOGO', [crucible?.symbol]);
@@ -42,11 +42,6 @@ export const FogoWithdrawModal: React.FC<FogoWithdrawModalProps> = ({ isOpen, on
   }, [apyCalculation]);
 
   const handleWithdraw = async () => {
-    if (!publicKey) {
-      setError('Please connect your wallet first');
-      return;
-    }
-
     if (!amount || parseFloat(amount) <= 0) {
       setError('Please enter a valid amount');
       return;
@@ -55,7 +50,7 @@ export const FogoWithdrawModal: React.FC<FogoWithdrawModalProps> = ({ isOpen, on
     const withdrawAmount = parseFloat(amount);
     
     if (withdrawAmount > availableAmount) {
-      setError(`Maximum withdrawable amount is ${availableAmount.toFixed(6)} ${targetSymbol}`);
+      setError(`Maximum withdrawable amount is ${availableAmount.toFixed(2)} ${targetSymbol}`);
       return;
     }
 
@@ -67,101 +62,49 @@ export const FogoWithdrawModal: React.FC<FogoWithdrawModalProps> = ({ isOpen, on
     setError(null);
 
     try {
-      if (withdrawMode === 'simulation') {
-        // SIMULATION MODE - Use FOGO Sessions context
-        console.log('Simulating FOGO withdrawal using FOGO Sessions context...');
-        
-        // Check if FOGO Sessions is available
-        if (!fogoSession.withdrawFromCrucible) {
-          setError('FOGO Sessions not available. Please connect to FOGO Sessions first.');
-          return;
-        }
-
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // Use FOGO Sessions context for withdrawal
-        await fogoSession.withdrawFromCrucible(withdrawAmount);
-        
-        const mockSignature = 'sim_withdraw_fogo_' + Math.random().toString(36).substr(2, 9);
-        console.log('Simulated FOGO withdrawal successful:', mockSignature);
-
-        // Update local state (simulation)
-        const solCredited = totalWithdrawal * 0.5; // Convert FOGO to SOL for simulation
-        addToBalance('SOL', solCredited);
-        subtractFromBalance('SPARK', withdrawAmount * 10);
-        subtractFromBalance('HEAT', withdrawAmount * 5);
-
-        // Update crucible
-        updateCrucibleWithdraw(crucibleId, withdrawAmount);
-
-        // Record transaction
-        addTransaction({
-          type: 'withdraw',
-          amount: withdrawAmount,
-          token: targetSymbol,
-          crucibleId,
-          signature: mockSignature,
-          apyRewards: apyRewards,
-          totalWithdrawal: totalWithdrawal
-        });
-
-        alert(`🎮 SIMULATION WITHDRAWAL\n\n✅ Principal: ${withdrawAmount.toFixed(6)} FOGO\n✅ APY Rewards: ${apyRewards.toFixed(6)} FOGO\n✅ Total Withdrawn: ${totalWithdrawal.toFixed(6)} FOGO\n✅ Credited: ${solCredited.toFixed(6)} SOL\n\nTransaction: ${mockSignature}\n\nThis is a test - no real tokens were used!`);
-
-      } else {
-        // REAL MODE - Actual FOGO tokens
-        if (network !== 'fogo-testnet') {
-          switchNetwork('fogo-testnet');
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-
-        // Create real withdrawal transaction
-        const transaction = new Transaction();
-
-        // For now, we'll simulate the withdrawal instruction
-        // In production, this would call the actual crucible withdrawal instruction
-        transaction.add(
-          SystemProgram.transfer({
-            fromPubkey: new PublicKey('11111111111111111111111111111111'), // Mock crucible vault
-            toPubkey: publicKey,
-            lamports: Math.floor(totalWithdrawal * LAMPORTS_PER_SOL), // Convert total withdrawal to lamports
-          })
-        );
-
-        // Send transaction
-        const signature = await sendTransaction(transaction);
-        
-        console.log('Real FOGO withdrawal successful:', signature);
-
-        // Calculate total withdrawal (principal + APY rewards)
-        const solCredited = totalWithdrawal * 0.5; // Convert FOGO to SOL for balance tracking
-
-        // Update local state
-        addToBalance('SOL', solCredited);
-        subtractFromBalance('SPARK', withdrawAmount * 10);
-        subtractFromBalance('HEAT', withdrawAmount * 5);
-
-        // Update crucible
-        updateCrucibleWithdraw(crucibleId, withdrawAmount);
-
-        // Record transaction
-        addTransaction({
-          type: 'withdraw',
-          amount: withdrawAmount,
-          token: targetSymbol,
-          crucibleId,
-          signature,
-          apyRewards: apyRewards,
-          totalWithdrawal: totalWithdrawal
-        });
-
-        alert(`🔥 REAL FOGO WITHDRAWAL\n\n✅ Principal: ${withdrawAmount.toFixed(6)} FOGO\n✅ APY Rewards: ${apyRewards.toFixed(6)} FOGO\n✅ Total Withdrawn: ${totalWithdrawal.toFixed(6)} FOGO\n✅ Credited: ${solCredited.toFixed(6)} SOL\n\nTransaction: ${signature}\n\nView on Fogo Explorer: https://explorer.fogo.io/tx/${signature}`);
+      console.log('Processing FOGO withdrawal...');
+      
+      // Check if FOGO Sessions is available
+      if (!fogoSession.withdrawFromCrucible) {
+        setError('FOGO Sessions not available. Please connect to FOGO Sessions first.');
+        return;
       }
+
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Use FOGO Sessions context for withdrawal
+      await fogoSession.withdrawFromCrucible(withdrawAmount);
+      
+      const mockSignature = 'sim_withdraw_fogo_' + Math.random().toString(36).substr(2, 9);
+      console.log('FOGO withdrawal successful:', mockSignature);
+
+      // Update local state
+      const solCredited = totalWithdrawal * 0.5; // Convert FOGO to SOL for simulation
+      addToBalance('SOL', solCredited);
+      subtractFromBalance('SPARK', withdrawAmount * 10);
+      subtractFromBalance('HEAT', withdrawAmount * 5);
+
+      // Update crucible
+      updateCrucibleWithdraw(crucibleId, withdrawAmount);
+
+      // Record transaction
+      addTransaction({
+        type: 'withdraw',
+        amount: withdrawAmount,
+        token: targetSymbol,
+        crucibleId,
+        signature: mockSignature,
+        apyRewards: apyRewards,
+        totalWithdrawal: totalWithdrawal
+      });
+
+      alert(`✅ FOGO WITHDRAWAL\n\n✅ Principal: ${withdrawAmount.toFixed(2)} FOGO\n✅ APY Rewards: ${apyRewards.toFixed(2)} FOGO\n✅ Total Withdrawn: ${totalWithdrawal.toFixed(2)} FOGO\n✅ Credited: ${solCredited.toFixed(2)} SOL\n\nTransaction: ${mockSignature}`);
 
       setAmount('');
       onClose();
-    } catch (err) {
-      console.error('FOGO withdrawal failed:', err);
-      setError(err instanceof Error ? err.message : 'FOGO withdrawal failed');
+    } catch (err: any) {
+      console.error('Withdrawal error:', err);
+      setError(err.message || 'Withdrawal failed');
     } finally {
       setLoading(false);
     }
@@ -187,67 +130,24 @@ export const FogoWithdrawModal: React.FC<FogoWithdrawModalProps> = ({ isOpen, on
         
         <div className="flex-1 overflow-y-auto p-6">
           <div className="space-y-4">
-          {/* Withdraw Mode Selection */}
-          <div className="p-4 bg-gray-700 rounded-lg">
-            <h4 className="text-sm font-semibold text-white mb-3">Choose Withdraw Mode</h4>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => setWithdrawMode('simulation')}
-                className={`p-3 rounded-lg border-2 transition-colors ${
-                  withdrawMode === 'simulation'
-                    ? 'border-blue-500 bg-blue-900/30 text-blue-300'
-                    : 'border-gray-600 bg-gray-600/30 text-gray-300 hover:border-gray-500'
-                }`}
-              >
-                <div className="text-lg mb-1">🎮</div>
-                <div className="text-sm font-medium">Simulation</div>
-                <div className="text-xs opacity-75">Test platform</div>
-              </button>
-              <button
-                onClick={() => setWithdrawMode('real')}
-                className={`p-3 rounded-lg border-2 transition-colors ${
-                  withdrawMode === 'real'
-                    ? 'border-orange-500 bg-orange-900/30 text-orange-300'
-                    : 'border-gray-600 bg-gray-600/30 text-gray-300 hover:border-gray-500'
-                }`}
-              >
-                <div className="text-lg mb-1">🔥</div>
-                <div className="text-sm font-medium">Real FOGO</div>
-                <div className="text-xs opacity-75">Actual tokens</div>
-              </button>
+          {/* FOGO Token Info */}
+          <div className="p-3 bg-purple-900/30 rounded-lg">
+            <h4 className="text-sm font-semibold text-purple-300 mb-2">FOGO Token Withdrawal</h4>
+            <div className="text-xs text-purple-200 space-y-1">
+              <div>• Withdraw your FOGO tokens from crucible</div>
+              <div>• Receive APY rewards based on time in crucible</div>
+              <div>• Earned SPARK and HEAT tokens are returned</div>
+              <div>• APY: {((crucible?.apr || 0.15) * 100).toFixed(2)}%</div>
             </div>
           </div>
-
-          {/* Mode-specific Information */}
-          {withdrawMode === 'simulation' ? (
-            <div className="p-3 bg-blue-900/30 border border-blue-600 rounded-lg">
-              <h4 className="text-sm font-semibold text-blue-300 mb-2">🎮 Simulation Mode</h4>
-              <div className="text-xs text-blue-200 space-y-1">
-                <div>• No real FOGO tokens required</div>
-                <div>• Perfect for testing withdrawals</div>
-                <div>• APY calculations work normally</div>
-                <div>• Safe to experiment with</div>
-              </div>
-            </div>
-          ) : (
-            <div className="p-3 bg-orange-900/30 border border-orange-600 rounded-lg">
-              <h4 className="text-sm font-semibold text-orange-300 mb-2">🔥 Real FOGO Mode</h4>
-              <div className="text-xs text-orange-200 space-y-1">
-                <div>• Withdraws your actual FOGO tokens</div>
-                <div>• Requires Fogo testnet connection</div>
-                <div>• Real transactions on blockchain</div>
-                <div>• Receive actual APY rewards</div>
-              </div>
-            </div>
-          )}
 
           {/* Available Balance */}
           <div className="p-3 bg-gray-700 rounded-lg">
             <div className="text-sm text-gray-300">
-              Available: {availableAmount.toFixed(6)} {targetSymbol}
+              Available: {availableAmount.toFixed(2)} {targetSymbol}
             </div>
             <div className="text-xs text-gray-400">
-              APY: {(crucible?.apr || 0.15) * 100}% | Time in crucible: {timeInCrucible} days
+              APY: {((crucible?.apr || 0.15) * 100).toFixed(2)}% | Time in crucible: {timeInCrucible} days
             </div>
           </div>
 
@@ -320,7 +220,7 @@ export const FogoWithdrawModal: React.FC<FogoWithdrawModalProps> = ({ isOpen, on
               disabled={loading || !amount || parseFloat(amount) <= 0}
               className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
             >
-              {loading ? 'Withdrawing...' : withdrawMode === 'simulation' ? 'Simulate Withdrawal' : 'Withdraw Real FOGO'}
+              {loading ? 'Withdrawing...' : 'Withdraw FOGO'}
             </button>
           </div>
         </div>
