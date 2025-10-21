@@ -129,7 +129,7 @@ export default function GovernancePanel({ className = '', onVote, isConnected = 
           </div>
           <button 
             onClick={() => setShowProposalCreationModal(true)}
-            className="bg-gradient-to-r from-fogo-primary to-fogo-secondary hover:from-fogo-primary-dark hover:to-fogo-secondary-dark text-white px-6 py-3 rounded-2xl font-medium transition-all duration-200 flex items-center space-x-2 shadow-fogo hover:shadow-flame"
+            className="bg-fogo-gray-700 hover:bg-fogo-gray-600 text-fogo-gray-300 hover:text-white px-6 py-3 rounded-2xl font-medium transition-all duration-200 flex items-center space-x-2 border border-fogo-gray-600 hover:border-fogo-gray-500"
           >
             <PlusIcon className="h-5 w-5" />
             <span>Create Proposal</span>
