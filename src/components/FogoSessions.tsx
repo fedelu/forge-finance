@@ -226,11 +226,13 @@ export function FogoSessionsProvider({
         };
         await endFogoSession(fogoClient.context, sessionToRevoke as any);
       }
+      // Store public key before disconnecting
+      const currentPublicKey = fogoWallet.publicKey;
       await fogoWallet.disconnect();
-      // Only clear stored session if we have a valid public key
-      if (fogoWallet.publicKey) {
+      // Only clear stored session if we had a valid public key
+      if (currentPublicKey) {
         try {
-          await clearStoredFogoSession(new PublicKey(fogoWallet.publicKey));
+          await clearStoredFogoSession(new PublicKey(currentPublicKey));
         } catch (e) {
           console.warn('Could not clear stored session:', e);
         }
@@ -244,34 +246,49 @@ export function FogoSessionsProvider({
 
   // Send transaction function
   const sendTransaction = async (instructions: any[]): Promise<string> => {
-    if (!sessionData || !fogoClient) {
+    if (!sessionData) {
       setError('Fogo Session not established for transaction.');
       throw new Error('Fogo Session not established for transaction.');
     }
     try {
-      // Reconstruct session object for sendFogoTransaction
-      const sessionToSend = {
-        sessionPublicKey: new PublicKey(sessionData.sessionId),
-        sessionKey: sessionData.sessionKey,
-        walletPublicKey: new PublicKey(sessionData.walletPublicKey),
-        payer: new PublicKey(sessionData.walletPublicKey),
-        sendTransaction: sessionData.sendTransaction,
-        sessionInfo: {
-          expiresAt: sessionData.expiresAt,
-          unlimited: true,
-          isDemo: true,
-        }
-      };
-      const result = await sendFogoTransaction(sessionToSend as any, instructions);
-      if (result.type === 0) { // Success
-        console.log('✅ Transaction successful:', result.signature);
-        // Refresh balances after a successful transaction
-        if (walletPublicKey) {
-          await refreshBalance();
-        }
+      // In simulation mode, use the mock sendTransaction from sessionData
+      if (sessionData.sendTransaction) {
+        console.log('🔥 Using simulation mode for transaction');
+        const result = await sessionData.sendTransaction(instructions);
+        console.log('✅ Simulated transaction successful:', result.signature);
         return result.signature;
+      } else if (fogoClient) {
+        // Real Fogo transaction (if fogoClient is available)
+        const sessionToSend = {
+          sessionPublicKey: new PublicKey(sessionData.sessionId),
+          sessionKey: sessionData.sessionKey,
+          walletPublicKey: new PublicKey(sessionData.walletPublicKey),
+          payer: new PublicKey(sessionData.walletPublicKey),
+          sendTransaction: sessionData.sendTransaction,
+          sessionInfo: {
+            expiresAt: sessionData.expiresAt,
+            unlimited: true,
+            isDemo: true,
+          }
+        };
+        const result = await sendFogoTransaction(sessionToSend as any, instructions);
+        if (result.type === 0) { // Success
+          console.log('✅ Transaction successful:', result.signature);
+          // Refresh balances after a successful transaction
+          if (walletPublicKey) {
+            await refreshBalance();
+          }
+          return result.signature;
+        } else {
+          throw new Error(result.error?.message || 'Transaction failed');
+        }
       } else {
-        throw new Error(result.error?.message || 'Transaction failed');
+        // Fallback simulation
+        console.log('🔥 Using fallback simulation for transaction');
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+        const mockSignature = 'fogo_sim_tx_' + Date.now();
+        console.log('✅ Fallback simulated transaction successful:', mockSignature);
+        return mockSignature;
       }
     } catch (error: any) {
       console.error('❌ Error sending transaction:', error);
@@ -285,8 +302,9 @@ export function FogoSessionsProvider({
     console.log(`🎮 Simulating deposit of ${amount} FOGO to crucible`);
     // Simulate a transaction
     const signature = await sendTransaction([]); // Send a mock transaction
-    // Update simulated balance
-    setFogoBalance(prev => prev + amount);
+    // Update simulated balance (deposit reduces wallet balance)
+    setFogoBalance(prev => prev - amount);
+    console.log(`💰 Updated FOGO balance after deposit: ${fogoBalance - amount}`);
     return { success: true, transactionId: signature };
   };
 
@@ -294,8 +312,9 @@ export function FogoSessionsProvider({
     console.log(`🎮 Simulating withdrawal of ${amount} FOGO from crucible`);
     // Simulate a transaction
     const signature = await sendTransaction([]); // Send a mock transaction
-    // Update simulated balance
-    setFogoBalance(prev => prev - amount);
+    // Update simulated balance (withdrawal increases wallet balance)
+    setFogoBalance(prev => prev + amount);
+    console.log(`💰 Updated FOGO balance after withdrawal: ${fogoBalance + amount}`);
     return { success: true, transactionId: signature };
   };
 
