@@ -20,9 +20,13 @@ interface FogoSessionContextType {
   isEstablished: boolean;
   walletPublicKey: PublicKey | null;
   sessionData: OfficialFogoSessionResponse | null;
+  fogoBalance: number;
   connect: () => Promise<void>;
   endSession: () => Promise<void>;
   sendTransaction: (instructions: any[]) => Promise<string>;
+  depositToCrucible: (crucibleId: string, amount: number) => Promise<{ success: boolean; transactionId: string }>;
+  withdrawFromCrucible: (crucibleId: string, amount: number) => Promise<{ success: boolean; transactionId: string }>;
+  refreshBalance: () => Promise<void>;
   error: string | null;
 }
 
@@ -32,6 +36,7 @@ const FogoSessionContext = createContext<FogoSessionContextType | null>(null);
 export function FogoSessionsProvider({ children }: { children: React.ReactNode }) {
   const [walletPublicKey, setWalletPublicKey] = useState<PublicKey | null>(null);
   const [sessionData, setSessionData] = useState<OfficialFogoSessionResponse | null>(null);
+  const [fogoBalance, setFogoBalance] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
   const [phantomProvider, setPhantomProvider] = useState<any>(null);
 
@@ -82,6 +87,15 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
       
       setWalletPublicKey(walletPublicKey);
       setSessionData(sessionData);
+      
+      // Load FOGO balance for the connected wallet
+      const storedBalance = localStorage.getItem(`fogo_balance_${walletPublicKey.toString()}`);
+      if (storedBalance) {
+        setFogoBalance(parseFloat(storedBalance));
+      } else {
+        setFogoBalance(1000); // New wallet gets 1000 FOGO tokens
+        localStorage.setItem(`fogo_balance_${walletPublicKey.toString()}`, '1000');
+      }
       
       // Trigger wallet connection event to sync with main wallet context
       window.dispatchEvent(new CustomEvent('walletConnected', { 
@@ -160,13 +174,73 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
     }
   };
 
+  // Function to simulate depositing FOGO tokens to a crucible
+  const depositToCrucible = async (crucibleId: string, amount: number) => {
+    if (amount > fogoBalance) {
+      throw new Error('Insufficient FOGO balance');
+    }
+    
+    console.log(`🏛️ Simulating deposit of ${amount} FOGO to crucible ${crucibleId}`);
+    
+    // Simulate transaction processing
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Update balance
+    const newBalance = fogoBalance - amount;
+    setFogoBalance(newBalance);
+    
+    // Store in localStorage for persistence
+    if (walletPublicKey) {
+      localStorage.setItem(`fogo_balance_${walletPublicKey.toString()}`, newBalance.toString());
+    }
+    
+    console.log(`✅ Successfully deposited ${amount} FOGO to crucible ${crucibleId} (simulation)`);
+    return { success: true, transactionId: `sim_${Date.now()}` };
+  };
+
+  // Function to simulate withdrawing FOGO tokens from a crucible
+  const withdrawFromCrucible = async (crucibleId: string, amount: number) => {
+    console.log(`🏛️ Simulating withdrawal of ${amount} FOGO from crucible ${crucibleId}`);
+    
+    // Simulate transaction processing
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Update balance
+    const newBalance = fogoBalance + amount;
+    setFogoBalance(newBalance);
+    
+    // Store in localStorage for persistence
+    if (walletPublicKey) {
+      localStorage.setItem(`fogo_balance_${walletPublicKey.toString()}`, newBalance.toString());
+    }
+    
+    console.log(`✅ Successfully withdrew ${amount} FOGO from crucible ${crucibleId} (simulation)`);
+    return { success: true, transactionId: `sim_${Date.now()}` };
+  };
+
+  const refreshBalance = async () => {
+    if (walletPublicKey) {
+      const storedBalance = localStorage.getItem(`fogo_balance_${walletPublicKey.toString()}`);
+      if (storedBalance) {
+        setFogoBalance(parseFloat(storedBalance));
+      } else {
+        setFogoBalance(1000); // Default balance for new wallets
+        localStorage.setItem(`fogo_balance_${walletPublicKey.toString()}`, '1000');
+      }
+    }
+  };
+
   const value: FogoSessionContextType = {
     isEstablished: !!sessionData,
     walletPublicKey,
     sessionData,
+    fogoBalance,
     connect,
     endSession,
     sendTransaction,
+    depositToCrucible,
+    withdrawFromCrucible,
+    refreshBalance,
     error,
   };
 
@@ -188,7 +262,7 @@ export function useSession() {
 
 // FOGO Sessions Button with Pyron Flow
 export function FogoSessionsButton() {
-  const { isEstablished, connect, endSession, walletPublicKey, sessionData, error } = useSession();
+  const { isEstablished, connect, endSession, walletPublicKey, sessionData, fogoBalance, refreshBalance, error } = useSession();
   const [isConnecting, setIsConnecting] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [activeTab, setActiveTab] = useState<'tokens' | 'session'>('tokens');
@@ -197,49 +271,8 @@ export function FogoSessionsButton() {
   const [flowStep, setFlowStep] = useState<'login' | 'wallet' | 'session-limits' | 'phantom' | 'complete'>('login');
   const [sessionDuration, setSessionDuration] = useState('One Week');
   const [limitTokenAccess, setLimitTokenAccess] = useState(false);
-  const [fogoBalance, setFogoBalance] = useState(0);
   const [recipientAddress, setRecipientAddress] = useState('');
   const [sendAmount, setSendAmount] = useState('');
-
-  const fetchFogoBalance = async (walletAddress: string) => {
-    try {
-      console.log('💰 Fetching FOGO balance for wallet:', walletAddress);
-      
-      // In a real implementation, this would fetch from FOGO API
-      // For now, we'll simulate fetching real balance based on wallet
-      const response = await fetch(`https://api.fogo.testnet/balance/${walletAddress}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      }).catch(() => {
-        // Fallback to simulated balance if API is not available
-        console.log('📡 FOGO API not available, using simulated balance');
-        return null;
-      });
-
-      if (response && response.ok) {
-        const data = await response.json();
-        setFogoBalance(data.balance || 0);
-        console.log('✅ Real FOGO balance fetched:', data.balance);
-      } else {
-        // Simulate realistic balance based on wallet address
-        const addressHash = walletAddress.split('').reduce((a, b) => {
-          a = ((a << 5) - a) + b.charCodeAt(0);
-          return a & a;
-        }, 0);
-        const baseBalance = 1000;
-        const variation = Math.abs(addressHash) % 5000;
-        const simulatedBalance = baseBalance + variation;
-        setFogoBalance(simulatedBalance);
-        console.log('💰 Simulated FOGO balance:', simulatedBalance);
-      }
-    } catch (error) {
-      console.error('❌ Failed to fetch FOGO balance:', error);
-      // Set a default balance if fetching fails
-      setFogoBalance(1000);
-    }
-  };
 
   const handleConnect = async () => {
     console.log('🔥 FOGO Sessions button clicked!');
@@ -261,22 +294,8 @@ export function FogoSessionsButton() {
     console.log('Connecting to Phantom...');
     setIsConnecting(true);
     try {
-      // Connect to Phantom wallet first
-      if (!window.solana?.isPhantom) {
-        throw new Error('Phantom wallet not found. Please install Phantom wallet.');
-      }
-
-      // Request connection to Phantom (this will show wallet selection if multiple accounts)
-      const response = await window.solana.connect();
-      const publicKey = response.publicKey;
-      
-      console.log('✅ Connected to Phantom wallet:', publicKey.toString());
-      
-      // Now create FOGO session with the connected wallet
+      // Connect to Phantom wallet and create FOGO session
       await connect();
-      
-      // Fetch FOGO balance for the connected wallet
-      await fetchFogoBalance(publicKey.toString());
       
       setFlowStep('complete');
     } catch (error: any) {
@@ -304,24 +323,25 @@ export function FogoSessionsButton() {
     }
     
     try {
-      // In a real implementation, this would send actual transaction via FOGO Sessions
-      console.log(`💸 Sending ${amount} FOGO to ${recipientAddress}`);
+      // Simulate sending FOGO tokens (no real transaction)
+      console.log(`💸 Simulating send of ${amount} FOGO to ${recipientAddress}`);
       
       // Simulate transaction processing
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Update balance
-      setFogoBalance(prev => prev - amount);
+      // Update balance using context function
+      const newBalance = fogoBalance - amount;
+      if (walletPublicKey) {
+        localStorage.setItem(`fogo_balance_${walletPublicKey.toString()}`, newBalance.toString());
+        // Trigger a refresh to update the context
+        window.location.reload();
+      }
+      
       setRecipientAddress('');
       setSendAmount('');
       setCurrentScreen('main');
       
-      // Refresh balance from API
-      if (walletPublicKey) {
-        await fetchFogoBalance(walletPublicKey.toString());
-      }
-      
-      alert(`✅ Successfully sent ${amount} FOGO to ${recipientAddress}`);
+      alert(`✅ Successfully sent ${amount} FOGO to ${recipientAddress} (simulation)`);
     } catch (error) {
       console.error('❌ Failed to send tokens:', error);
       alert('Failed to send tokens. Please try again.');
@@ -333,11 +353,7 @@ export function FogoSessionsButton() {
     alert('Share your wallet address to receive FOGO tokens');
   };
 
-  const refreshBalance = async () => {
-    if (walletPublicKey) {
-      await fetchFogoBalance(walletPublicKey.toString());
-    }
-  };
+
 
   const handleDisconnect = async () => {
     setIsDisconnecting(true);
@@ -345,7 +361,6 @@ export function FogoSessionsButton() {
       await endSession();
       setFlowStep('login');
       setIsOpen(false);
-      setFogoBalance(0); // Reset balance
     } catch (error) {
       console.error('Disconnection failed:', error);
     } finally {
@@ -353,42 +368,6 @@ export function FogoSessionsButton() {
     }
   };
 
-  const handleSwitchWallet = async () => {
-    console.log('Switching wallet...');
-    setIsConnecting(true);
-    try {
-      // Disconnect current session
-      await endSession();
-      
-      // Connect to a different Phantom wallet
-      if (!window.solana?.isPhantom) {
-        throw new Error('Phantom wallet not found. Please install Phantom wallet.');
-      }
-
-      // Request connection to Phantom (this will show wallet selection)
-      const response = await window.solana.connect();
-      const publicKey = response.publicKey;
-      
-      console.log('✅ Switched to Phantom wallet:', publicKey.toString());
-      
-      // Create new FOGO session with the new wallet
-      await connect();
-      
-      // Fetch FOGO balance for the new wallet
-      await fetchFogoBalance(publicKey.toString());
-      
-      setFlowStep('complete');
-    } catch (error: any) {
-      console.error('❌ Failed to switch wallet:', error);
-      if (error.code === 4001) {
-        alert('Wallet switch cancelled by user.');
-      } else {
-        alert('Failed to switch wallet. Please try again.');
-      }
-    } finally {
-      setIsConnecting(false);
-    }
-  };
 
   // Render different flow steps
   const renderFlowStep = () => {
@@ -583,27 +562,15 @@ export function FogoSessionsButton() {
                       <p className="text-orange-100 text-sm">Connected</p>
                     </div>
                   </div>
-                  <div className="flex space-x-2">
-                    <button 
-                      onClick={copyToClipboard} 
-                      className="p-2 hover:bg-white/20 rounded-full transition-colors"
-                      title="Copy address"
-                    >
-                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                    </button>
-                    <button 
-                      onClick={handleSwitchWallet}
-                      disabled={isConnecting}
-                      className="p-2 hover:bg-white/20 rounded-full transition-colors disabled:opacity-50"
-                      title="Switch wallet"
-                    >
-                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                      </svg>
-                    </button>
-                  </div>
+                  <button 
+                    onClick={copyToClipboard} 
+                    className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                    title="Copy address"
+                  >
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </button>
                 </div>
                 <div className="bg-white/10 rounded-lg p-3">
                   <p className="text-xs text-orange-100 mb-1">Wallet Address</p>
