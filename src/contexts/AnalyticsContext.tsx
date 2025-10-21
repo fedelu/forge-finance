@@ -23,7 +23,7 @@ interface AnalyticsData {
   averageWithdrawal: number; // USD
   transactions: Transaction[];
   dailyVolume: { [key: string]: number }; // USD per day
-  tokenDistribution: { [key: string]: number }; // token amounts
+  tokenDistribution: { [key: string]: number }; // actual token amounts (not USD)
   totalAPYRewards: number; // Total APY rewards earned (USD)
   totalAPYWithdrawn: number; // Total APY rewards withdrawn (USD)
 }
@@ -117,11 +117,11 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({ children }
         dailyVolume[date] = (dailyVolume[date] || 0) + signed;
       });
 
-      // Calculate token distribution in USD (DEPOSITS - WITHDRAWS) by token
+      // Calculate token distribution in actual token amounts (DEPOSITS - WITHDRAWS) by token
       const tokenDistribution: { [key: string]: number } = {};
       newTransactions.forEach(tx => {
         const key = tx.distToken || tx.token;
-        const signed = (tx.type === 'deposit' ? 1 : -1) * toUsd(tx);
+        const signed = (tx.type === 'deposit' ? 1 : -1) * tx.amount;
         tokenDistribution[key] = (tokenDistribution[key] || 0) + signed;
       });
 
@@ -158,11 +158,11 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({ children }
   }, [analytics.dailyVolume]);
 
   const getTokenStats = useCallback(() => {
-    const totalUsd = Object.values(analytics.tokenDistribution).reduce((s, v) => s + v, 0);
+    const totalTokens = Object.values(analytics.tokenDistribution).reduce((s, v) => s + Math.abs(v), 0);
     return Object.entries(analytics.tokenDistribution).map(([token, amount]) => ({
       token,
-      amount,
-      percentage: totalUsd > 0 ? (amount / totalUsd) * 100 : 0
+      amount: Math.abs(amount), // Show absolute value for display
+      percentage: totalTokens > 0 ? (Math.abs(amount) / totalTokens) * 100 : 0
     }));
   }, [analytics.tokenDistribution]);
 
