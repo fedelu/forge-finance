@@ -236,7 +236,7 @@ export default function GovernancePanel({ className = '', onVote, isConnected = 
                   </button>
                   <button
                     onClick={() => handleVote(proposal.id, 'against')}
-                    className="flex-1 bg-fogo-gray-700 hover:bg-fogo-gray-600 text-white px-4 py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center space-x-2 border border-fogo-gray-600 hover:border-fogo-gray-500"
+                    className="flex-1 bg-fogo-primary hover:bg-fogo-primary-dark text-white px-4 py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center space-x-2 shadow-fogo hover:shadow-flame"
                   >
                     <XCircleIcon className="h-5 w-5" />
                     <span>Vote Against</span>

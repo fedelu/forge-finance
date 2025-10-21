@@ -17,6 +17,22 @@ export const AnalyticsDashboard: React.FC = () => {
   const recentTransactions = getRecentTransactions(5);
   const [realTimeAPYEarnings, setRealTimeAPYEarnings] = useState(0);
 
+  // Calculate 24-hour volume
+  const get24HourVolume = () => {
+    const now = Date.now();
+    const twentyFourHoursAgo = now - (24 * 60 * 60 * 1000);
+    
+    return analytics.transactions
+      .filter(tx => tx.timestamp >= twentyFourHoursAgo)
+      .reduce((total, tx) => {
+        const price = (token: string) => ({ SOL: 200, USDC: 1, ETH: 4000, BTC: 110000, FOGO: 0.5 } as any)[token] || 1;
+        const usdValue = tx.amount * price(tx.token);
+        return tx.type === 'deposit' ? total + usdValue : total - usdValue;
+      }, 0);
+  };
+
+  const volume24h = get24HourVolume();
+
   // Update APY earnings every minute for real-time display
   useEffect(() => {
     const updateAPYEarnings = () => {

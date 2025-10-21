@@ -160,30 +160,6 @@ export default function CrucibleManager({ className = '', onDeposit, onWithdraw,
         ))}
       </div>
 
-      {/* Overall Stats */}
-      <div className="bg-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700">
-        <h3 className="text-xl font-semibold text-white mb-6">Your Overall Crucible Stats</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center p-4 bg-fogo-gray-800 rounded-xl">
-            <p className="text-fogo-gray-400 text-sm mb-2">Total Deposited</p>
-            <p className="text-2xl font-bold text-white">
-              {formatCurrency(crucibles.reduce((sum, c) => sum + c.userDeposit, 0))}
-            </p>
-          </div>
-          <div className="text-center p-4 bg-fogo-gray-800 rounded-xl">
-            <p className="text-fogo-gray-400 text-sm mb-2">Total Shares</p>
-            <p className="text-2xl font-bold text-white">
-              {crucibles.reduce((sum, c) => sum + c.userShares, 0).toLocaleString()}
-            </p>
-          </div>
-          <div className="text-center p-4 bg-fogo-gray-800 rounded-xl">
-            <p className="text-fogo-gray-400 text-sm mb-2">Estimated APY</p>
-            <p className="text-2xl font-bold text-fogo-primary">
-              {formatPercentage(crucibles.reduce((sum, c) => sum + c.apr, 0) / crucibles.length)}
-            </p>
-          </div>
-        </div>
-      </div>
 
              {/* Modals */}
              {selectedCrucible && (
