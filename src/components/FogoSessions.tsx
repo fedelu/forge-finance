@@ -43,20 +43,23 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
   }, []);
 
 
-  const connect = async () => {
+  const connect = async (publicKey?: PublicKey) => {
     try {
       console.log('🔥 Starting FOGO Sessions connection with Phantom...');
       setError(null);
       
-      if (!phantomProvider) {
-        throw new Error('Phantom wallet not found. Please install Phantom wallet.');
-      }
-
-      // Connect to Phantom wallet
-      const response = await phantomProvider.connect();
-      const publicKey = response.publicKey;
+      let walletPublicKey = publicKey;
       
-      console.log('✅ Connected to Phantom wallet:', publicKey.toString());
+      // If no public key provided, connect to Phantom
+      if (!walletPublicKey) {
+        if (!phantomProvider) {
+          throw new Error('Phantom wallet not found. Please install Phantom wallet.');
+        }
+        
+        const response = await phantomProvider.connect();
+        walletPublicKey = response.publicKey;
+        console.log('✅ Connected to Phantom wallet:', walletPublicKey.toString());
+      }
       
       // Create FOGO session with Phantom public key
       const config: OfficialFogoSessionConfig = {
@@ -72,23 +75,23 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
         success: true,
         sessionId: 'fogo_' + Math.random().toString(36).substr(2, 9),
         sessionKey: 'session_' + Math.random().toString(36).substr(2, 16),
-        userPublicKey: publicKey.toString(),
+        userPublicKey: walletPublicKey.toString(),
         expiresAt: (Date.now() + (24 * 60 * 60 * 1000)).toString(), // 24 hours
         message: 'FOGO Session established successfully with Phantom wallet'
       };
       
-      setWalletPublicKey(publicKey);
+      setWalletPublicKey(walletPublicKey);
       setSessionData(sessionData);
       
       // Trigger wallet connection event to sync with main wallet context
       window.dispatchEvent(new CustomEvent('walletConnected', { 
-        detail: { publicKey: publicKey.toString() } 
+        detail: { publicKey: walletPublicKey.toString() } 
       }));
       
       console.log('🔥 FOGO Session established successfully!');
       console.log('Session ID:', sessionData.sessionId);
       console.log('Session Key:', sessionData.sessionKey);
-      console.log('Phantom Public Key:', publicKey.toString());
+      console.log('Phantom Public Key:', walletPublicKey.toString());
       console.log('Expires:', new Date(sessionData.expiresAt).toLocaleString());
       
     } catch (error: any) {
@@ -258,15 +261,31 @@ export function FogoSessionsButton() {
     console.log('Connecting to Phantom...');
     setIsConnecting(true);
     try {
-      await connect();
-      // Fetch FOGO balance after successful connection
-      if (walletPublicKey) {
-        await fetchFogoBalance(walletPublicKey.toString());
+      // Connect to Phantom wallet first
+      if (!window.solana?.isPhantom) {
+        throw new Error('Phantom wallet not found. Please install Phantom wallet.');
       }
+
+      // Request connection to Phantom (this will show wallet selection if multiple accounts)
+      const response = await window.solana.connect();
+      const publicKey = response.publicKey;
+      
+      console.log('✅ Connected to Phantom wallet:', publicKey.toString());
+      
+      // Now create FOGO session with the connected wallet
+      await connect();
+      
+      // Fetch FOGO balance for the connected wallet
+      await fetchFogoBalance(publicKey.toString());
+      
       setFlowStep('complete');
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Phantom connection failed:', error);
-      alert('Failed to connect to Phantom wallet. Please make sure Phantom is installed and unlocked.');
+      if (error.code === 4001) {
+        alert('Connection rejected by user. Please try again.');
+      } else {
+        alert('Failed to connect to Phantom wallet. Please make sure Phantom is installed and unlocked.');
+      }
     } finally {
       setIsConnecting(false);
     }
@@ -326,10 +345,48 @@ export function FogoSessionsButton() {
       await endSession();
       setFlowStep('login');
       setIsOpen(false);
+      setFogoBalance(0); // Reset balance
     } catch (error) {
       console.error('Disconnection failed:', error);
     } finally {
       setIsDisconnecting(false);
+    }
+  };
+
+  const handleSwitchWallet = async () => {
+    console.log('Switching wallet...');
+    setIsConnecting(true);
+    try {
+      // Disconnect current session
+      await endSession();
+      
+      // Connect to a different Phantom wallet
+      if (!window.solana?.isPhantom) {
+        throw new Error('Phantom wallet not found. Please install Phantom wallet.');
+      }
+
+      // Request connection to Phantom (this will show wallet selection)
+      const response = await window.solana.connect();
+      const publicKey = response.publicKey;
+      
+      console.log('✅ Switched to Phantom wallet:', publicKey.toString());
+      
+      // Create new FOGO session with the new wallet
+      await connect();
+      
+      // Fetch FOGO balance for the new wallet
+      await fetchFogoBalance(publicKey.toString());
+      
+      setFlowStep('complete');
+    } catch (error: any) {
+      console.error('❌ Failed to switch wallet:', error);
+      if (error.code === 4001) {
+        alert('Wallet switch cancelled by user.');
+      } else {
+        alert('Failed to switch wallet. Please try again.');
+      }
+    } finally {
+      setIsConnecting(false);
     }
   };
 
@@ -526,15 +583,27 @@ export function FogoSessionsButton() {
                       <p className="text-orange-100 text-sm">Connected</p>
                     </div>
                   </div>
-                  <button 
-                    onClick={copyToClipboard} 
-                    className="p-2 hover:bg-white/20 rounded-full transition-colors"
-                    title="Copy address"
-                  >
-                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                  </button>
+                  <div className="flex space-x-2">
+                    <button 
+                      onClick={copyToClipboard} 
+                      className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                      title="Copy address"
+                    >
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    </button>
+                    <button 
+                      onClick={handleSwitchWallet}
+                      disabled={isConnecting}
+                      className="p-2 hover:bg-white/20 rounded-full transition-colors disabled:opacity-50"
+                      title="Switch wallet"
+                    >
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
                 <div className="bg-white/10 rounded-lg p-3">
                   <p className="text-xs text-orange-100 mb-1">Wallet Address</p>
