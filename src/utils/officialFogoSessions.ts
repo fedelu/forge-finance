@@ -30,7 +30,7 @@ export interface OfficialFogoSessionResponse {
   sessionId: string;
   sessionKey: string;
   expiresAt: string;
-  userPublicKey: string;
+  walletPublicKey: string;
   message: string;
 }
 
@@ -174,7 +174,7 @@ tokens: this app may spend any amount of any token`;
       sessionId: apiResult.session_id || sessionKey,
       sessionKey: sessionKey,
       expiresAt: new Date(expires).toISOString(),
-      userPublicKey: publicKey.toString(),
+      walletPublicKey: publicKey.toString(),
       message: 'FOGO Session created successfully with Direct API'
     };
     

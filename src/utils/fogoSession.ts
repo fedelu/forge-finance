@@ -28,7 +28,7 @@ export interface FogoSessionIntent {
 
 export interface FogoSessionPayload {
   sessionKey: string;
-  userPublicKey: string;
+  walletPublicKey: string;
   intentMessage: string;
   signature: string; // base64 encoded
 }
@@ -296,7 +296,7 @@ export async function fetchFogoSession(sessionPayload: FogoSessionPayload): Prom
   
   const requestBody = {
     session_key: sessionPayload.sessionKey,
-    user_public_key: sessionPayload.userPublicKey,
+    user_public_key: sessionPayload.walletPublicKey,
     intent_message: sessionPayload.intentMessage,
     signature: sessionPayload.signature,
     timestamp: new Date().toISOString()

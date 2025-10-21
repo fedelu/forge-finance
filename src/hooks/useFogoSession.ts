@@ -72,8 +72,8 @@ export function useFogoSession(config: FogoSessionConfig = {}): FogoSessionState
       sessionRef.current = newSession;
       
       // Extract wallet public key if available
-      if (newSession.userPublicKey) {
-        setWalletPublicKey(new PublicKey(newSession.userPublicKey));
+      if (newSession.walletPublicKey) {
+        setWalletPublicKey(new PublicKey(newSession.walletPublicKey));
       }
       
       // Store in localStorage for persistence
@@ -159,8 +159,8 @@ export function useFogoSession(config: FogoSessionConfig = {}): FogoSessionState
           setIsActive(true);
           sessionRef.current = parsedSession;
           
-          if (parsedSession.userPublicKey) {
-            setWalletPublicKey(new PublicKey(parsedSession.userPublicKey));
+          if (parsedSession.walletPublicKey) {
+            setWalletPublicKey(new PublicKey(parsedSession.walletPublicKey));
           }
           
           console.log('✅ FOGO Session restored from localStorage');
