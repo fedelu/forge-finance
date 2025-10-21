@@ -25,8 +25,8 @@ export const DEMO_CONFIG = {
     sol: 2.5,
   },
   
-  // Demo Session Wallet Address (mock)
-  DEMO_SESSION_WALLET: 'SessionWallet1111111111111111111111111111111111111',
+  // Demo Session Wallet Address (mock) - using a valid base58 public key
+  DEMO_SESSION_WALLET: '11111111111111111111111111111112',
   
   // Demo Transaction IDs (mock)
   DEMO_TRANSACTION_IDS: [

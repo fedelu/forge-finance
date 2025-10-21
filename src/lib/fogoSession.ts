@@ -30,9 +30,17 @@ export function createFogoSessionClient(opts?: {
     throw new Error("Fogo Sessions: RPC URL and Network must be configured.");
   }
 
+  // Disable paymaster for localhost and development
+  const isLocalhost = typeof window !== 'undefined' && 
+    (window.location.hostname === 'localhost' || 
+     window.location.hostname === '127.0.0.1' ||
+     window.location.hostname.includes('localhost'));
+  
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  
   // Temporarily disable paymaster until domain is registered with Fogo team
   // TODO: Re-enable paymaster once domain is registered
-  const finalPaymasterUrl = undefined;
+  const finalPaymasterUrl = (isLocalhost || isDevelopment) ? undefined : paymasterUrl;
 
   console.log('🔥 Initializing Fogo Sessions client with:', {
     rpcUrl,
@@ -67,12 +75,18 @@ export function createFogoSessionClient(opts?: {
     }
   } catch (error) {
     console.warn('⚠️ Failed to create session context with paymaster, trying without:', error);
+    
+    // Check if it's a paymaster error
+    if (error.message && error.message.includes('PaymasterResponseError')) {
+      console.warn('⚠️ Paymaster error detected, disabling paymaster for this session');
+    }
+    
     // Fallback: create context without paymaster
     try {
       context = createSessionContext({
         connection,
       });
-      console.log('✅ Fallback session context created successfully');
+      console.log('✅ Fallback session context created successfully (no paymaster)');
     } catch (fallbackError) {
       console.error('❌ Failed to create fallback session context:', fallbackError);
       throw new Error('Unable to create Fogo session context');
