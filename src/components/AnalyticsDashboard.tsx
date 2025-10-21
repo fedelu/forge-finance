@@ -33,7 +33,7 @@ export const AnalyticsDashboard: React.FC = () => {
 
   const volume24h = get24HourVolume();
 
-  // Update APY earnings every minute for real-time display
+  // Update APY earnings when transactions change or every minute for real-time display
   useEffect(() => {
     const updateAPYEarnings = () => {
       setRealTimeAPYEarnings(getRealTimeAPYEarnings());
@@ -46,7 +46,7 @@ export const AnalyticsDashboard: React.FC = () => {
     const interval = setInterval(updateAPYEarnings, 60000);
 
     return () => clearInterval(interval);
-  }, [getRealTimeAPYEarnings]);
+  }, [getRealTimeAPYEarnings, analytics.transactions]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -82,7 +82,7 @@ export const AnalyticsDashboard: React.FC = () => {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         <div className="bg-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700 shadow-fogo hover:shadow-fogo-lg transition-all duration-300 hover:border-fogo-primary/30">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-fogo-primary/20 rounded-xl flex items-center justify-center">
@@ -130,6 +130,18 @@ export const AnalyticsDashboard: React.FC = () => {
             <div>
               <p className="text-fogo-gray-400 text-sm">Transactions</p>
               <p className="text-2xl font-bold text-white">{analytics.transactionCount}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700 shadow-fogo hover:shadow-fogo-lg transition-all duration-300 hover:border-fogo-secondary/30">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-fogo-secondary/20 rounded-xl flex items-center justify-center">
+              <ChartBarIcon className="h-6 w-6 text-fogo-secondary" />
+            </div>
+            <div>
+              <p className="text-fogo-gray-400 text-sm">24h Volume</p>
+              <p className="text-2xl font-bold text-white">{formatCurrency(volume24h)}</p>
             </div>
           </div>
         </div>
