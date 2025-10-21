@@ -73,7 +73,7 @@ export const FogoWithdrawModal: React.FC<FogoWithdrawModalProps> = ({ isOpen, on
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       // Use FOGO Sessions context for withdrawal (including APY rewards)
-      await fogoSession.withdrawFromCrucible(withdrawAmount, apyRewards);
+      await fogoSession.withdrawFromCrucible(withdrawAmount);
       
       const mockSignature = 'sim_withdraw_fogo_' + Math.random().toString(36).substr(2, 9);
       console.log('FOGO withdrawal successful:', mockSignature);

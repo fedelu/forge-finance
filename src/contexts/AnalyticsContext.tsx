@@ -11,6 +11,7 @@ interface Transaction {
   signature?: string;
   apyRewards?: number; // APY rewards earned/withdrawn
   totalWithdrawal?: number; // Total amount including APY rewards
+  usdValue?: number; // USD value of the transaction
 }
 
 interface AnalyticsData {

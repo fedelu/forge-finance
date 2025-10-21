@@ -280,7 +280,7 @@ export function FogoSessionsProvider({
           }
           return result.signature;
         } else {
-          throw new Error(result.error?.message || 'Transaction failed');
+          throw new Error(typeof result.error === 'string' ? result.error : 'Transaction failed');
         }
       } else {
         // Fallback simulation
@@ -370,7 +370,7 @@ export function FogoSessionsProvider({
           walletStatus={{
             isInstalled: fogoWallet.isInstalled,
             isUnlocked: fogoWallet.isUnlocked,
-            connected: fogoWallet.connected,
+            isAvailable: fogoWallet.connected,
             error: fogoWallet.error,
           }}
           onRetry={() => connect()}
