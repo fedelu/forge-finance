@@ -156,13 +156,13 @@ export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onCl
               />
               {fogoBalance !== null && (
                 <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-xs text-fogo-gray-400">
-                  Balance: {fogoBalance.toFixed(6)} FOGO
+                  Balance: {fogoBalance.toFixed(2)} FOGO
                 </div>
               )}
             </div>
             {fogoBalance !== null && (
               <div className="mt-2 flex items-center justify-between text-xs text-fogo-gray-400">
-                <span>Available: {fogoBalance.toFixed(6)} FOGO</span>
+                <span>Available: {fogoBalance.toFixed(2)} FOGO</span>
                 <button
                   onClick={refreshBalance}
                   className="text-fogo-primary hover:text-fogo-primary-light transition-colors"
