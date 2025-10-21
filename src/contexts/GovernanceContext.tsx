@@ -41,9 +41,9 @@ interface GovernanceProviderProps {
 export const GovernanceProvider: React.FC<GovernanceProviderProps> = ({ children }) => {
   const [proposals, setProposals] = useState<Proposal[]>([
     {
-      id: 'fogo_prop_1',
-      title: 'Increase SPARK rewards for FOGO crucibles',
-      description: 'This proposal suggests increasing SPARK token rewards for FOGO crucible deposits from 10x to 15x to incentivize more FOGO liquidity and ecosystem growth.',
+      id: 'forge_prop_1',
+      title: 'Increase SPARK rewards for Forge crucibles',
+      description: 'This proposal suggests increasing SPARK token rewards for Forge crucible deposits from 10x to 15x to incentivize more Forge liquidity and ecosystem growth.',
       status: 'active',
       votesFor: 1250,
       votesAgainst: 320,
@@ -55,9 +55,9 @@ export const GovernanceProvider: React.FC<GovernanceProviderProps> = ({ children
       options: ['Increase to 15x', 'Keep at 10x', 'Increase to 12x']
     },
     {
-      id: 'fogo_prop_2',
-      title: 'Add new FOGO DeFi Strategy crucible with 25% APR',
-      description: 'Proposal to create a new advanced FOGO crucible with 25% APR using DeFi protocols to maximize FOGO token yields.',
+      id: 'forge_prop_2',
+      title: 'Add new Forge DeFi Strategy crucible with 25% APR',
+      description: 'Proposal to create a new advanced Forge crucible with 25% APR using DeFi protocols to maximize Forge token yields.',
       status: 'active',
       votesFor: 890,
       votesAgainst: 150,
@@ -69,9 +69,9 @@ export const GovernanceProvider: React.FC<GovernanceProviderProps> = ({ children
       options: ['Create DeFi crucible', 'Reject proposal', 'Modify APR to 20%']
     },
     {
-      id: 'fogo_prop_3',
-      title: 'FOGO Treasury allocation for ecosystem development',
-      description: 'Allocate 100,000 FOGO tokens from treasury for ecosystem development including partnerships, integrations, and developer incentives.',
+      id: 'forge_prop_3',
+      title: 'Forge Treasury allocation for ecosystem development',
+      description: 'Allocate 100,000 Forge tokens from treasury for ecosystem development including partnerships, integrations, and developer incentives.',
       status: 'passed',
       votesFor: 2100,
       votesAgainst: 400,
@@ -80,12 +80,12 @@ export const GovernanceProvider: React.FC<GovernanceProviderProps> = ({ children
       createdAt: Date.now() - 259200000, // 3 days ago
       endTime: Date.now() - 86400000, // 1 day ago
       category: 'treasury',
-      options: ['Approve allocation', 'Reject allocation', 'Reduce to 75,000 FOGO']
+      options: ['Approve allocation', 'Reject allocation', 'Reduce to 75,000 Forge']
     },
     {
-      id: 'fogo_prop_4',
-      title: 'Implement FOGO token burn mechanism',
-      description: 'Proposal to implement a token burn mechanism where 2% of all FOGO crucible fees are burned to reduce total supply and increase token value.',
+      id: 'forge_prop_4',
+      title: 'Implement Forge token burn mechanism',
+      description: 'Proposal to implement a token burn mechanism where 2% of all Forge crucible fees are burned to reduce total supply and increase token value.',
       status: 'active',
       votesFor: 1800,
       votesAgainst: 600,
@@ -97,9 +97,9 @@ export const GovernanceProvider: React.FC<GovernanceProviderProps> = ({ children
       options: ['Implement burn mechanism', 'Reject proposal', 'Reduce to 1% burn']
     },
     {
-      id: 'fogo_prop_5',
-      title: 'FOGO cross-chain bridge integration',
-      description: 'Proposal to integrate FOGO tokens with major cross-chain bridges to enable multi-chain FOGO crucibles and expand ecosystem reach.',
+      id: 'forge_prop_5',
+      title: 'Forge cross-chain bridge integration',
+      description: 'Proposal to integrate Forge tokens with major cross-chain bridges to enable multi-chain Forge crucibles and expand ecosystem reach.',
       status: 'active',
       votesFor: 950,
       votesAgainst: 200,
