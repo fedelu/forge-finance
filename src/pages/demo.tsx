@@ -94,12 +94,17 @@ function DemoContent() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div className="flex items-center space-x-2">
-                  <FireIcon className="h-8 w-8 text-fogo-primary" />
-                  <BoltIcon className="h-6 w-6 text-fogo-accent" />
+                  <div className="w-8 h-8">
+                    {/* Circular flame icon */}
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                      <circle cx="12" cy="12" r="10" stroke="#E85102" strokeWidth="2" fill="none"/>
+                      <path d="M12 6c-3.314 0-6 2.686-6 6s2.686 6 6 6 6-2.686 6-6-2.686-6-6-6zm0 2c2.209 0 4 1.791 4 4s-1.791 4-4 4-4-1.791-4-4 1.791-4 4-4z" fill="#E85102"/>
+                      <circle cx="12" cy="12" r="3" fill="#E85102"/>
+                    </svg>
+                  </div>
                 </div>
                 <div className="flex flex-col">
                   <h1 className="text-2xl font-inter-bold text-fogo-gray-50">Forge Protocol</h1>
-                  <p className="text-xs font-inter-light text-fogo-gray-400">Powered by Fogo</p>
                 </div>
               </div>
               
