@@ -108,19 +108,6 @@ function DemoContent() {
               </div>
               
               <nav className="hidden md:flex items-center space-x-1">
-                <button
-                  onClick={() => setMainTab('dashboard')}
-                  className={`px-4 py-2 rounded-lg font-inter font-medium transition-all duration-200 ${
-                    mainTab === 'dashboard' 
-                      ? 'bg-fogo-primary text-white shadow-lg' 
-                      : 'text-fogo-gray-300 hover:text-white hover:bg-fogo-gray-800/50'
-                  }`}
-                >
-                  <div className="flex items-center space-x-2">
-                    <ChartBarIcon className="w-4 h-4" />
-                    <span>{isEstablished ? 'Dashboard' : 'Home'}</span>
-                  </div>
-                </button>
                 {isEstablished && (
                   <>
                     <button
@@ -187,20 +174,6 @@ function DemoContent() {
         {showMobileMenu && (
           <div className="mobile-menu md:hidden bg-fogo-gray-900 border-b border-fogo-gray-700 shadow-lg">
             <div className="px-4 py-4 space-y-2">
-              <button
-                onClick={() => {
-                  setMainTab('dashboard')
-                  setShowMobileMenu(false)
-                }}
-                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-inter font-medium transition-all duration-200 ${
-                  mainTab === 'dashboard' 
-                    ? 'bg-fogo-primary text-white shadow-lg' 
-                    : 'text-fogo-gray-300 hover:text-white hover:bg-fogo-gray-800/50'
-                }`}
-              >
-                <ChartBarIcon className="w-5 h-5" />
-                <span>{isEstablished ? 'Dashboard' : 'Home'}</span>
-              </button>
               {isEstablished && (
                 <>
                   <button
@@ -267,11 +240,10 @@ function DemoContent() {
                     <p className="text-xl text-fogo-gray-300 font-inter-light mb-8 leading-relaxed">
                       Real Yield, Reinvented. Turn market volatility into sustainable on-chain yield through our advanced DeFi protocol.
                     </p>
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                      <FogoSessionsButton />
-                      <button className="px-8 py-3 bg-fogo-gray-800 hover:bg-fogo-gray-700 text-white rounded-lg border border-fogo-gray-600 transition-colors">
-                        Learn More
-                      </button>
+                    <div className="flex justify-center">
+                      <div className="flex justify-center">
+                        <FogoSessionsButton />
+                      </div>
                     </div>
                   </div>
                 </div>
