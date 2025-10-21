@@ -42,10 +42,10 @@ A comprehensive DeFi protocol built on Solana, featuring crucible management, go
 - **Framer Motion** - Animations
 
 ### **Blockchain**
-- **Solana Devnet** - Test network
-- **Anchor Framework** - Smart contracts
+- **Fogo Testnet** - Official Fogo test network
+- **Fogo Sessions SDK** - Gasless transactions
 - **Solana Web3.js** - Blockchain interaction
-- **Wallet Adapter** - Multi-wallet support
+- **Phantom Wallet** - Primary wallet support
 
 ### **Smart Contracts**
 - **Forge Core** - Main protocol logic
@@ -82,13 +82,14 @@ npm run dev
 
 ### **Environment Setup**
 
-Create `.env.local` in the `app` directory:
+Create `.env.local` in the root directory:
 
 ```env
-NEXT_PUBLIC_SOLANA_NETWORK=devnet
-NEXT_PUBLIC_RPC_URL=https://api.devnet.solana.com
-NEXT_PUBLIC_EXPLORER_URL=https://explorer.solana.com
+NEXT_PUBLIC_SOLANA_NETWORK=fogo-testnet
+NEXT_PUBLIC_RPC_URL=https://testnet.fogo.io
 NEXT_PUBLIC_COMMITMENT=confirmed
+NEXT_PUBLIC_PAYMASTER_URL=https://testnet.fogo.io/paymaster
+NEXT_PUBLIC_APP_DOMAIN=http://localhost:3003
 ```
 
 ## 🔧 **Development**
@@ -99,8 +100,8 @@ NEXT_PUBLIC_COMMITMENT=confirmed
 # Build all programs
 anchor build
 
-# Deploy to devnet
-anchor deploy --provider.cluster devnet
+# Deploy to Fogo testnet
+anchor deploy --provider.cluster fogo-testnet
 ```
 
 ### **Run Frontend**
@@ -126,9 +127,9 @@ npm test
 ### **For Users**
 
 1. **Connect Wallet**
-   - Install Phantom or Solflare wallet
-   - Connect to Solana Devnet
-   - Get test SOL from [faucet](https://faucet.solana.com)
+   - Install Phantom wallet
+   - Connect to Fogo testnet
+   - Get test FOGO tokens from [Fogo faucet](https://testnet.fogo.io/faucet)
 
 2. **Deposit Tokens**
    - Navigate to Crucibles tab

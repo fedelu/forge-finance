@@ -2,16 +2,13 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 import { PublicKey, Connection } from '@solana/web3.js';
 import { getAssociatedTokenAddress, getAccount } from '@solana/spl-token';
 import { 
-  initializeFogoSession, 
-  createFogoSession, 
-  sendFogoTransaction, 
-  getCurrentSession, 
-  onSessionChange,
-  detectWalletStatus,
-  connectWallet,
-  FOGO_CONFIG 
+  createSessionWithWallet,
+  getCurrentSession,
+  endFogoSession,
+  sendFogoTransaction,
+  clearStoredFogoSession
 } from '../lib/fogoSession';
-import { usePhantomWallet } from '../hooks/usePhantomWallet';
+import { useFogoWallet } from '../hooks/useFogoWallet';
 import { FOGO_TESTNET_CONFIG } from '../config/fogo-testnet';
 import WalletFallback from './WalletFallback';
 
@@ -49,7 +46,13 @@ interface FogoSessionContextType {
 const FogoSessionContext = createContext<FogoSessionContextType | null>(null);
 
 // FOGO Sessions Provider
-export function FogoSessionsProvider({ children }: { children: React.ReactNode }) {
+export function FogoSessionsProvider({ 
+  children, 
+  fogoClient 
+}: { 
+  children: React.ReactNode;
+  fogoClient?: { context: any; connection: any };
+}) {
   const [walletPublicKey, setWalletPublicKey] = useState<PublicKey | null>(null);
   const [sessionData, setSessionData] = useState<any>(null);
   const [fogoBalance, setFogoBalance] = useState<number>(0);
@@ -58,11 +61,11 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
   const [showFallback, setShowFallback] = useState(false);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
   
-  // Use the new Phantom wallet hook
-  const phantomWallet = usePhantomWallet();
+  // Use the official Fogo wallet hook
+  const fogoWallet = useFogoWallet();
   
-  // Create connection for balance fetching
-  const connection = new Connection(FOGO_CONFIG.RPC_URL, FOGO_CONFIG.COMMITMENT as any);
+  // Use connection from fogoClient or create fallback
+  const connection = fogoClient?.connection || new Connection(process.env.NEXT_PUBLIC_RPC_URL || 'https://testnet.fogo.io', 'confirmed');
 
   // Function to fetch real FOGO balance
   const fetchRealFogoBalance = async (publicKey: PublicKey): Promise<number> => {
@@ -114,44 +117,52 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
     }
   };
 
-  // Sync with Phantom wallet state
+  // Sync with Fogo wallet state
   useEffect(() => {
-    const syncWithPhantom = async () => {
-      if (phantomWallet.connected && phantomWallet.publicKey) {
-        console.log('🔄 Syncing with Phantom wallet:', phantomWallet.publicKey.toString());
+    const syncWithFogoWallet = async () => {
+      if (fogoWallet.connected && fogoWallet.publicKey && fogoClient) {
+        console.log('🔄 Syncing with Fogo wallet:', fogoWallet.publicKey);
         
-        setWalletPublicKey(phantomWallet.publicKey);
-        setIsEstablished(true);
+        const publicKey = new PublicKey(fogoWallet.publicKey);
+        setWalletPublicKey(publicKey);
         
         // Fetch real balance
-        const realBalance = await fetchRealFogoBalance(phantomWallet.publicKey);
+        const realBalance = await fetchRealFogoBalance(publicKey);
         setFogoBalance(realBalance);
         
-        // Initialize Fogo Session
+        // Create Fogo Session using official SDK
         try {
-          console.log('🔥 Initializing Fogo Session with Phantom wallet...');
-          const sessionResponse = await createFogoSession({
-            domain: FOGO_CONFIG.APP_DOMAIN
-          });
+          console.log('🔥 Creating Fogo Session with official SDK...');
+          const sessionResponse = await createSessionWithWallet(
+            fogoClient.context,
+            publicKey,
+            fogoWallet.signMessage,
+            new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+          );
           
-          setSessionData({
-            sessionId: sessionResponse.sessionId,
-            sessionKey: sessionResponse.sessionKey,
-            expiresAt: sessionResponse.expiresAt,
-            userPublicKey: sessionResponse.userPublicKey?.toString(),
-            success: true,
-            message: 'Fogo Session created with Phantom wallet'
-          });
+          if (sessionResponse.type === 'Success') {
+            setSessionData({
+              sessionId: sessionResponse.session.sessionPublicKey.toString(),
+              sessionKey: sessionResponse.session.sessionKey,
+              expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+              userPublicKey: publicKey.toString(),
+              success: true,
+              message: 'Fogo Session created with official SDK'
+            });
+          } else {
+            throw new Error(`Session creation failed: ${sessionResponse.error}`);
+          }
           
-          console.log('✅ Fogo Session created successfully:', sessionResponse.sessionId);
+          setIsEstablished(true);
+          console.log('✅ Fogo Session created successfully:', sessionResponse.session.sessionPublicKey.toString());
         } catch (sessionError) {
           console.error('Failed to create Fogo Session:', sessionError);
           setError('Failed to create Fogo Session');
         }
         
-      } else if (!phantomWallet.connected && isEstablished) {
-        // Reset when Phantom disconnects
-        console.log('🔌 Phantom wallet disconnected, resetting FOGO Session');
+      } else if (!fogoWallet.connected && isEstablished) {
+        // Reset when wallet disconnects
+        console.log('🔌 Wallet disconnected, resetting FOGO Session');
         setWalletPublicKey(null);
         setIsEstablished(false);
         setSessionData(null);
@@ -160,8 +171,8 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
       }
     };
 
-    syncWithPhantom();
-  }, [phantomWallet.connected, phantomWallet.publicKey]);
+    syncWithFogoWallet();
+  }, [fogoWallet.connected, fogoWallet.publicKey, fogoClient]);
 
   // Initialize Fogo Sessions on mount
   useEffect(() => {
@@ -173,27 +184,27 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
       }
 
       try {
-        // Initialize Fogo Sessions
-        console.log('🔥 Initializing Fogo Sessions in provider...');
-        const sessionInitialized = await initializeFogoSession();
-        
-        if (sessionInitialized) {
-          const session = getCurrentSession();
-          setIsEstablished(session.isActive);
-          setWalletPublicKey(session.userPublicKey);
-          setSessionData({
-            sessionId: session.sessionId,
-            sessionKey: session.sessionKey,
-            expiresAt: session.expiresAt?.toISOString(),
-            userPublicKey: session.userPublicKey?.toString(),
-            success: true,
-            message: 'Fogo Session restored from storage'
-          });
+        // Check for existing session using official SDK
+        if (fogoClient && fogoWallet.publicKey) {
+          console.log('🔥 Checking for existing Fogo Session...');
+          const publicKey = new PublicKey(fogoWallet.publicKey);
+          const existingSession = await getCurrentSession(fogoClient.context, publicKey);
           
-          // Fetch real balance if wallet is connected
-          if (session.userPublicKey) {
-            const realBalance = await fetchRealFogoBalance(session.userPublicKey);
-            setFogoBalance(realBalance);
+          if (existingSession) {
+            console.log('✅ Existing session found:', existingSession);
+            setIsEstablished(true);
+            setSessionData(existingSession);
+            
+            if (existingSession.userPublicKey) {
+              const publicKey = new PublicKey(existingSession.userPublicKey);
+              setWalletPublicKey(publicKey);
+              
+              // Fetch real balance
+              const realBalance = await fetchRealFogoBalance(publicKey);
+              setFogoBalance(realBalance);
+            }
+          } else {
+            console.log('ℹ️ No existing session found');
           }
         }
       } catch (error) {
@@ -203,31 +214,7 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
     };
 
     initializeSessions();
-
-    // Listen for session changes
-    const unsubscribe = onSessionChange((session) => {
-      console.log('Fogo Session state changed in provider:', session);
-      setIsEstablished(session.isActive);
-      setWalletPublicKey(session.userPublicKey);
-      
-      if (session.isActive) {
-        setSessionData({
-          sessionId: session.sessionId,
-          sessionKey: session.sessionKey,
-          expiresAt: session.expiresAt?.toISOString(),
-          userPublicKey: session.userPublicKey?.toString(),
-          success: true,
-          message: 'Fogo Session active'
-        });
-      } else {
-        setSessionData(null);
-      }
-    });
-
-    return () => {
-      unsubscribe();
-    };
-  }, []);
+  }, [fogoClient]);
 
 
   const connect = async (publicKey?: PublicKey) => {
@@ -235,32 +222,49 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
       console.log('🔥 Connecting to FOGO Sessions...');
       setError(null);
       
-      // Use Phantom wallet connection
-      if (!phantomWallet.connected) {
-        await phantomWallet.connect();
+      // Use Fogo wallet connection
+      if (!fogoWallet.connected) {
+        await fogoWallet.connect();
       }
       
-      if (!phantomWallet.publicKey) {
-        throw new Error('Failed to get public key from Phantom wallet');
+      if (!fogoWallet.publicKey) {
+        throw new Error('Failed to get public key from wallet');
       }
       
-      const walletPublicKey = phantomWallet.publicKey;
-      console.log('✅ Connected to Phantom wallet:', walletPublicKey.toString());
+      const walletPublicKey = new PublicKey(fogoWallet.publicKey);
+      console.log('✅ Connected to wallet:', walletPublicKey.toString());
       
       // Fetch real balance
       const realBalance = await fetchRealFogoBalance(walletPublicKey);
       setFogoBalance(realBalance);
       
-      // Create Fogo Session using the library
-      const sessionResponse = await createFogoSession({
-        domain: FOGO_CONFIG.APP_DOMAIN
-      });
-      
-      console.log('✅ Fogo Session created successfully:', sessionResponse.sessionId);
+      // Create Fogo Session using official SDK
+      if (fogoClient) {
+        const sessionResponse = await createSessionWithWallet(
+          fogoClient.context,
+          publicKey,
+          fogoWallet.signMessage,
+          new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+        );
+        
+        if (sessionResponse.type === 'Success') {
+          console.log('✅ Fogo Session created successfully:', sessionResponse.session.sessionPublicKey.toString());
+          
+          setSessionData({
+            sessionId: sessionResponse.session.sessionPublicKey.toString(),
+            sessionKey: sessionResponse.session.sessionKey,
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+            userPublicKey: publicKey.toString(),
+            success: true,
+            message: 'Fogo Session created with official SDK'
+          });
+        } else {
+          throw new Error(`Session creation failed: ${sessionResponse.error}`);
+        }
+        setIsEstablished(true);
+      }
       
       setWalletPublicKey(walletPublicKey);
-      setSessionData(sessionResponse);
-      setIsEstablished(true);
       
       // Trigger wallet connection event to sync with main wallet context
       window.dispatchEvent(new CustomEvent('walletConnected', { 
@@ -268,9 +272,9 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
       }));
       
       console.log('🔥 Fogo Session established successfully!');
-      console.log('Session ID:', sessionResponse.sessionId);
-      console.log('Session Key:', sessionResponse.sessionKey);
-      console.log('Phantom Public Key:', walletPublicKey.toString());
+      console.log('Session ID:', sessionData?.sessionId);
+      console.log('Session Key:', sessionData?.sessionKey);
+      console.log('Wallet Public Key:', walletPublicKey.toString());
       console.log('Real FOGO Balance:', realBalance, 'FOGO');
       
     } catch (error: any) {
@@ -282,15 +286,34 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
 
   const endSession = async () => {
     try {
-      console.log('🔄 Ending FOGO Session and disconnecting from Phantom...');
+      console.log('🔄 Ending FOGO Session and disconnecting wallet...');
       
-      // Disconnect from Phantom wallet if connected
-      if (phantomWallet.provider && phantomWallet.connected) {
+      // End Fogo Session using official SDK
+      if (fogoClient && sessionData) {
         try {
-          await phantomWallet.disconnect();
-          console.log('✅ Disconnected from Phantom wallet');
+          // We need to reconstruct the session object for ending
+          const session = {
+            sessionPublicKey: new PublicKey(sessionData.sessionId),
+            sessionKey: sessionData.sessionKey,
+            walletPublicKey: walletPublicKey,
+            payer: walletPublicKey, // This might need adjustment based on actual session structure
+            sendTransaction: async () => ({}), // Placeholder
+            sessionInfo: {} // Placeholder
+          };
+          await endFogoSession(fogoClient.context, session);
+          console.log('✅ Fogo Session ended via SDK');
         } catch (error) {
-          console.warn('⚠️ Error disconnecting from Phantom:', error);
+          console.warn('⚠️ Error ending Fogo Session:', error);
+        }
+      }
+      
+      // Disconnect from wallet if connected
+      if (fogoWallet.connected) {
+        try {
+          await fogoWallet.disconnect();
+          console.log('✅ Disconnected from wallet');
+        } catch (error) {
+          console.warn('⚠️ Error disconnecting from wallet:', error);
         }
       }
       
@@ -320,11 +343,29 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
         throw new Error('No wallet connected');
       }
       
-      // Use the Fogo Sessions library for transaction sending
-      const signature = await sendFogoTransaction(instructions as any);
+      if (!fogoClient) {
+        throw new Error('Fogo client not initialized');
+      }
       
-      console.log('✅ Fogo transaction sent successfully:', signature);
-      return signature;
+      // Use the official Fogo Sessions SDK for transaction sending
+      if (!sessionData) {
+        throw new Error('No active session');
+      }
+      
+      // Reconstruct session object for transaction sending
+      const session = {
+        sessionPublicKey: new PublicKey(sessionData.sessionId),
+        sessionKey: sessionData.sessionKey,
+        walletPublicKey: walletPublicKey,
+        payer: walletPublicKey,
+        sendTransaction: async () => ({}), // Placeholder
+        sessionInfo: {} // Placeholder
+      };
+      
+      const result = await sendFogoTransaction(session, instructions);
+      
+      console.log('✅ Fogo transaction sent successfully:', result);
+      return result;
       
     } catch (error: any) {
       console.error('❌ Fogo transaction failed:', error);
@@ -515,8 +556,8 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
     setError(null);
     
     try {
-      // Try to connect using Phantom wallet hook
-      if (phantomWallet.isInstalled && phantomWallet.isUnlocked) {
+      // Try to connect using Fogo wallet hook
+      if (fogoWallet.provider) {
         await connect();
       } else {
         setShowFallback(true);
@@ -534,10 +575,10 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
       {showFallback && (
         <WalletFallback
           walletStatus={{
-            isInstalled: phantomWallet.isInstalled,
-            isUnlocked: phantomWallet.isUnlocked,
-            isAvailable: phantomWallet.isInstalled && phantomWallet.isUnlocked,
-            error: phantomWallet.error || undefined
+            isInstalled: !!fogoWallet.provider,
+            isUnlocked: fogoWallet.connected,
+            isAvailable: fogoWallet.connected,
+            error: fogoWallet.error || undefined
           }}
           onRetry={handleRetry}
         />
