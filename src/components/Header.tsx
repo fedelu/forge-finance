@@ -14,7 +14,7 @@ export const Header: React.FC = () => {
               <div className="w-8 h-8">
                 <svg viewBox="0 0 24 24" fill="none" className="w-full h-full">
                   <path 
-                    d="M12 2l4 6H8l4 6H6l4 6h8l-4-6h4l-4-6z" 
+                    d="M6 2h4l-2 4h4l-2 4h4l-2 4h4l-2 4H6l2-4H4l2-4H2l2-4H0l2-4z" 
                     fill="url(#forgeGradient)"
                     className="rounded-sm"
                   />
