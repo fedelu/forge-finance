@@ -179,30 +179,18 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({ children }
       }));
   }, [analytics.transactions]);
 
-  // Calculate real-time APY earnings from all active deposits
+  // Calculate APY earnings from withdrawals (simplified yearly approach)
   const getRealTimeAPYEarnings = useCallback(() => {
     const price = (token: string) => ({ SOL: 200, USDC: 1, ETH: 4000, BTC: 110000, FOGO: 0.5 } as any)[token] || 1;
     
-    // Get all deposits that haven't been fully withdrawn
-    const deposits = analytics.transactions.filter(tx => tx.type === 'deposit');
-    const withdrawals = analytics.transactions.filter(tx => tx.type === 'withdraw');
+    // Get all withdrawals that have APY rewards
+    const withdrawals = analytics.transactions.filter(tx => tx.type === 'withdraw' && tx.apyRewards && tx.apyRewards > 0);
     
     let totalAPYEarnings = 0;
     
-    deposits.forEach(deposit => {
-      // Calculate how much of this deposit has been withdrawn
-      const withdrawnAmount = withdrawals
-        .filter(w => w.crucibleId === deposit.crucibleId && w.token === deposit.token)
-        .reduce((sum, w) => sum + w.amount, 0);
-      
-      const remainingAmount = deposit.amount - withdrawnAmount;
-      
-      if (remainingAmount > 0) {
-        // Calculate APY earnings for the remaining amount
-        const apyRate = 0.15; // 15% APY (this should come from crucible data)
-        const apyEarnings = calculateRealTimeAPY(remainingAmount, apyRate, deposit.timestamp);
-        totalAPYEarnings += apyEarnings * price(deposit.token);
-      }
+    withdrawals.forEach(withdrawal => {
+      // Add the APY rewards that were earned and withdrawn
+      totalAPYEarnings += (withdrawal.apyRewards || 0) * price(withdrawal.token);
     });
     
     return totalAPYEarnings;

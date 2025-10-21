@@ -3,7 +3,7 @@ import {
   BanknotesIcon, 
   UserGroupIcon, 
   ChartBarIcon,
-  FireIcon 
+  CurrencyDollarIcon 
 } from '@heroicons/react/24/outline'
 
 interface ProtocolStats {
@@ -45,7 +45,7 @@ export const Stats: React.FC<StatsProps> = ({ stats }) => {
     {
       title: 'Total Crucibles',
       value: stats.totalCrucibles,
-      icon: FireIcon,
+      icon: CurrencyDollarIcon,
       color: 'text-forge-primary',
     },
     {

@@ -29,13 +29,15 @@ interface FogoSessionContextType {
   walletPublicKey: PublicKey | null;
   sessionData: any | null;
   fogoBalance: number;
+  liveAPYEarnings: number;
   connect: () => Promise<void>;
   endSession: () => Promise<void>;
   sendTransaction: (instructions: any[]) => Promise<string>;
-  depositToCrucible: (amount: number) => Promise<{ success: boolean; transactionId: string }>;
-  withdrawFromCrucible: (amount: number) => Promise<{ success: boolean; transactionId: string }>;
+  depositToCrucible: (amount: number, crucibleId?: string) => Promise<{ success: boolean; transactionId: string }>;
+  withdrawFromCrucible: (amount: number, apyRewards?: number) => Promise<{ success: boolean; transactionId: string }>;
   calculateAPY: (principal: number, timeInDays: number) => number;
   calculateCompoundInterest: (principal: number, apy: number, timeInDays: number) => number;
+  getCrucibleAPYEarnings: (crucibleId: string) => number;
   refreshBalance: () => Promise<void>;
   testDeposit: (amount: number) => Promise<{ success: boolean; transactionId: string }>;
   error: string | null;
@@ -54,6 +56,8 @@ export function FogoSessionsProvider({
   const [walletPublicKey, setWalletPublicKey] = useState<PublicKey | null>(null);
   const [sessionData, setSessionData] = useState<any>(null);
   const [fogoBalance, setFogoBalance] = useState<number>(10000); // Fixed fake balance
+  const [liveAPYEarnings, setLiveAPYEarnings] = useState<number>(0); // Live APY earnings
+  const [deposits, setDeposits] = useState<Array<{amount: number, timestamp: number, apyRate: number, crucibleId: string}>>([]); // Track deposits
   const [error, setError] = useState<string | null>(null);
   const [isEstablished, setIsEstablished] = useState(false);
   const [showFallback, setShowFallback] = useState(false);
@@ -83,7 +87,7 @@ export function FogoSessionsProvider({
         setFogoBalance(10000);
         
         // Create fake Fogo Session
-        console.log('🔥 Creating fake Fogo Session...');
+        console.log('Creating fake Fogo Session...');
         setSessionData({
           sessionId: 'fogo_session_' + Date.now(),
           sessionKey: {},
@@ -113,6 +117,44 @@ export function FogoSessionsProvider({
 
     syncWithFogoWallet();
   }, [fogoWallet.connected, fogoWallet.publicKey, fogoClient]);
+
+  // Live APY earnings tracking
+  useEffect(() => {
+    if (!isEstablished || !walletPublicKey) {
+      setLiveAPYEarnings(0);
+      return;
+    }
+
+    const updateLiveAPY = () => {
+      // Calculate APY based on tracked deposits
+      let totalAPY = 0;
+      
+      console.log(`📊 Updating live APY for ${deposits.length} deposits:`, deposits);
+      
+      deposits.forEach((deposit, index) => {
+        // Calculate time elapsed since deposit (in days)
+        const timeElapsed = (Date.now() - deposit.timestamp) / (1000 * 60 * 60 * 24);
+        
+        // Calculate APY for full year (365 days) by default
+        const dailyRate = deposit.apyRate / 365;
+        const earnedAPY = deposit.amount * (Math.pow(1 + dailyRate, 365) - 1);
+        totalAPY += Math.max(0, earnedAPY);
+        
+        console.log(`📈 Deposit ${index + 1}: ${deposit.amount} FOGO, ${timeElapsed.toFixed(2)} days ago, APY: ${earnedAPY.toFixed(2)} FOGO`);
+      });
+      
+      console.log(`💰 Total live APY earnings: ${totalAPY.toFixed(2)} FOGO`);
+      setLiveAPYEarnings(totalAPY);
+    };
+
+    // Update immediately
+    updateLiveAPY();
+
+    // Update every minute
+    const interval = setInterval(updateLiveAPY, 60000);
+
+    return () => clearInterval(interval);
+  }, [isEstablished, walletPublicKey, deposits]);
 
   // Initialize Fogo Sessions on mount
   useEffect(() => {
@@ -298,13 +340,24 @@ export function FogoSessionsProvider({
   };
 
   // Mock deposit/withdraw functions for demo
-  const depositToCrucible = async (amount: number) => {
-    console.log(`🎮 Simulating deposit of ${amount} FOGO to crucible`);
+  const depositToCrucible = async (amount: number, crucibleId: string = 'default-crucible') => {
+    console.log(`🎮 Simulating deposit of ${amount} FOGO to crucible: ${crucibleId}`);
     // Simulate a transaction
     const signature = await sendTransaction([]); // Send a mock transaction
     // Update simulated balance (deposit reduces wallet balance)
     setFogoBalance(prev => prev - amount);
+    
+    // Track the deposit for APY calculation
+    const newDeposit = {
+      amount: amount,
+      timestamp: Date.now(),
+      apyRate: 0.08, // 8% APY
+      crucibleId: crucibleId
+    };
+    setDeposits(prev => [...prev, newDeposit]);
+    
     console.log(`💰 Updated FOGO balance after deposit: ${fogoBalance - amount}`);
+    console.log(`📈 Tracked deposit for APY calculation: ${amount} FOGO to ${crucibleId} at ${new Date().toISOString()}`);
     return { success: true, transactionId: signature };
   };
 
@@ -315,19 +368,61 @@ export function FogoSessionsProvider({
     const signature = await sendTransaction([]); // Send a mock transaction
     // Update simulated balance (withdrawal increases wallet balance)
     setFogoBalance(prev => prev + totalWithdrawal);
+    
+    // Remove the corresponding deposit from tracking (FIFO - First In, First Out)
+    setDeposits(prev => {
+      const sortedDeposits = [...prev].sort((a, b) => a.timestamp - b.timestamp);
+      let remainingAmount = amount;
+      const newDeposits = [];
+      
+      for (const deposit of sortedDeposits) {
+        if (remainingAmount <= 0) {
+          newDeposits.push(deposit);
+        } else if (deposit.amount <= remainingAmount) {
+          remainingAmount -= deposit.amount;
+          // Deposit fully withdrawn, don't add to newDeposits
+        } else {
+          // Partial withdrawal, reduce deposit amount
+          newDeposits.push({
+            ...deposit,
+            amount: deposit.amount - remainingAmount
+          });
+          remainingAmount = 0;
+        }
+      }
+      
+      return newDeposits;
+    });
+    
     console.log(`💰 Updated FOGO balance after withdrawal: ${fogoBalance + totalWithdrawal}`);
+    console.log(`📉 Removed deposit from APY tracking: ${amount} FOGO`);
     return { success: true, transactionId: signature };
   };
 
   // APY and Compound Interest calculations (can be real or mocked)
   const calculateAPY = (principal: number, timeInDays: number): number => {
     // Mock APY for demo
-    return 0.15; // 15% APY
+    return 0.08; // 8% APY for more realistic demo
   };
 
   const calculateCompoundInterest = (principal: number, apy: number, timeInDays: number): number => {
     const dailyRate = apy / 365;
     return principal * Math.pow(1 + dailyRate, timeInDays) - principal;
+  };
+
+  // Get APY earnings for a specific crucible
+  const getCrucibleAPYEarnings = (crucibleId: string): number => {
+    const crucibleDeposits = deposits.filter(deposit => deposit.crucibleId === crucibleId);
+    let totalAPY = 0;
+    
+    crucibleDeposits.forEach(deposit => {
+      // Calculate APY for full year (365 days) by default
+      const dailyRate = deposit.apyRate / 365;
+      const earnedAPY = deposit.amount * (Math.pow(1 + dailyRate, 365) - 1);
+      totalAPY += Math.max(0, earnedAPY);
+    });
+    
+    return totalAPY;
   };
 
   const refreshBalance = useCallback(async () => {
@@ -350,6 +445,7 @@ export function FogoSessionsProvider({
     walletPublicKey,
     sessionData,
     fogoBalance,
+    liveAPYEarnings,
     connect,
     endSession,
     sendTransaction,
@@ -357,6 +453,7 @@ export function FogoSessionsProvider({
     withdrawFromCrucible,
     calculateAPY,
     calculateCompoundInterest,
+    getCrucibleAPYEarnings,
     refreshBalance,
     testDeposit,
     error,
@@ -391,7 +488,7 @@ export function useSession() {
 
 // FOGO Sessions Button with Pyron/Brasa Finance style
 export function FogoSessionsButton() {
-  const { isEstablished, connect, endSession, walletPublicKey, sessionData, fogoBalance, refreshBalance, error } = useSession();
+  const { isEstablished, connect, endSession, walletPublicKey, sessionData, fogoBalance, liveAPYEarnings, refreshBalance, error } = useSession();
   const [isConnecting, setIsConnecting] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
@@ -525,7 +622,7 @@ export function FogoSessionsButton() {
             {/* Content */}
             <div className="p-6 bg-white dark:bg-gray-900">
               {/* Balance Card */}
-              <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-2xl p-6 mb-6 border border-gray-200 dark:border-gray-600">
+              <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-2xl p-6 mb-4 border border-gray-200 dark:border-gray-600">
                 <div className="flex items-center justify-between mb-2">
                   <div className="text-sm font-medium text-gray-600 dark:text-gray-400">FOGO Balance</div>
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
@@ -537,6 +634,22 @@ export function FogoSessionsButton() {
                   ≈ ${(fogoBalance * 0.5).toFixed(2)} USD
                 </div>
               </div>
+
+              {/* Live APY Earnings Card */}
+              {liveAPYEarnings > 0 && (
+                <div className="bg-gradient-to-br from-fogo-primary/10 to-fogo-secondary/10 dark:from-fogo-primary/20 dark:to-fogo-secondary/20 rounded-2xl p-4 mb-4 border border-fogo-primary/20 dark:border-fogo-primary/30">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm font-medium text-fogo-primary dark:text-fogo-primary">Live APY Earnings</div>
+                    <div className="w-2 h-2 bg-fogo-primary rounded-full animate-pulse"></div>
+                  </div>
+                  <div className="text-2xl font-bold text-fogo-primary dark:text-fogo-primary mb-1">
+                    +{liveAPYEarnings.toFixed(2)} FOGO
+                  </div>
+                  <div className="text-sm text-fogo-primary/70 dark:text-fogo-primary/70">
+                    ≈ +${(liveAPYEarnings * 0.5).toFixed(2)} USD (8% APY)
+                  </div>
+                </div>
+              )}
 
               {/* Action Buttons */}
               <div className="space-y-3">

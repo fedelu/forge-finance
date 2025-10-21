@@ -3,12 +3,12 @@ import { useBalance } from '../contexts/BalanceContext';
 import { useAnalytics } from '../contexts/AnalyticsContext';
 import { useCrucible } from '../contexts/CrucibleContext';
 import { 
-  FireIcon, 
-  BoltIcon, 
+  BanknotesIcon, 
   CurrencyDollarIcon,
   ChartBarIcon,
   ArrowTrendingUpIcon,
-  ClockIcon
+  ClockIcon,
+  ArrowUpIcon
 } from '@heroicons/react/24/outline';
 
 interface DynamicTokenBalancesProps {
@@ -44,7 +44,7 @@ export const DynamicTokenBalances: React.FC<DynamicTokenBalancesProps> = ({ clas
       case 'ETH': return '🔷';
       case 'BTC': return '₿';
       case 'SPARK': return '⚡';
-      case 'HEAT': return '🔥';
+      case 'HEAT': return '⚡';
       default: return '💰';
     }
   };
@@ -113,7 +113,7 @@ export const DynamicTokenBalances: React.FC<DynamicTokenBalancesProps> = ({ clas
 
             {/* SPARK Balance */}
             <div className="text-center p-6 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-lg border border-blue-500/30">
-              <BoltIcon className="h-10 w-10 text-forge-accent mx-auto mb-3" />
+              <ArrowUpIcon className="h-10 w-10 text-fogo-accent mx-auto mb-3" />
               <div className="text-3xl font-bold text-white">{formatNumber(getSparkBalance(), 0)}</div>
               <div className="text-sm text-forge-accent mt-1">SPARK Tokens</div>
               <div className="text-xs text-gray-400">Governance Power</div>
@@ -121,7 +121,7 @@ export const DynamicTokenBalances: React.FC<DynamicTokenBalancesProps> = ({ clas
 
             {/* HEAT Balance */}
             <div className="text-center p-6 bg-gradient-to-br from-yellow-500/20 to-orange-500/20 rounded-lg border border-yellow-500/30">
-              <FireIcon className="h-10 w-10 text-yellow-400 mx-auto mb-3" />
+              <BanknotesIcon className="h-10 w-10 text-fogo-primary mx-auto mb-3" />
               <div className="text-3xl font-bold text-white">{formatNumber(getHeatBalance(), 0)}</div>
               <div className="text-sm text-yellow-400 mt-1">HEAT Tokens</div>
               <div className="text-xs text-gray-400">Reward Points</div>
@@ -132,8 +132,7 @@ export const DynamicTokenBalances: React.FC<DynamicTokenBalancesProps> = ({ clas
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <FireIcon className="h-6 w-6 text-orange-400" />
-                <h4 className="text-lg font-semibold text-white">🔥 FOGO Crucibles</h4>
+                <h4 className="text-lg font-semibold text-white">FOGO Crucibles</h4>
                 <div className="text-sm text-gray-400">({crucibles.filter(c => c.symbol === 'FOGO').length} active)</div>
               </div>
               <div className="text-right">
@@ -147,12 +146,10 @@ export const DynamicTokenBalances: React.FC<DynamicTokenBalancesProps> = ({ clas
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
               {crucibles.filter(c => c.symbol === 'FOGO').map((crucible) => (
                 <div key={crucible.id} className="text-center p-4 bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-lg border border-orange-500/20 hover:border-orange-500/40 transition-colors">
-                  <div className="text-2xl mb-2">{crucible.icon}</div>
                   <div className="text-lg font-bold text-white">{formatNumber(crucible.userDeposit, 2)}</div>
                   <div className="text-sm text-gray-300">FOGO</div>
                   <div className="text-xs text-gray-400 mt-1">{crucible.name}</div>
                   <div className="text-xs font-semibold text-orange-400 mt-1">{(crucible.apr * 100).toFixed(1)}% APY</div>
-                  <div className="text-xs text-gray-500 mt-1">{crucible.userShares.toLocaleString()} shares</div>
                 </div>
               ))}
             </div>

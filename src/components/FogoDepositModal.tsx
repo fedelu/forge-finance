@@ -70,7 +70,7 @@ export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onCl
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       // Use FOGO Sessions context for deposit
-      await fogoSession.depositToCrucible(depositAmount);
+      await fogoSession.depositToCrucible(depositAmount, crucibleId);
       
       const mockSignature = 'sim_deposit_' + Math.random().toString(36).substr(2, 9);
       console.log('FOGO deposit successful:', mockSignature);

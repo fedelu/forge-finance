@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
 import { 
-  FireIcon, 
+  BanknotesIcon, 
   PlusIcon, 
   ArrowUpIcon, 
-  ArrowDownIcon
+  ArrowDownIcon,
+  CurrencyDollarIcon,
+  ChartBarIcon
 } from '@heroicons/react/24/outline'
 import { useWallet } from '../contexts/WalletContext'
 import { useCrucible } from '../contexts/CrucibleContext'
@@ -38,7 +40,7 @@ interface CrucibleManagerProps {
 export default function CrucibleManager({ className = '', onDeposit, onWithdraw, isConnected = false }: CrucibleManagerProps) {
   const { connected } = useWallet()
   const { crucibles } = useCrucible()
-  const { isEstablished } = useSession()
+  const { isEstablished, getCrucibleAPYEarnings } = useSession()
   const [activeTab, setActiveTab] = useState<'deposit' | 'withdraw' | 'manage'>('deposit')
   const [selectedCrucible, setSelectedCrucible] = useState<string | null>(null)
   const [showDepositModal, setShowDepositModal] = useState(false)
@@ -93,7 +95,7 @@ export default function CrucibleManager({ className = '', onDeposit, onWithdraw,
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">🔥 Crucible Management</h2>
+          <h2 className="text-2xl font-bold text-white">Crucible Management</h2>
           <p className="text-fogo-gray-400 text-sm mt-1">Manage your FOGO token deposits and earn rewards</p>
         </div>
         <button 
@@ -132,13 +134,17 @@ export default function CrucibleManager({ className = '', onDeposit, onWithdraw,
                 <span className="font-medium text-fogo-accent">{formatPercentage(crucible.apr)}</span>
               </div>
               <div className="flex justify-between">
-                <span>Your Deposit:</span>
-                <span className="font-medium text-white">{crucible.userDeposit.toLocaleString()} {crucible.symbol}</span>
-              </div>
-              <div className="flex justify-between">
                 <span>Your Shares:</span>
-                <span className="font-medium text-white">{crucible.userShares.toLocaleString()}</span>
+                <span className="font-medium text-white">{crucible.userShares.toLocaleString()} {crucible.symbol}</span>
               </div>
+              {crucible.userDeposit > 0 && (
+                <div className="flex justify-between items-center pt-3 border-t border-fogo-gray-700">
+                  <span className="text-fogo-gray-400 text-sm">APY Earnings</span>
+                  <span className="font-semibold text-fogo-primary">
+                    +{getCrucibleAPYEarnings(crucible.id).toFixed(2)} FOGO
+                  </span>
+                </div>
+              )}
             </div>
             <div className="flex space-x-3">
               <button

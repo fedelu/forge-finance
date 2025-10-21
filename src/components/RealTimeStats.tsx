@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { 
-  FireIcon, 
+  CurrencyDollarIcon, 
   BanknotesIcon, 
   UserGroupIcon, 
   ChartBarIcon,
@@ -223,7 +223,7 @@ export default function RealTimeStats({ className = '' }: RealTimeStatsProps) {
           value={stats.totalCrucibles}
           change={2}
           changeType="positive"
-          icon={FireIcon}
+          icon={CurrencyDollarIcon}
           iconColor="bg-gradient-to-br from-forge-primary to-forge-primary-dark"
           delay={0}
         />

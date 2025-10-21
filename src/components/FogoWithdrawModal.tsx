@@ -17,7 +17,7 @@ export const FogoWithdrawModal: React.FC<FogoWithdrawModalProps> = ({ isOpen, on
   const { connection, publicKey, sendTransaction, network, switchNetwork } = useWallet();
   const { addToBalance, subtractFromBalance } = useBalance();
   const { updateCrucibleWithdraw, getCrucible } = useCrucible();
-  const { addTransaction } = useAnalytics();
+  const { addTransaction, analytics } = useAnalytics();
   const fogoSession = useSession();
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
@@ -28,14 +28,33 @@ export const FogoWithdrawModal: React.FC<FogoWithdrawModalProps> = ({ isOpen, on
   const targetSymbol = useMemo(() => crucible?.symbol || 'FOGO', [crucible?.symbol]);
   const availableAmount = useMemo(() => crucible?.userDeposit || 0, [crucible?.userDeposit]);
 
-  // APY Calculation
-  const timeInCrucible = useMemo(() => getTimeInCrucible(crucibleId), [crucibleId]);
+  // APY Calculation - find the original deposit timestamp for this crucible
+  const depositTimestamp = useMemo(() => {
+    // Find the most recent deposit transaction for this crucible
+    const depositTx = analytics.transactions
+      .filter(tx => tx.type === 'deposit' && tx.crucibleId === crucibleId)
+      .sort((a, b) => b.timestamp - a.timestamp)[0]; // Get most recent deposit
+    return depositTx?.timestamp || Date.now() - (30 * 24 * 60 * 60 * 1000); // Default to 30 days ago if no deposit found
+  }, [analytics.transactions, crucibleId]);
+
   const apyCalculation = useMemo(() => {
     if (!amount || parseFloat(amount) <= 0) return null;
     const principal = parseFloat(amount);
-    const apyRate = crucible?.apr || 0.15;
-    return calculateAPYRewards(principal, apyRate, timeInCrucible);
-  }, [amount, crucible?.apr, timeInCrucible]);
+    const apyRate = crucible?.apr || 0.08; // 8% APY for more realistic demo
+    // Calculate APY for full year (365 days) by default
+    const dailyRate = apyRate / 365;
+    const totalWithdrawal = principal * Math.pow(1 + dailyRate, 365);
+    const totalRewards = totalWithdrawal - principal;
+    
+    return {
+      principal,
+      apyRate,
+      timeInDays: 365,
+      totalRewards,
+      totalWithdrawal,
+      dailyRate
+    };
+  }, [amount, crucible?.apr]);
 
   const apyBreakdown = useMemo(() => {
     return apyCalculation ? formatAPYBreakdown(apyCalculation) : null;
@@ -73,7 +92,7 @@ export const FogoWithdrawModal: React.FC<FogoWithdrawModalProps> = ({ isOpen, on
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       // Use FOGO Sessions context for withdrawal (including APY rewards)
-      await fogoSession.withdrawFromCrucible(withdrawAmount);
+      await fogoSession.withdrawFromCrucible(withdrawAmount, apyRewards);
       
       const mockSignature = 'sim_withdraw_fogo_' + Math.random().toString(36).substr(2, 9);
       console.log('FOGO withdrawal successful:', mockSignature);
@@ -146,7 +165,7 @@ export const FogoWithdrawModal: React.FC<FogoWithdrawModalProps> = ({ isOpen, on
               Available: {availableAmount.toFixed(2)} {targetSymbol}
             </div>
             <div className="text-xs text-gray-400">
-              APY: {((crucible?.apr || 0.15) * 100).toFixed(2)}% | Time in crucible: {timeInCrucible} days
+              APY: {((crucible?.apr || 0.08) * 100).toFixed(2)}% | Full year rewards (365 days)
             </div>
           </div>
 

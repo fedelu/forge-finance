@@ -1,21 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import { useAnalytics } from '../contexts/AnalyticsContext';
 import { useBalance } from '../contexts/BalanceContext';
+import { useSession } from './FogoSessions';
 import { DynamicTokenBalances } from './DynamicTokenBalances';
 import { 
   ChartBarIcon, 
   CurrencyDollarIcon, 
   ArrowTrendingUpIcon,
   ClockIcon,
-  FireIcon
+  BanknotesIcon,
+  ArrowUpIcon,
+  ArrowDownIcon
 } from '@heroicons/react/24/outline';
 
 export const AnalyticsDashboard: React.FC = () => {
-  const { analytics, getRecentTransactions, getRealTimeAPYEarnings } = useAnalytics();
+  const { analytics, getRecentTransactions } = useAnalytics();
   const { balances } = useBalance();
+  const { liveAPYEarnings } = useSession();
 
   const recentTransactions = getRecentTransactions(5);
-  const [realTimeAPYEarnings, setRealTimeAPYEarnings] = useState(0);
+
+  // Calculate total APY earnings (live + withdrawn)
+  const getTotalAPYEarnings = () => {
+    const price = (token: string) => ({ SOL: 200, USDC: 1, ETH: 4000, BTC: 110000, FOGO: 0.5 } as any)[token] || 1;
+    
+    // Get all withdrawals that have APY rewards (already earned and withdrawn)
+    const withdrawnAPY = analytics.transactions
+      .filter(tx => tx.type === 'withdraw' && tx.apyRewards && tx.apyRewards > 0)
+      .reduce((total, withdrawal) => total + (withdrawal.apyRewards || 0) * price(withdrawal.token), 0);
+    
+    // Get current live APY earnings (not yet withdrawn)
+    const currentAPY = liveAPYEarnings * price('FOGO');
+    
+    return withdrawnAPY + currentAPY;
+  };
 
   // Calculate 24-hour volume
   const get24HourVolume = () => {
@@ -34,19 +52,6 @@ export const AnalyticsDashboard: React.FC = () => {
   const volume24h = get24HourVolume();
 
   // Update APY earnings when transactions change or every minute for real-time display
-  useEffect(() => {
-    const updateAPYEarnings = () => {
-      setRealTimeAPYEarnings(getRealTimeAPYEarnings());
-    };
-
-    // Initial calculation
-    updateAPYEarnings();
-
-    // Update every minute
-    const interval = setInterval(updateAPYEarnings, 60000);
-
-    return () => clearInterval(interval);
-  }, [getRealTimeAPYEarnings, analytics.transactions]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -73,10 +78,10 @@ export const AnalyticsDashboard: React.FC = () => {
       {/* Header */}
       <div className="flex items-center space-x-3">
         <div className="w-10 h-10 bg-fogo-primary/20 rounded-2xl flex items-center justify-center">
-          <ChartBarIcon className="h-6 w-6 text-fogo-primary" />
+          <BanknotesIcon className="h-6 w-6 text-fogo-primary" />
         </div>
         <div>
-          <h1 className="text-3xl font-bold text-white">🔥 Portfolio</h1>
+          <h1 className="text-3xl font-bold text-white">Portfolio</h1>
           <p className="text-fogo-gray-400 text-sm">Track your FOGO portfolio performance</p>
         </div>
       </div>
@@ -86,13 +91,13 @@ export const AnalyticsDashboard: React.FC = () => {
         <div className="bg-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700 shadow-fogo hover:shadow-fogo-lg transition-all duration-300 hover:border-fogo-primary/30">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-fogo-primary/20 rounded-xl flex items-center justify-center">
-              <FireIcon className="h-6 w-6 text-fogo-primary" />
+              <CurrencyDollarIcon className="h-6 w-6 text-fogo-primary" />
             </div>
             <div>
               <p className="text-fogo-gray-400 text-sm">APY Earnings</p>
-              <p className="text-2xl font-bold text-white">{formatCurrency(realTimeAPYEarnings)}</p>
+              <p className="text-2xl font-bold text-white">{formatCurrency(getTotalAPYEarnings())}</p>
               <p className="text-xs text-fogo-primary mt-1">
-                {analytics.totalAPYWithdrawn > 0 ? `+${formatCurrency(analytics.totalAPYWithdrawn)} withdrawn` : 'Live earnings'}
+                {analytics.totalAPYWithdrawn > 0 ? `${formatCurrency(analytics.totalAPYWithdrawn)} withdrawn` : 'Live earnings'}
               </p>
             </div>
           </div>
@@ -101,7 +106,7 @@ export const AnalyticsDashboard: React.FC = () => {
         <div className="bg-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700 shadow-fogo hover:shadow-fogo-lg transition-all duration-300 hover:border-fogo-success/30">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-fogo-success/20 rounded-xl flex items-center justify-center">
-              <ArrowTrendingUpIcon className="h-6 w-6 text-fogo-success" />
+              <ArrowUpIcon className="h-6 w-6 text-fogo-success" />
             </div>
             <div>
               <p className="text-fogo-gray-400 text-sm">Total Deposits</p>
@@ -113,7 +118,7 @@ export const AnalyticsDashboard: React.FC = () => {
         <div className="bg-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700 shadow-fogo hover:shadow-fogo-lg transition-all duration-300 hover:border-fogo-error/30">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-fogo-error/20 rounded-xl flex items-center justify-center">
-              <ArrowTrendingUpIcon className="h-6 w-6 text-fogo-error rotate-180" />
+              <ArrowDownIcon className="h-6 w-6 text-fogo-error" />
             </div>
             <div>
               <p className="text-fogo-gray-400 text-sm">Total Withdrawals</p>
@@ -125,7 +130,7 @@ export const AnalyticsDashboard: React.FC = () => {
         <div className="bg-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700 shadow-fogo hover:shadow-fogo-lg transition-all duration-300 hover:border-fogo-accent/30">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-fogo-accent/20 rounded-xl flex items-center justify-center">
-              <ClockIcon className="h-6 w-6 text-fogo-accent" />
+              <ChartBarIcon className="h-6 w-6 text-fogo-accent" />
             </div>
             <div>
               <p className="text-fogo-gray-400 text-sm">Transactions</p>
@@ -137,7 +142,7 @@ export const AnalyticsDashboard: React.FC = () => {
         <div className="bg-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700 shadow-fogo hover:shadow-fogo-lg transition-all duration-300 hover:border-fogo-secondary/30">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-fogo-secondary/20 rounded-xl flex items-center justify-center">
-              <ChartBarIcon className="h-6 w-6 text-fogo-secondary" />
+              <ClockIcon className="h-6 w-6 text-fogo-secondary" />
             </div>
             <div>
               <p className="text-fogo-gray-400 text-sm">24h Volume</p>
@@ -157,7 +162,7 @@ export const AnalyticsDashboard: React.FC = () => {
       <div className="bg-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700 shadow-fogo">
         <div className="flex items-center space-x-3 mb-6">
           <div className="w-8 h-8 bg-fogo-secondary/20 rounded-xl flex items-center justify-center">
-            <ClockIcon className="h-5 w-5 text-fogo-secondary" />
+            <ChartBarIcon className="h-5 w-5 text-fogo-secondary" />
           </div>
           <h3 className="text-xl font-semibold text-white">Recent Transactions</h3>
         </div>
@@ -198,7 +203,7 @@ export const AnalyticsDashboard: React.FC = () => {
           ) : (
             <div className="text-center py-12">
               <div className="w-16 h-16 bg-fogo-primary/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <FireIcon className="h-8 w-8 text-fogo-primary" />
+                <BanknotesIcon className="h-8 w-8 text-fogo-primary" />
               </div>
               <p className="text-fogo-gray-300 text-lg mb-2">No transactions yet</p>
               <p className="text-fogo-gray-500 text-sm">Make your first deposit to see analytics!</p>

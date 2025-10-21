@@ -1,6 +1,6 @@
 import React from 'react'
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
-import { FireIcon, BoltIcon, SparklesIcon } from '@heroicons/react/24/outline'
+import { BanknotesIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline'
 import { FogoSessionsButton } from './FogoSessions'
 
 export const Header: React.FC = () => {
@@ -12,10 +12,9 @@ export const Header: React.FC = () => {
           <div className="flex items-center space-x-3">
             <div className="flex items-center space-x-2">
               <div className="relative">
-                <FireIcon className="h-8 w-8 text-orange-500" />
-                <SparklesIcon className="h-4 w-4 text-yellow-400 absolute -top-1 -right-1" />
+                <BanknotesIcon className="h-8 w-8 text-fogo-primary" />
+                <CurrencyDollarIcon className="h-4 w-4 text-fogo-accent absolute -top-1 -right-1" />
               </div>
-              <BoltIcon className="h-6 w-6 text-orange-400" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-white">Forge Protocol</h1>

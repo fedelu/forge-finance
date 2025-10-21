@@ -5,7 +5,7 @@ import {
   ClockIcon,
   UserGroupIcon,
   ChartBarIcon,
-  FireIcon,
+  BanknotesIcon,
   PlusIcon
 } from '@heroicons/react/24/outline'
 import { useGovernance } from '../contexts/GovernanceContext'
@@ -118,7 +118,7 @@ export default function GovernancePanel({ className = '', onVote, isConnected = 
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">🔥 FOGO Governance</h2>
+          <h2 className="text-2xl font-bold text-white">FOGO Governance</h2>
           <p className="text-fogo-gray-400 text-sm mt-1">Shape the future of the FOGO ecosystem</p>
         </div>
         <div className="flex items-center space-x-6">

@@ -89,7 +89,7 @@ export const CrucibleCreationModal: React.FC<CrucibleCreationModalProps> = ({ is
       <div className="bg-forge-gray p-8 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto border border-gray-700">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-white">🔥 Create FOGO Crucible</h2>
+            <h2 className="text-2xl font-bold text-white">Create FOGO Crucible</h2>
             <p className="text-gray-400 text-sm mt-1">Design your custom FOGO token strategy</p>
           </div>
           <button
@@ -130,7 +130,7 @@ export const CrucibleCreationModal: React.FC<CrucibleCreationModalProps> = ({ is
         {step === 'template' && (
           <div className="space-y-6">
             <div className="text-center mb-6">
-              <h3 className="text-xl font-semibold text-white mb-2">🔥 Choose Your FOGO Strategy</h3>
+              <h3 className="text-xl font-semibold text-white mb-2">Choose Your FOGO Strategy</h3>
               <p className="text-gray-400">Select a template to start building your custom FOGO crucible</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -140,12 +140,9 @@ export const CrucibleCreationModal: React.FC<CrucibleCreationModalProps> = ({ is
                   onClick={() => handleTemplateSelect(template)}
                   className="card bg-forge-gray border-gray-700 hover:border-forge-primary cursor-pointer transition-colors"
                 >
-                  <div className="flex items-center space-x-3 mb-4">
-                    <div className="text-3xl">{template.icon}</div>
-                    <div>
-                      <h4 className="text-lg font-semibold text-white">{template.name}</h4>
-                      <p className="text-gray-400 text-sm">{template.symbol}</p>
-                    </div>
+                  <div className="mb-4">
+                    <h4 className="text-lg font-semibold text-white">{template.name}</h4>
+                    <p className="text-gray-400 text-sm">{template.symbol}</p>
                   </div>
                   <p className="text-gray-300 text-sm mb-4">{template.description}</p>
                   <div className="space-y-2 text-sm">

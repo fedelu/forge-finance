@@ -11,8 +11,13 @@ export interface APYCalculation {
 export const calculateAPYRewards = (
   principal: number,
   apyRate: number,
-  timeInDays: number = 365 // Default to 1 year
+  depositTimestamp: number
 ): APYCalculation => {
+  // Calculate actual time elapsed since deposit
+  const now = Date.now();
+  const timeElapsedMs = now - depositTimestamp;
+  const timeInDays = Math.max(0, timeElapsedMs / (1000 * 60 * 60 * 24)); // Convert to days
+  
   // Use compound interest formula: A = P(1 + r/n)^(nt)
   // For daily compounding: A = P(1 + r/365)^(365 * t)
   const dailyRate = apyRate / 365;
