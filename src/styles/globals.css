@@ -189,11 +189,11 @@ body {
 
 /* Gradient text */
 .text-gradient {
-  @apply bg-gradient-to-r from-forge-primary to-forge-secondary bg-clip-text text-transparent;
+  @apply bg-gradient-to-r from-fogo-primary to-fogo-secondary bg-clip-text text-transparent;
 }
 
 .text-gradient-secondary {
-  @apply bg-gradient-to-r from-forge-secondary to-forge-accent bg-clip-text text-transparent;
+  @apply bg-gradient-to-r from-fogo-secondary to-fogo-accent bg-clip-text text-transparent;
 }
 
 /* Hover effects */
@@ -202,12 +202,12 @@ body {
 }
 
 .hover-glow {
-  @apply transition-all duration-300 hover:shadow-glow;
+  @apply transition-all duration-300 hover:shadow-flame;
 }
 
 /* Focus styles */
 .focus-ring {
-  @apply focus:outline-none focus:ring-4 focus:ring-forge-primary/20 focus:border-forge-primary;
+  @apply focus:outline-none focus:ring-4 focus:ring-fogo-primary/20 focus:border-fogo-primary;
 }
 
 /* Responsive text */
