@@ -322,6 +322,15 @@ function DemoContent() {
           )}
 
         </main>
+        
+        {/* Footer */}
+        <footer className="bg-fogo-gray-900 border-t border-fogo-gray-700 py-6 mt-12">
+          <div className="container mx-auto px-4 text-center">
+            <p className="text-fogo-gray-400 text-sm">
+              © 2025 Forge. Real Yield, Reinvented.
+            </p>
+          </div>
+        </footer>
       </div>
     </>
   )
@@ -344,15 +353,6 @@ export default function Demo() {
         </BalanceProvider>
       </WalletProvider>
     </FogoSessionsProvider>
-    
-    {/* Footer */}
-    <footer className="bg-fogo-gray-900 border-t border-fogo-gray-700 py-6 mt-12">
-      <div className="container mx-auto px-4 text-center">
-        <p className="text-fogo-gray-400 text-sm">
-          © 2025 Forge. Real Yield, Reinvented.
-        </p>
-      </div>
-    </footer>
   )
 }
 
