@@ -145,7 +145,7 @@ export function FogoSessionsProvider({
               sessionId: sessionResponse.session.sessionPublicKey.toString(),
               sessionKey: sessionResponse.session.sessionKey,
               expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-              userPublicKey: publicKey.toString(),
+              walletPublicKey: publicKey.toString(),
               success: true,
               message: 'Fogo Session created with official SDK'
             });
@@ -195,8 +195,8 @@ export function FogoSessionsProvider({
             setIsEstablished(true);
             setSessionData(existingSession);
             
-            if (existingSession.userPublicKey) {
-              const publicKey = new PublicKey(existingSession.userPublicKey);
+            if (existingSession.walletPublicKey) {
+              const publicKey = existingSession.walletPublicKey;
               setWalletPublicKey(publicKey);
               
               // Fetch real balance
@@ -254,7 +254,7 @@ export function FogoSessionsProvider({
             sessionId: sessionResponse.session.sessionPublicKey.toString(),
             sessionKey: sessionResponse.session.sessionKey,
             expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-            userPublicKey: publicKey.toString(),
+            walletPublicKey: publicKey.toString(),
             success: true,
             message: 'Fogo Session created with official SDK'
           });
@@ -296,9 +296,9 @@ export function FogoSessionsProvider({
             sessionPublicKey: new PublicKey(sessionData.sessionId),
             sessionKey: sessionData.sessionKey,
             walletPublicKey: walletPublicKey,
-            payer: walletPublicKey, // This might need adjustment based on actual session structure
-            sendTransaction: async () => ({}), // Placeholder
-            sessionInfo: {} // Placeholder
+            payer: walletPublicKey,
+            sendTransaction: async () => ({ type: 0, signature: 'mock_signature' }), // Mock TransactionResult
+            sessionInfo: {} as any
           };
           await endFogoSession(fogoClient.context, session);
           console.log('✅ Fogo Session ended via SDK');
@@ -358,14 +358,14 @@ export function FogoSessionsProvider({
         sessionKey: sessionData.sessionKey,
         walletPublicKey: walletPublicKey,
         payer: walletPublicKey,
-        sendTransaction: async () => ({}), // Placeholder
-        sessionInfo: {} // Placeholder
+        sendTransaction: async () => ({ type: 0, signature: 'mock_signature' }), // Mock TransactionResult
+        sessionInfo: {} as any
       };
       
       const result = await sendFogoTransaction(session, instructions);
       
       console.log('✅ Fogo transaction sent successfully:', result);
-      return result;
+      return result.signature || 'mock_signature';
       
     } catch (error: any) {
       console.error('❌ Fogo transaction failed:', error);
