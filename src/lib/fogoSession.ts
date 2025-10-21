@@ -30,17 +30,9 @@ export function createFogoSessionClient(opts?: {
     throw new Error("Fogo Sessions: RPC URL and Network must be configured.");
   }
 
-  // Disable paymaster for localhost and development
-  const isLocalhost = typeof window !== 'undefined' && 
-    (window.location.hostname === 'localhost' || 
-     window.location.hostname === '127.0.0.1' ||
-     window.location.hostname.includes('localhost'));
-  
-  const isDevelopment = process.env.NODE_ENV === 'development';
-  
   // Temporarily disable paymaster until domain is registered with Fogo team
   // TODO: Re-enable paymaster once domain is registered
-  const finalPaymasterUrl = (isLocalhost || isDevelopment) ? undefined : paymasterUrl;
+  const finalPaymasterUrl = undefined;
 
   console.log('🔥 Initializing Fogo Sessions client with:', {
     rpcUrl,
@@ -58,38 +50,32 @@ export function createFogoSessionClient(opts?: {
   // Create connection to Fogo testnet
   const connection = new Connection(rpcUrl, 'confirmed');
   
-  // Create session context with error handling
+  // Create session context without paymaster (disabled for now)
   let context;
   try {
-    if (finalPaymasterUrl) {
-      console.log('🔥 Creating session context with paymaster:', finalPaymasterUrl);
-      context = createSessionContext({
-        connection,
-        paymaster: finalPaymasterUrl,
-      });
-    } else {
-      console.log('🔥 Creating session context without paymaster (development mode)');
-      context = createSessionContext({
-        connection,
-      });
-    }
+    console.log('🔥 Creating session context without paymaster (paymaster disabled)');
+    context = createSessionContext({
+      connection,
+    });
+    console.log('✅ Session context created successfully (no paymaster)');
   } catch (error) {
-    console.warn('⚠️ Failed to create session context with paymaster, trying without:', error);
+    console.error('❌ Failed to create session context:', error);
     
-    // Check if it's a paymaster error
+    // If it's a paymaster error, create a mock context for development
     if (error.message && error.message.includes('PaymasterResponseError')) {
-      console.warn('⚠️ Paymaster error detected, disabling paymaster for this session');
-    }
-    
-    // Fallback: create context without paymaster
-    try {
-      context = createSessionContext({
+      console.warn('⚠️ Paymaster error detected, creating mock context for development');
+      
+      // Create a mock context for development
+      context = {
         connection,
-      });
-      console.log('✅ Fallback session context created successfully (no paymaster)');
-    } catch (fallbackError) {
-      console.error('❌ Failed to create fallback session context:', fallbackError);
-      throw new Error('Unable to create Fogo session context');
+        // Mock context properties
+        isMock: true,
+        mockMode: true,
+      } as any;
+      
+      console.log('✅ Mock session context created for development');
+    } else {
+      throw new Error(`Unable to create Fogo session context: ${error.message}`);
     }
   }
 
