@@ -50,34 +50,27 @@ export function createFogoSessionClient(opts?: {
   // Create connection to Fogo testnet
   const connection = new Connection(rpcUrl, 'confirmed');
   
-  // Create session context without paymaster (disabled for now)
-  let context;
-  try {
-    console.log('🔥 Creating session context without paymaster (paymaster disabled)');
-    context = createSessionContext({
-      connection,
-    });
-    console.log('✅ Session context created successfully (no paymaster)');
-  } catch (error) {
-    console.error('❌ Failed to create session context:', error);
-    
-    // If it's a paymaster error, create a mock context for development
-    if (error.message && error.message.includes('PaymasterResponseError')) {
-      console.warn('⚠️ Paymaster error detected, creating mock context for development');
-      
-      // Create a mock context for development
-      context = {
-        connection,
-        // Mock context properties
-        isMock: true,
-        mockMode: true,
-      } as any;
-      
-      console.log('✅ Mock session context created for development');
-    } else {
-      throw new Error(`Unable to create Fogo session context: ${error.message}`);
-    }
-  }
+  // Create mock context for development (bypass paymaster completely)
+  console.log('🔥 Creating mock session context for development (paymaster disabled)');
+  
+  const context = {
+    connection,
+    // Mock context properties
+    isMock: true,
+    mockMode: true,
+    // Mock the required methods to avoid paymaster calls
+    getSponsor: async () => {
+      console.log('🎮 Mock getSponsor called (no paymaster)');
+      return null;
+    },
+    // Add other required methods as needed
+    createSession: async () => {
+      console.log('🎮 Mock createSession called');
+      return { type: 0, session: {} };
+    },
+  } as any;
+  
+  console.log('✅ Mock session context created for development');
 
   return {
     context,
