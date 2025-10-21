@@ -29,6 +29,7 @@ interface FogoSessionContextType {
   calculateAPY: (principal: number, timeInDays: number) => number;
   calculateCompoundInterest: (principal: number, apy: number, timeInDays: number) => number;
   refreshBalance: () => Promise<void>;
+  testDeposit: (amount: number) => Promise<{ success: boolean; transactionId: string }>;
   error: string | null;
 }
 
@@ -178,6 +179,9 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
 
   // Single deposit function for SIMULATED FOGO tokens
   const depositToCrucible = async (amount: number) => {
+    console.log(`🏛️ DEPOSIT REQUEST: ${amount} FOGO tokens`);
+    console.log(`💰 Current balance before deposit: ${fogoBalance} FOGO`);
+    
     if (amount > fogoBalance) {
       throw new Error('Insufficient simulated FOGO balance');
     }
@@ -194,12 +198,20 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
     
     // Update simulated balance
     const newBalance = fogoBalance - amount;
+    console.log(`💰 New balance after deposit: ${newBalance} FOGO`);
+    
     setFogoBalance(newBalance);
     
     // Store in localStorage for persistence
     if (walletPublicKey) {
       localStorage.setItem(`fogo_balance_${walletPublicKey.toString()}`, newBalance.toString());
+      console.log(`💾 Balance saved to localStorage: ${newBalance} FOGO`);
     }
+    
+    // Force a context update by dispatching a custom event
+    window.dispatchEvent(new CustomEvent('fogoBalanceUpdated', { 
+      detail: { newBalance, operation: 'deposit', amount } 
+    }));
     
     console.log(`✅ Successfully SIMULATED deposit of ${amount} FOGO tokens`);
     console.log('⚠️  WARNING: This is a simulation - no real FOGO tokens were deposited');
@@ -208,6 +220,9 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
 
   // Single withdraw function for SIMULATED FOGO tokens
   const withdrawFromCrucible = async (amount: number) => {
+    console.log(`🏛️ WITHDRAWAL REQUEST: ${amount} FOGO tokens`);
+    console.log(`💰 Current balance before withdrawal: ${fogoBalance} FOGO`);
+    
     if (amount <= 0) {
       throw new Error('Withdrawal amount must be greater than 0');
     }
@@ -220,12 +235,20 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
     
     // Update simulated balance
     const newBalance = fogoBalance + amount;
+    console.log(`💰 New balance after withdrawal: ${newBalance} FOGO`);
+    
     setFogoBalance(newBalance);
     
     // Store in localStorage for persistence
     if (walletPublicKey) {
       localStorage.setItem(`fogo_balance_${walletPublicKey.toString()}`, newBalance.toString());
+      console.log(`💾 Balance saved to localStorage: ${newBalance} FOGO`);
     }
+    
+    // Force a context update by dispatching a custom event
+    window.dispatchEvent(new CustomEvent('fogoBalanceUpdated', { 
+      detail: { newBalance, operation: 'withdrawal', amount } 
+    }));
     
     console.log(`✅ Successfully SIMULATED withdrawal of ${amount} FOGO tokens`);
     console.log('⚠️  WARNING: This is a simulation - no real FOGO tokens were withdrawn');
@@ -299,6 +322,22 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
     return interest;
   };
 
+  // Test function for crucible components to test deposit functionality
+  const testDeposit = async (amount: number) => {
+    console.log('🧪 TEST DEPOSIT: Testing deposit functionality');
+    console.log(`💰 Current balance: ${fogoBalance} FOGO`);
+    console.log(`🏛️ Test deposit amount: ${amount} FOGO`);
+    
+    try {
+      const result = await depositToCrucible(amount);
+      console.log('✅ Test deposit successful:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ Test deposit failed:', error);
+      throw error;
+    }
+  };
+
   const value: FogoSessionContextType = {
     isEstablished: !!sessionData,
     walletPublicKey,
@@ -312,6 +351,7 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
     calculateAPY,
     calculateCompoundInterest,
     refreshBalance,
+    testDeposit,
     error,
   };
 
@@ -344,6 +384,21 @@ export function FogoSessionsButton() {
   const [limitTokenAccess, setLimitTokenAccess] = useState(false);
   const [recipientAddress, setRecipientAddress] = useState('');
   const [sendAmount, setSendAmount] = useState('');
+
+  // Listen for balance updates from crucible operations
+  useEffect(() => {
+    const handleBalanceUpdate = (event: CustomEvent) => {
+      console.log('🔄 Balance update received:', event.detail);
+      // Refresh the balance from context
+      refreshBalance();
+    };
+
+    window.addEventListener('fogoBalanceUpdated', handleBalanceUpdate as EventListener);
+    
+    return () => {
+      window.removeEventListener('fogoBalanceUpdated', handleBalanceUpdate as EventListener);
+    };
+  }, [refreshBalance]);
 
   const handleConnect = async () => {
     console.log('🔥 FOGO Sessions button clicked!');
