@@ -1,111 +1,178 @@
-import React, { useState, useEffect } from 'react';
-import { useWallet } from '../contexts/WalletContext';
+import React from 'react';
+import { usePhantomWallet } from '../hooks/usePhantomWallet';
+import { initFogoSession } from '../lib/fogoSessionInit';
 
-interface PhantomWalletButtonProps {
-  className?: string;
-}
-
-export const PhantomWalletButton: React.FC<PhantomWalletButtonProps> = ({ className = '' }) => {
-  const { connected, connecting, connect, disconnect, publicKey, getFogoBalance, network, switchNetwork } = useWallet();
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [fogoBalance, setFogoBalance] = useState<number | null>(null);
-  const [loadingBalance, setLoadingBalance] = useState(false);
-
-  // Fetch FOGO balance when connected
-  useEffect(() => {
-    if (connected && publicKey) {
-      setLoadingBalance(true);
-      getFogoBalance().then(balance => {
-        setFogoBalance(balance);
-        setLoadingBalance(false);
-      }).catch(() => {
-        setLoadingBalance(false);
-      });
-    } else {
-      setFogoBalance(null);
-    }
-  }, [connected, publicKey, getFogoBalance]);
+export const PhantomWalletButton: React.FC = () => {
+  const {
+    provider,
+    publicKey,
+    connected,
+    connecting,
+    error,
+    isInstalled,
+    isUnlocked,
+    connect,
+    disconnect,
+    signMessage,
+    clearError
+  } = usePhantomWallet();
 
   const handleConnect = async () => {
-    setIsConnecting(true);
     try {
+      console.log('🚀 PhantomWalletButton: Starting connection...');
       await connect();
+      
+      // Initialize Fogo Session after successful connection
+      if (provider && publicKey) {
+        console.log('🔥 PhantomWalletButton: Initializing Fogo Session...');
+        const sessionResult = await initFogoSession(provider);
+        
+        if (sessionResult.success) {
+          console.log('✅ PhantomWalletButton: Fogo Session initialized:', sessionResult.sessionId);
+        } else {
+          console.error('❌ PhantomWalletButton: Fogo Session failed:', sessionResult.error);
+        }
+      }
     } catch (error) {
-      console.error('Failed to connect wallet:', error);
-      alert('Failed to connect wallet. Please make sure Phantom wallet is installed.');
-    } finally {
-      setIsConnecting(false);
+      console.error('❌ PhantomWalletButton: Connection failed:', error);
     }
   };
 
-  const handleDisconnect = () => {
-    disconnect();
-    setFogoBalance(null);
+  const handleDisconnect = async () => {
+    try {
+      console.log('🔌 PhantomWalletButton: Disconnecting...');
+      await disconnect();
+    } catch (error) {
+      console.error('❌ PhantomWalletButton: Disconnect failed:', error);
+    }
   };
 
-  const handleSwitchToFogo = () => {
-    switchNetwork('fogo-testnet');
-    // Refresh balance after switching
-    setTimeout(() => {
-      if (connected && publicKey) {
-        getFogoBalance().then(balance => {
-          setFogoBalance(balance);
-        });
+  const handleSignMessage = async () => {
+    if (!connected || !publicKey) {
+      console.error('❌ PhantomWalletButton: Not connected, cannot sign message');
+      return;
+    }
+
+    try {
+      const message = `Hello from Forge Finance! Timestamp: ${Date.now()}`;
+      console.log('✍️ PhantomWalletButton: Signing test message...');
+      
+      const signature = await signMessage(message);
+      
+      if (signature) {
+        console.log('✅ PhantomWalletButton: Message signed successfully');
+        console.log('📊 PhantomWalletButton: Signature length:', signature.length);
+        console.log('📄 PhantomWalletButton: Message:', message);
+      } else {
+        console.error('❌ PhantomWalletButton: Signing failed');
       }
-    }, 1000);
+    } catch (error) {
+      console.error('❌ PhantomWalletButton: Sign message failed:', error);
+    }
   };
 
-  if (connected && publicKey) {
-    return (
-      <div className={`flex items-center space-x-4 ${className}`}>
-        {/* Network Indicator - Always FOGO */}
-        <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 rounded-full bg-orange-500 animate-pulse"></div>
-          <span className="text-sm font-medium text-orange-300">FOGO</span>
-        </div>
+  const getButtonText = () => {
+    if (connecting) return 'Connecting...';
+    if (connected) return 'Disconnect';
+    if (!isInstalled) return 'Install Phantom';
+    if (!isUnlocked) return 'Unlock Phantom';
+    return 'Connect Phantom';
+  };
 
-        {/* Wallet Address */}
-        <div className="text-sm text-gray-300 font-mono">
-          {publicKey.toString().slice(0, 4)}...{publicKey.toString().slice(-4)}
-        </div>
+  const getButtonColor = () => {
+    if (connected) return 'bg-red-600 hover:bg-red-700';
+    if (!isInstalled || !isUnlocked) return 'bg-gray-600 hover:bg-gray-700';
+    return 'bg-purple-600 hover:bg-purple-700';
+  };
 
-        {/* FOGO Balance Display (like Pyron.fi) */}
-        <div className="flex items-center space-x-2 px-3 py-1 bg-orange-900/30 border border-orange-500/50 rounded-lg">
-          <span className="text-orange-400 text-sm">🔥</span>
-          <span className="text-orange-300 text-sm font-medium">
-            {loadingBalance ? '...' : fogoBalance !== null ? `${fogoBalance.toFixed(2)} FOGO` : '0 FOGO'}
-          </span>
-        </div>
-
-
-        {/* Disconnect Button */}
-        <button
-          onClick={handleDisconnect}
-          className="px-3 py-1 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors"
-        >
-          Disconnect
-        </button>
-      </div>
-    );
-  }
+  const isButtonDisabled = () => {
+    return connecting || (!isInstalled && !connected);
+  };
 
   return (
-    <button
-      onClick={handleConnect}
-      disabled={connecting || isConnecting}
-      className={`px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-lg font-semibold hover:from-purple-600 hover:to-blue-600 transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
-    >
-      {connecting || isConnecting ? (
+    <div className="space-y-4 p-4 bg-white rounded-lg shadow-lg">
+      <h3 className="text-lg font-semibold text-gray-900">Phantom Wallet Connection</h3>
+      
+      {/* Status Display */}
+      <div className="space-y-2">
         <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-          <span>Connecting...</span>
+          <div className={`w-3 h-3 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+          <span className="text-sm font-medium">
+            {connected ? 'Connected' : 'Disconnected'}
+          </span>
         </div>
-      ) : (
-        <div className="flex items-center space-x-2">
-          <span>👻</span>
-          <span>Connect Phantom</span>
+        
+        {publicKey && (
+          <div className="text-sm text-gray-600">
+            <strong>Address:</strong> {publicKey.toString().slice(0, 8)}...{publicKey.toString().slice(-8)}
+          </div>
+        )}
+        
+        {!isInstalled && (
+          <div className="text-sm text-red-600">
+            Phantom wallet not installed. 
+            <a 
+              href="https://phantom.app/download" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="ml-1 text-blue-600 hover:underline"
+            >
+              Install here
+            </a>
+          </div>
+        )}
+        
+        {isInstalled && !isUnlocked && (
+          <div className="text-sm text-yellow-600">
+            Phantom wallet is locked. Please unlock it and try again.
+          </div>
+        )}
+      </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-red-600">{error}</span>
+            <button
+              onClick={clearError}
+              className="text-red-400 hover:text-red-600 text-sm"
+            >
+              ✕
+            </button>
+          </div>
         </div>
       )}
-    </button>
+
+      {/* Action Buttons */}
+      <div className="space-y-2">
+        <button
+          onClick={connected ? handleDisconnect : handleConnect}
+          disabled={isButtonDisabled()}
+          className={`w-full px-4 py-2 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${getButtonColor()}`}
+        >
+          {getButtonText()}
+        </button>
+        
+        {connected && (
+          <button
+            onClick={handleSignMessage}
+            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Test Sign Message
+          </button>
+        )}
+      </div>
+
+      {/* Debug Info */}
+      <div className="text-xs text-gray-500 space-y-1">
+        <div>Installed: {isInstalled ? 'Yes' : 'No'}</div>
+        <div>Unlocked: {isUnlocked ? 'Yes' : 'No'}</div>
+        <div>Connected: {connected ? 'Yes' : 'No'}</div>
+        <div>Connecting: {connecting ? 'Yes' : 'No'}</div>
+      </div>
+    </div>
   );
 };
+
+export default PhantomWalletButton;

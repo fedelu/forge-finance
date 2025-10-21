@@ -27,6 +27,7 @@ export const FOGO_TESTNET_CONFIG = {
   // Fogo token addresses (testnet)
   TOKEN_ADDRESSES: {
     SOL: 'So11111111111111111111111111111111111111112', // Wrapped SOL
+    FOGO: 'FogoToken1111111111111111111111111111111111111', // FOGO token (placeholder - update with real address)
     USDC: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC testnet
     ETH: '2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk', // Mock ETH token
     BTC: '9n4nbM75f5Ui33ZdvPYWZKU6efXy2HKhmaKkDVcnNYKE', // Mock BTC token

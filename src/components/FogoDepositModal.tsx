@@ -21,7 +21,7 @@ export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onCl
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [depositMode, setDepositMode] = useState<'simulation' | 'real'>('real'); // Default to real FOGO
+  const [depositMode, setDepositMode] = useState<'simulation' | 'real'>('simulation'); // Default to simulation
   const [fogoBalance, setFogoBalance] = useState<number | null>(null);
 
   const crucible = getCrucible(crucibleId);
@@ -29,12 +29,36 @@ export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onCl
 
   // Fetch FOGO balance when modal opens
   useEffect(() => {
-    if (isOpen && publicKey && depositMode === 'real') {
-      getFogoBalance().then(balance => {
-        setFogoBalance(balance);
-      });
+    if (isOpen) {
+      if (depositMode === 'real' && publicKey) {
+        getFogoBalance().then(balance => {
+          setFogoBalance(balance);
+        });
+      } else if (depositMode === 'simulation' && fogoSession.fogoBalance !== undefined) {
+        // Use FOGO Sessions balance for simulation mode
+        setFogoBalance(fogoSession.fogoBalance);
+      }
     }
-  }, [isOpen, publicKey, depositMode, getFogoBalance]);
+  }, [isOpen, publicKey, depositMode, getFogoBalance, fogoSession.fogoBalance]);
+
+  // Refresh balance function
+  const refreshBalance = async () => {
+    if (depositMode === 'real' && publicKey) {
+      try {
+        const balance = await getFogoBalance();
+        setFogoBalance(balance);
+      } catch (error) {
+        console.error('Failed to refresh real FOGO balance:', error);
+      }
+    } else if (depositMode === 'simulation' && fogoSession.refreshBalance) {
+      try {
+        await fogoSession.refreshBalance();
+        setFogoBalance(fogoSession.fogoBalance);
+      } catch (error) {
+        console.error('Failed to refresh simulation FOGO balance:', error);
+      }
+    }
+  };
 
   const handleDeposit = async () => {
     if (!publicKey) {
@@ -59,11 +83,27 @@ export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onCl
 
     try {
       if (depositMode === 'simulation') {
-        // SIMULATION MODE - No real tokens, just testing
-        console.log('Simulating FOGO deposit...');
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        const mockSignature = 'sim_fogo_' + Math.random().toString(36).substr(2, 9);
+        // SIMULATION MODE - Use FOGO Sessions context
+        console.log('Simulating FOGO deposit using FOGO Sessions context...');
         
+        // Check if FOGO Sessions is available
+        if (!fogoSession.depositToCrucible) {
+          setError('FOGO Sessions not available. Please connect to FOGO Sessions first.');
+          return;
+        }
+
+        // Check FOGO balance in simulation mode
+        if (fogoSession.fogoBalance !== undefined && depositAmount > fogoSession.fogoBalance) {
+          setError(`Insufficient FOGO balance. You have ${fogoSession.fogoBalance.toFixed(6)} FOGO tokens.`);
+          return;
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Use FOGO Sessions context for deposit
+        await fogoSession.depositToCrucible(depositAmount);
+        
+        const mockSignature = 'sim_deposit_' + Math.random().toString(36).substr(2, 9);
         console.log('Simulated FOGO deposit successful:', mockSignature);
 
         // Update local state (simulation)
@@ -83,6 +123,9 @@ export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onCl
           crucibleId,
           signature: mockSignature
         });
+
+        // Update local FOGO balance display
+        setFogoBalance(fogoSession.fogoBalance);
 
         alert(`🎮 SIMULATION MODE\n\n✅ ${depositAmount} FOGO simulated deposit\n✅ ${depositAmount * 10} SPARK earned\n✅ ${depositAmount * 5} HEAT earned\n\nTransaction: ${mockSignature}\n\nThis is a test - no real tokens were used!`);
 
@@ -253,15 +296,34 @@ export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onCl
             <label className="block text-sm font-medium text-gray-300 mb-2">
               FOGO Amount
             </label>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
-              placeholder="0.0"
-            />
+            <div className="relative">
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                max={fogoBalance || undefined}
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                placeholder="0.0"
+              />
+              {fogoBalance !== null && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-400">
+                  Balance: {fogoBalance.toFixed(6)} FOGO
+                </div>
+              )}
+            </div>
+            {fogoBalance !== null && (
+              <div className="mt-1 flex items-center justify-between text-xs text-gray-400">
+                <span>Available: {fogoBalance.toFixed(6)} FOGO</span>
+                <button
+                  onClick={refreshBalance}
+                  className="text-purple-400 hover:text-purple-300 transition-colors"
+                >
+                  Refresh
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Rewards Preview */}

@@ -3,6 +3,7 @@ import { useWallet } from '../contexts/WalletContext';
 import { useBalance } from '../contexts/BalanceContext';
 import { useCrucible } from '../contexts/CrucibleContext';
 import { useAnalytics } from '../contexts/AnalyticsContext';
+import { useSession } from './FogoSessions';
 import { Transaction, SystemProgram, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { calculateAPYRewards, getTimeInCrucible, formatAPYBreakdown } from '../utils/apyCalculations';
 
@@ -17,6 +18,7 @@ export const FogoWithdrawModal: React.FC<FogoWithdrawModalProps> = ({ isOpen, on
   const { addToBalance, subtractFromBalance } = useBalance();
   const { updateCrucibleWithdraw, getCrucible } = useCrucible();
   const { addTransaction } = useAnalytics();
+  const fogoSession = useSession();
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,11 +68,21 @@ export const FogoWithdrawModal: React.FC<FogoWithdrawModalProps> = ({ isOpen, on
 
     try {
       if (withdrawMode === 'simulation') {
-        // SIMULATION MODE - No real tokens, just testing
-        console.log('Simulating FOGO withdrawal...');
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        const mockSignature = 'sim_withdraw_fogo_' + Math.random().toString(36).substr(2, 9);
+        // SIMULATION MODE - Use FOGO Sessions context
+        console.log('Simulating FOGO withdrawal using FOGO Sessions context...');
         
+        // Check if FOGO Sessions is available
+        if (!fogoSession.withdrawFromCrucible) {
+          setError('FOGO Sessions not available. Please connect to FOGO Sessions first.');
+          return;
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Use FOGO Sessions context for withdrawal
+        await fogoSession.withdrawFromCrucible(withdrawAmount);
+        
+        const mockSignature = 'sim_withdraw_fogo_' + Math.random().toString(36).substr(2, 9);
         console.log('Simulated FOGO withdrawal successful:', mockSignature);
 
         // Update local state (simulation)

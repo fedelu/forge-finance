@@ -1,6 +1,7 @@
 import '../styles/globals.css'
 import type { AppProps } from 'next/app'
 import { useEffect, useState } from 'react'
+import { FogoSessionsProvider } from '../components/FogoSessions'
 
 export default function App({ Component, pageProps }: AppProps) {
   const [mounted, setMounted] = useState(false)
@@ -13,5 +14,9 @@ export default function App({ Component, pageProps }: AppProps) {
     return null
   }
 
-  return <Component {...pageProps} />
+  return (
+    <FogoSessionsProvider>
+      <Component {...pageProps} />
+    </FogoSessionsProvider>
+  )
 }
