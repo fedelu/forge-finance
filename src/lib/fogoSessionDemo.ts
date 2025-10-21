@@ -10,6 +10,7 @@ import {
   type TransactionResult
 } from "@fogo/sessions-sdk";
 import { PublicKey, Connection, TransactionInstruction } from '@solana/web3.js';
+import { getAssociatedTokenAddress, getAccount } from '@solana/spl-token';
 import { getStoredSession, clearStoredSession, setStoredSession } from "@fogo/sessions-sdk-web";
 import { DEMO_CONFIG } from '../config/demo-config';
 
@@ -100,9 +101,9 @@ export async function createDemoSessionWithWallet(
     sendTransaction: async (instructions: TransactionInstruction[]) => {
       console.log('🎮 Demo transaction sent with', instructions.length, 'instructions');
       return { 
-        type: 'Success', 
+        type: 0, // Success type
         signature: `demo_tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` 
-      };
+      } as TransactionResult;
     },
     sessionInfo: {
       expiresAt: expires,
@@ -159,16 +160,16 @@ export async function getCurrentDemoSession(
     sendTransaction: async (instructions: TransactionInstruction[]) => {
       console.log('🎮 Demo transaction sent');
       return { 
-        type: 'Success', 
+        type: 0, // Success type
         signature: `demo_tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` 
-      };
+      } as TransactionResult;
     },
     sessionInfo: {
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       unlimited: true,
       isDemo: true,
     }
-  } as Session;
+  } as any; // Use any to avoid complex type matching
 }
 
 /**
@@ -180,11 +181,11 @@ export async function sendDemoTransaction(
 ): Promise<TransactionResult> {
   console.log('🚀 Sending DEMO transaction via Fogo Session...');
   
-  if (session.sessionInfo?.isDemo) {
+  if ((session as any).sessionInfo?.isDemo) {
     // Demo transaction
     const signature = `demo_tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     console.log('✅ Demo transaction successful:', signature);
-    return { type: 'Success', signature } as TransactionResult;
+    return { type: 0, signature } as TransactionResult;
   } else {
     // Real transaction
     try {
@@ -194,7 +195,7 @@ export async function sendDemoTransaction(
     } catch (error) {
       console.error('❌ Real transaction failed, falling back to demo:', error);
       const signature = `demo_tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      return { type: 'Success', signature } as TransactionResult;
+      return { type: 0, signature } as TransactionResult;
     }
   }
 }
@@ -211,9 +212,9 @@ export async function fetchDemoBalances(
   if (DEMO_CONFIG.MOCK_BALANCES) {
     // Return mock balances for demo
     const balances = {
-      fogo: DEMO_CONFIG.DEMO_BALANCES.FOGO + (Math.random() * 100 - 50), // Add some variation
-      usdc: DEMO_CONFIG.DEMO_BALANCES.USDC + (Math.random() * 50 - 25),
-      sol: DEMO_CONFIG.DEMO_BALANCES.SOL + (Math.random() * 0.5 - 0.25),
+      fogo: DEMO_CONFIG.DEMO_BALANCES.fogo + (Math.random() * 100 - 50), // Add some variation
+      usdc: DEMO_CONFIG.DEMO_BALANCES.usdc + (Math.random() * 50 - 25),
+      sol: DEMO_CONFIG.DEMO_BALANCES.sol + (Math.random() * 0.5 - 0.25),
     };
     
     console.log('🎮 Demo balances:', balances);

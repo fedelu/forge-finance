@@ -9,7 +9,7 @@ import {
   clearStoredFogoSession
 } from '../lib/fogoSession';
 import { useFogoWallet } from '../hooks/useFogoWallet';
-import { useSimulation } from './SimulationMode';
+import { useSimulation, SimulationModeToggle } from './SimulationMode';
 import { FOGO_TESTNET_CONFIG } from '../config/fogo-testnet';
 import WalletFallback from './WalletFallback';
 
@@ -223,7 +223,7 @@ export function FogoSessionsProvider({
               setWalletPublicKey(publicKey);
               
               // Fetch real balance
-              const realBalance = await fetchRealFogoBalance(publicKey);
+              const realBalance = await fetchFogoBalance(publicKey);
               setFogoBalance(realBalance);
             }
           } else {

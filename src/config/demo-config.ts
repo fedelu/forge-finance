@@ -20,9 +20,9 @@ export const DEMO_CONFIG = {
   
   // Demo Balances (will be shown in UI)
   DEMO_BALANCES: {
-    FOGO: 1000.0,
-    USDC: 500.0,
-    SOL: 2.5,
+    fogo: 1000.0,
+    usdc: 500.0,
+    sol: 2.5,
   },
   
   // Demo Session Wallet Address (mock)
