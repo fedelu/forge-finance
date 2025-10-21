@@ -11,9 +11,21 @@ export const Header: React.FC = () => {
           {/* Logo and Brand */}
           <div className="flex items-center space-x-3">
             <div className="flex items-center space-x-2">
-              <div className="relative">
-                <BanknotesIcon className="h-8 w-8 text-fogo-primary" />
-                <CurrencyDollarIcon className="h-4 w-4 text-fogo-accent absolute -top-1 -right-1" />
+              <div className="w-8 h-8">
+                <svg viewBox="0 0 24 24" fill="none" className="w-full h-full">
+                  <path 
+                    d="M12 2l4 6H8l4 6H6l4 6h8l-4-6h4l-4-6z" 
+                    fill="url(#forgeGradient)"
+                    className="rounded-sm"
+                  />
+                  <defs>
+                    <linearGradient id="forgeGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stopColor="#FFD700" />
+                      <stop offset="50%" stopColor="#FF6B35" />
+                      <stop offset="100%" stopColor="#DC2626" />
+                    </linearGradient>
+                  </defs>
+                </svg>
               </div>
             </div>
             <div>
