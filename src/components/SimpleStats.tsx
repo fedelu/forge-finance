@@ -5,7 +5,11 @@ import {
   UserGroupIcon, 
   ChartBarIcon,
   ArrowUpIcon,
-  ArrowDownIcon
+  ArrowDownIcon,
+  FireIcon,
+  BoltIcon,
+  CubeIcon,
+  CurrencyDollarIcon as DollarIcon
 } from '@heroicons/react/24/outline'
 import { useCrucible } from '../contexts/CrucibleContext'
 import { useAnalytics } from '../contexts/AnalyticsContext'
@@ -68,19 +72,27 @@ export default function SimpleStats({ className = '' }: SimpleStatsProps) {
     const averageAPR = crucibles.length > 0 
       ? crucibles.reduce((sum, crucible) => sum + crucible.apr, 0) / crucibles.length 
       : 8.5
-    // Compute 24h volume in USD using token prices
+    // Compute 24h volume - dynamic based on recent deposits
     const now = Date.now()
     const txs = (analytics as any).transactions || []
-    const price = (token: string) => ({ SOL: 200, USDC: 1, ETH: 4000, BTC: 110000, FOGO: 0.5 } as any)[token] || 1
-    const volume24h = txs
-      .filter((tx: any) => now - tx.timestamp <= 24 * 60 * 60 * 1000)
-      .reduce((sum: number, tx: any) => sum + (tx.type === 'deposit' ? 1 : -1) * tx.amount * price(tx.token), 0)
+    const current24hVolume = txs
+      .filter((tx: any) => now - tx.timestamp <= 24 * 60 * 60 * 1000) // Last 24 hours
+      .filter((tx: any) => tx.type === 'deposit') // Only deposits
+      .reduce((sum: number, tx: any) => sum + (tx.amount * 0.5), 0) // FOGO price = $0.5
     const priceChange24h = 0.05 // Mock for now
     const tvlChange = 5.2 // Mock for now
     const userChange = 12 // Mock for now
     const aprChange = 0.2 // Mock for now
-    // No percentage for 24h volume
-    const volumeChange = 0
+    
+    // Calculate 24h volume change dynamically
+    const previous24hVolume = txs
+      .filter((tx: any) => now - tx.timestamp <= 48 * 60 * 60 * 1000 && now - tx.timestamp > 24 * 60 * 60 * 1000) // 24-48 hours ago
+      .filter((tx: any) => tx.type === 'deposit')
+      .reduce((sum: number, tx: any) => sum + (tx.amount * 0.5), 0)
+    
+    const volumeChange = previous24hVolume > 0 
+      ? ((current24hVolume - previous24hVolume) / previous24hVolume) * 100 
+      : 0 // Start at 0% if no previous volume
 
     return {
       totalCrucibles,
@@ -88,7 +100,7 @@ export default function SimpleStats({ className = '' }: SimpleStatsProps) {
       totalUsers,
       averageAPR,
       priceChange24h,
-      volume24h,
+      volume24h: current24hVolume,
       tvlChange,
       userChange,
       aprChange,
@@ -123,49 +135,54 @@ export default function SimpleStats({ className = '' }: SimpleStatsProps) {
     value, 
     change, 
     changeType, 
-    icon: Icon, 
-    iconColor, 
     delay = 0 
   }: {
     title: string
     value: string | number
     change: number
     changeType: 'positive' | 'negative' | 'neutral'
-    icon: any
-    iconColor: string
     delay?: number
   }) => {
     const isPositive = changeType === 'positive'
     const isNegative = changeType === 'negative'
+    const valueStr = value.toString()
+    const isLongValue = valueStr.length > 10
     
     return (
       <div
-        className="card-hover group"
+        className="bg-fogo-gray-800/50 backdrop-blur-sm rounded-2xl p-8 border border-fogo-gray-700/50 shadow-fogo hover:shadow-fogo-lg transition-all duration-300 hover:scale-105 hover:-translate-y-1 min-h-[180px] overflow-hidden"
         style={{ animationDelay: `${delay}ms` }}
       >
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <p className="text-forge-gray-400 text-sm font-medium mb-2">{title}</p>
-            <p className="text-3xl font-bold text-white mb-2">
-              {value}
+        <div className="space-y-6 h-full flex flex-col">
+          <p className="text-fogo-gray-400 text-sm font-inter font-medium uppercase tracking-wide">{title}</p>
+          
+          <div className="flex-1 flex items-center min-w-0">
+            <p 
+              className={`font-inter-bold text-white break-all overflow-hidden ${
+                isLongValue ? 'text-2xl leading-tight' : 'text-4xl'
+              }`}
+              title={isLongValue ? valueStr : undefined}
+              style={{ 
+                wordBreak: 'break-all',
+                overflowWrap: 'break-word',
+                hyphens: 'auto'
+              }}
+            >
+              {isLongValue ? valueStr.substring(0, 10) + '...' : value}
             </p>
-            <div className="flex items-center space-x-1">
-              {isPositive && <ArrowUpIcon className="h-4 w-4 text-forge-success" />}
-              {isNegative && <ArrowDownIcon className="h-4 w-4 text-forge-error" />}
-              <span className={`text-sm font-medium ${
-                isPositive ? 'text-forge-success' : 
-                isNegative ? 'text-forge-error' : 
-                'text-forge-gray-400'
-              }`}>
-                {formatChange(change, true)}
-              </span>
-              <span className="text-forge-gray-500 text-sm">this week</span>
-            </div>
           </div>
-          <div
-            className={`p-3 rounded-xl ${iconColor} group-hover:scale-110 transition-transform duration-300`}
-          >
-            <Icon className="h-8 w-8 text-white" />
+          
+          <div className="flex items-center space-x-2">
+            {isPositive && <ArrowUpIcon className="h-4 w-4 text-fogo-success" />}
+            {isNegative && <ArrowDownIcon className="h-4 w-4 text-fogo-error" />}
+            <span className={`text-sm font-inter font-medium ${
+              isPositive ? 'text-fogo-success' : 
+              isNegative ? 'text-fogo-error' : 
+              'text-fogo-gray-400'
+            }`}>
+              {formatChange(change, true)}
+            </span>
+            <span className="text-fogo-gray-500 text-sm font-inter-light">this week</span>
           </div>
         </div>
       </div>
@@ -177,18 +194,18 @@ export default function SimpleStats({ className = '' }: SimpleStatsProps) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-4 sm:space-y-0">
         <div>
-          <h2 className="text-3xl font-bold text-white mb-2">Protocol Statistics</h2>
-          <p className="text-forge-gray-400">Real-time data and performance metrics</p>
+          <h2 className="text-3xl font-inter-bold text-white mb-2">Protocol Statistics</h2>
+          <p className="text-fogo-gray-400 font-inter-light">Real-time data and performance metrics</p>
         </div>
         
         <div className="flex items-center space-x-4">
           {/* Live Status */}
           <div className="flex items-center space-x-2">
             <div className={`w-3 h-3 rounded-full ${isLive ? 'status-online' : 'status-offline'}`} />
-            <span className="text-sm text-forge-gray-400">Live</span>
+            <span className="text-sm text-fogo-gray-400 font-inter">Live</span>
             <button 
               onClick={() => setIsLive(!isLive)}
-              className="text-xs px-3 py-1 rounded-lg bg-forge-gray-700 hover:bg-forge-gray-600 transition-colors hover-lift"
+              className="text-xs px-3 py-1 rounded-lg bg-fogo-gray-700 hover:bg-fogo-gray-600 transition-colors hover-lift font-inter"
             >
               {isLive ? 'Pause' : 'Resume'}
             </button>
@@ -197,14 +214,12 @@ export default function SimpleStats({ className = '' }: SimpleStatsProps) {
       </div>
       
       {/* Main Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
         <StatCard
           title="Total Crucibles"
           value={stats.totalCrucibles}
           change={2}
           changeType="positive"
-          icon={CurrencyDollarIcon}
-          iconColor="bg-gradient-to-br from-forge-primary to-forge-primary-dark"
           delay={0}
         />
         
@@ -213,8 +228,6 @@ export default function SimpleStats({ className = '' }: SimpleStatsProps) {
           value={formatCurrency(stats.totalTVL)}
           change={stats.tvlChange}
           changeType={stats.tvlChange >= 0 ? "positive" : "negative"}
-          icon={BanknotesIcon}
-          iconColor="bg-gradient-to-br from-forge-secondary to-forge-secondary-dark"
           delay={100}
         />
         
@@ -223,8 +236,6 @@ export default function SimpleStats({ className = '' }: SimpleStatsProps) {
           value={stats.totalUsers.toLocaleString()}
           change={stats.userChange}
           changeType="positive"
-          icon={UserGroupIcon}
-          iconColor="bg-gradient-to-br from-forge-success to-green-500"
           delay={200}
         />
         
@@ -233,30 +244,16 @@ export default function SimpleStats({ className = '' }: SimpleStatsProps) {
           value={formatPercentage(stats.averageAPR)}
           change={stats.aprChange}
           changeType={stats.aprChange >= 0 ? "positive" : "negative"}
-          icon={ChartBarIcon}
-          iconColor="bg-gradient-to-br from-forge-info to-blue-500"
           delay={300}
         />
-      </div>
-      
-      {/* Secondary Stats */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Volume Card */}
-        <div className="card-glow">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold text-white">24h Volume</h3>
-            <div className="flex items-center space-x-2">
-              <div className="status-online" />
-            </div>
-          </div>
-          <div className="space-y-4">
-            <div className="text-3xl font-bold text-white">
-              {formatCurrency(stats.volume24h)}
-            </div>
-            {/* Removed percentage/progress bar as requested */}
-          </div>
-        </div>
         
+        <StatCard
+          title="24h Volume"
+          value={formatCurrency(stats.volume24h)}
+          change={stats.volumeChange}
+          changeType={stats.volumeChange >= 0 ? "positive" : "negative"}
+          delay={400}
+        />
       </div>
     </div>
   )

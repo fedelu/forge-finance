@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { 
   FireIcon, 
@@ -50,8 +50,24 @@ function ConnectWalletMessage({ onConnect }: { onConnect: () => void }) {
 
 function DemoContent() {
   const [mainTab, setMainTab] = useState('dashboard')
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
   const { network, connected } = useWallet()
   const { isEstablished, connect } = useSession()
+
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showMobileMenu) {
+        const target = event.target as HTMLElement
+        if (!target.closest('.mobile-menu') && !target.closest('.mobile-menu-button')) {
+          setShowMobileMenu(false)
+        }
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showMobileMenu])
 
   // Mock protocol stats
   const protocolStats = {
@@ -71,9 +87,9 @@ function DemoContent() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
-      <div className="min-h-screen bg-fogo-dark">
+      <div className="min-h-screen bg-gradient-to-br from-fogo-dark via-fogo-secondary to-fogo-dark">
         {/* Header */}
-        <header className="bg-fogo-gray-900 border-b border-fogo-gray-700">
+        <header className="bg-gradient-to-r from-fogo-dark via-fogo-secondary to-fogo-dark border-b border-fogo-primary/30 shadow-2xl backdrop-blur-sm">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
@@ -82,37 +98,65 @@ function DemoContent() {
                   <BoltIcon className="h-6 w-6 text-fogo-accent" />
                 </div>
                 <div className="flex flex-col">
-                  <h1 className="text-2xl font-bold text-white">Forge Protocol</h1>
-                  <p className="text-xs text-fogo-gray-400">Powered by Fogo</p>
+                  <h1 className="text-2xl font-inter-bold text-fogo-gray-50">Forge Protocol</h1>
+                  <p className="text-xs font-inter-light text-fogo-gray-400">Powered by Fogo</p>
                 </div>
               </div>
               
-              <nav className="hidden md:flex items-center space-x-8">
+              <nav className="hidden md:flex items-center space-x-1">
                 <button
                   onClick={() => setMainTab('dashboard')}
-                  className={`transition-colors ${mainTab === 'dashboard' ? 'text-fogo-primary' : 'text-fogo-gray-300 hover:text-white'}`}
+                  className={`px-4 py-2 rounded-lg font-inter font-medium transition-all duration-200 ${
+                    mainTab === 'dashboard' 
+                      ? 'bg-fogo-primary text-white shadow-lg' 
+                      : 'text-fogo-gray-300 hover:text-white hover:bg-fogo-gray-800/50'
+                  }`}
                 >
-                  Dashboard
+                  <div className="flex items-center space-x-2">
+                    <ChartBarIcon className="w-4 h-4" />
+                    <span>Dashboard</span>
+                  </div>
                 </button>
                 {isEstablished && (
                   <>
                     <button
                       onClick={() => setMainTab('crucibles')}
-                      className={`transition-colors ${mainTab === 'crucibles' ? 'text-white' : 'text-gray-300 hover:text-white'}`}
+                      className={`px-4 py-2 rounded-lg font-inter font-medium transition-all duration-200 ${
+                        mainTab === 'crucibles' 
+                          ? 'bg-fogo-primary text-white shadow-lg' 
+                          : 'text-fogo-gray-300 hover:text-white hover:bg-fogo-gray-800/50'
+                      }`}
                     >
-                      Crucibles
+                      <div className="flex items-center space-x-2">
+                        <FireIcon className="w-4 h-4" />
+                        <span>Crucibles</span>
+                      </div>
                     </button>
                     <button
                       onClick={() => setMainTab('governance')}
-                      className={`transition-colors ${mainTab === 'governance' ? 'text-white' : 'text-gray-300 hover:text-white'}`}
+                      className={`px-4 py-2 rounded-lg font-inter font-medium transition-all duration-200 ${
+                        mainTab === 'governance' 
+                          ? 'bg-fogo-primary text-white shadow-lg' 
+                          : 'text-fogo-gray-300 hover:text-white hover:bg-fogo-gray-800/50'
+                      }`}
                     >
-                      Governance
+                      <div className="flex items-center space-x-2">
+                        <UserGroupIcon className="w-4 h-4" />
+                        <span>Governance</span>
+                      </div>
                     </button>
                     <button
                       onClick={() => setMainTab('analytics')}
-                      className={`transition-colors ${mainTab === 'analytics' ? 'text-white' : 'text-gray-300 hover:text-white'}`}
+                      className={`px-4 py-2 rounded-lg font-inter font-medium transition-all duration-200 ${
+                        mainTab === 'analytics' 
+                          ? 'bg-fogo-primary text-white shadow-lg' 
+                          : 'text-fogo-gray-300 hover:text-white hover:bg-fogo-gray-800/50'
+                      }`}
                     >
-                      Portfolio
+                      <div className="flex items-center space-x-2">
+                        <BoltIcon className="w-4 h-4" />
+                        <span>Portfolio</span>
+                      </div>
                     </button>
                   </>
                 )}
@@ -120,10 +164,88 @@ function DemoContent() {
 
               <div className="flex items-center space-x-4">
                 <FogoSessionsButton />
+                
+                {/* Mobile Menu Button */}
+                <button
+                  onClick={() => setShowMobileMenu(!showMobileMenu)}
+                  className="mobile-menu-button md:hidden p-2 rounded-lg text-fogo-gray-300 hover:text-white hover:bg-fogo-gray-800/50 transition-all duration-200"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
         </header>
+
+        {/* Mobile Navigation Menu */}
+        {showMobileMenu && (
+          <div className="mobile-menu md:hidden bg-fogo-gray-900 border-b border-fogo-gray-700 shadow-lg">
+            <div className="px-4 py-4 space-y-2">
+              <button
+                onClick={() => {
+                  setMainTab('dashboard')
+                  setShowMobileMenu(false)
+                }}
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-inter font-medium transition-all duration-200 ${
+                  mainTab === 'dashboard' 
+                    ? 'bg-fogo-primary text-white shadow-lg' 
+                    : 'text-fogo-gray-300 hover:text-white hover:bg-fogo-gray-800/50'
+                }`}
+              >
+                <ChartBarIcon className="w-5 h-5" />
+                <span>Dashboard</span>
+              </button>
+              {isEstablished && (
+                <>
+                  <button
+                    onClick={() => {
+                      setMainTab('crucibles')
+                      setShowMobileMenu(false)
+                    }}
+                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-inter font-medium transition-all duration-200 ${
+                      mainTab === 'crucibles' 
+                        ? 'bg-fogo-primary text-white shadow-lg' 
+                        : 'text-fogo-gray-300 hover:text-white hover:bg-fogo-gray-800/50'
+                    }`}
+                  >
+                    <FireIcon className="w-5 h-5" />
+                    <span>Crucibles</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMainTab('governance')
+                      setShowMobileMenu(false)
+                    }}
+                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-inter font-medium transition-all duration-200 ${
+                      mainTab === 'governance' 
+                        ? 'bg-fogo-primary text-white shadow-lg' 
+                        : 'text-fogo-gray-300 hover:text-white hover:bg-fogo-gray-800/50'
+                    }`}
+                  >
+                    <UserGroupIcon className="w-5 h-5" />
+                    <span>Governance</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMainTab('analytics')
+                      setShowMobileMenu(false)
+                    }}
+                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-inter font-medium transition-all duration-200 ${
+                      mainTab === 'analytics' 
+                        ? 'bg-fogo-primary text-white shadow-lg' 
+                        : 'text-fogo-gray-300 hover:text-white hover:bg-fogo-gray-800/50'
+                    }`}
+                  >
+                    <BoltIcon className="w-5 h-5" />
+                    <span>Portfolio</span>
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
 
         <main className="container mx-auto px-4 py-8">
                   {/* Token balances moved to Analytics dashboard */}

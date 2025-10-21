@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { PublicKey, Connection } from '@solana/web3.js';
 import { 
   createSessionWithWallet,
@@ -111,7 +112,7 @@ export function FogoSessionsProvider({
         setIsEstablished(false);
         setSessionData(null);
         setFogoBalance(10000); // Keep fake balance even when disconnected
-        setError(null);
+      setError(null);
       }
     };
 
@@ -574,8 +575,8 @@ export function FogoSessionsButton() {
     const shortAddress = `${walletPublicKey.toString().slice(0, 4)}...${walletPublicKey.toString().slice(-4)}`;
     
     return (
-      <div className="relative">
-        {/* Header Wallet Button - Dark Theme */}
+           <div className="relative z-50">
+             {/* Header Wallet Button - Dark Theme */}
         <button
           onClick={() => setIsOpen(true)}
           className="bg-fogo-gray-800 hover:bg-fogo-gray-700 text-white px-4 py-2.5 rounded-xl transition-all duration-200 flex items-center space-x-3 group shadow-fogo hover:shadow-flame border border-fogo-gray-600 hover:border-fogo-primary/30"
@@ -591,9 +592,21 @@ export function FogoSessionsButton() {
           </svg>
         </button>
 
-        {/* Modern Wallet Popup */}
-        {isOpen && (
-          <div ref={walletPopupRef} className="absolute top-full right-0 mt-3 z-50 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 w-80 overflow-hidden backdrop-blur-xl">
+             {/* Modern Wallet Popup */}
+             {isOpen && typeof window !== 'undefined' && createPortal(
+               <div 
+                 className="wallet-popup-overlay flex items-start justify-end p-4"
+               >
+                 {/* Backdrop */}
+                 <div 
+                   className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+                   onClick={() => setIsOpen(false)}
+                 />
+                 {/* Popup */}
+                 <div 
+                   ref={walletPopupRef} 
+                   className="wallet-popup-content bg-fogo-gray-50 dark:bg-fogo-secondary rounded-2xl shadow-2xl border border-fogo-primary/20 dark:border-fogo-primary/30 w-80 overflow-hidden backdrop-blur-xl"
+                 >
             {/* Header */}
             <div className="bg-gradient-to-r from-fogo-primary to-fogo-secondary p-6">
               <div className="flex items-center justify-between">
@@ -604,7 +617,7 @@ export function FogoSessionsButton() {
                     </svg>
                   </div>
                   <div>
-                    <div className="font-bold text-lg text-white">FOGO Wallet</div>
+                    <div className="font-inter-bold text-lg text-white">FOGO Wallet</div>
                     <div className="text-sm text-white/80 font-mono">{shortAddress}</div>
                   </div>
                 </div>
@@ -620,17 +633,17 @@ export function FogoSessionsButton() {
             </div>
 
             {/* Content */}
-            <div className="p-6 bg-white dark:bg-gray-900">
+            <div className="p-6 bg-fogo-gray-50 dark:bg-fogo-secondary">
               {/* Balance Card */}
-              <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-2xl p-6 mb-4 border border-gray-200 dark:border-gray-600">
+              <div className="bg-gradient-to-br from-fogo-gray-100 to-fogo-gray-200 dark:from-fogo-secondary-dark dark:to-fogo-secondary rounded-2xl p-6 mb-4 border border-fogo-primary/20 dark:border-fogo-primary/30">
                 <div className="flex items-center justify-between mb-2">
-                  <div className="text-sm font-medium text-gray-600 dark:text-gray-400">FOGO Balance</div>
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <div className="text-sm font-medium text-fogo-gray-600 dark:text-fogo-gray-400">FOGO Balance</div>
+                  <div className="w-2 h-2 bg-fogo-primary rounded-full animate-pulse"></div>
                 </div>
-                <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
+                <div className="text-3xl font-inter-bold text-fogo-gray-900 dark:text-fogo-gray-50 mb-1">
                   {fogoBalance.toFixed(2)}
                 </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
+                <div className="text-sm font-inter-light text-fogo-gray-500 dark:text-fogo-gray-400">
                   ≈ ${(fogoBalance * 0.5).toFixed(2)} USD
                 </div>
               </div>
@@ -642,10 +655,10 @@ export function FogoSessionsButton() {
                     <div className="text-sm font-medium text-fogo-primary dark:text-fogo-primary">Live APY Earnings</div>
                     <div className="w-2 h-2 bg-fogo-primary rounded-full animate-pulse"></div>
                   </div>
-                  <div className="text-2xl font-bold text-fogo-primary dark:text-fogo-primary mb-1">
+                  <div className="text-2xl font-inter-bold text-fogo-primary dark:text-fogo-primary mb-1">
                     +{liveAPYEarnings.toFixed(2)} FOGO
                   </div>
-                  <div className="text-sm text-fogo-primary/70 dark:text-fogo-primary/70">
+                  <div className="text-sm font-inter-light text-fogo-primary/70 dark:text-fogo-primary/70">
                     ≈ +${(liveAPYEarnings * 0.5).toFixed(2)} USD (8% APY)
                   </div>
                 </div>
@@ -661,7 +674,7 @@ export function FogoSessionsButton() {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
-                  <span>Get FOGO Tokens</span>
+                  <span className="font-inter">Get FOGO Tokens</span>
                 </button>
 
                 {/* Disconnect Button */}
@@ -669,28 +682,30 @@ export function FogoSessionsButton() {
                   onClick={handleDisconnect}
                   className="w-full p-4 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-2xl transition-all duration-200 font-medium border border-gray-200 dark:border-gray-600"
                 >
-                  Disconnect Wallet
+                  <span className="font-inter">Disconnect Wallet</span>
                 </button>
               </div>
             </div>
           </div>
-        )}
+               </div>,
+               document.body
+             )}
       </div>
     );
   }
 
-  // Initial login button - FOGO style
+       // Initial login button - FOGO style
   return (
-        <div className="relative">
-          <button
+             <div className="relative z-50">
+      <button
             onClick={handleConnect}
-            disabled={isConnecting}
+        disabled={isConnecting}
             className="bg-fogo-gray-800 hover:bg-fogo-gray-700 text-white px-4 py-2.5 rounded-xl transition-all duration-200 flex items-center space-x-3 shadow-fogo hover:shadow-flame disabled:opacity-50 disabled:cursor-not-allowed border border-fogo-gray-600 hover:border-fogo-primary/30"
           >
         <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
           <path d="M14.724 0h-8.36L5.166 4.804h-3.61L.038 10.898a1.28 1.28 0 0 0 1.238 1.591h3.056L1.465 24l9.744-10.309c.771-.816.195-2.162-.925-2.162h-4.66l1.435-5.765h7.863l1.038-4.172A1.28 1.28 0 0 0 14.723 0ZM26.09 18.052h-2.896V5.58h9.086v2.525h-6.19v2.401h5.636v2.525H26.09v5.02Zm13.543.185c-1.283 0-2.404-.264-3.365-.793a5.603 5.603 0 0 1-2.24-2.233c-.533-.96-.8-2.09-.8-3.394 0-1.304.267-2.451.8-3.41a5.55 5.55 0 0 1 2.24-2.225c.96-.523 2.08-.785 3.365-.785 1.285 0 2.42.259 3.381.777a5.474 5.474 0 0 1 2.233 2.218c.528.96.793 2.1.793 3.425 0 1.324-.268 2.437-.801 3.403a5.56 5.56 0 0 1-2.24 2.233c-.961.523-2.081.785-3.366.785v-.001Zm.016-2.525c1.118 0 1.98-.353 2.586-1.062.606-.708.91-1.652.91-2.833 0-1.182-.304-2.137-.91-2.84-.605-.704-1.473-1.055-2.602-1.055-1.128 0-1.984.351-2.595 1.054-.61.704-.916 1.645-.916 2.825 0 1.18.306 2.14.916 2.85.61.708 1.48 1.061 2.61 1.061Zm13.703 2.525c-1.211 0-2.28-.27-3.203-.808a5.647 5.647 0 0 1-2.163-2.256c-.517-.964-.776-2.079-.776-3.34 0-1.263.267-2.423.8-3.388a5.635 5.635 0 0 1 2.256-2.249c.97-.533 2.096-.801 3.38-.801 1.057 0 1.992.182 2.803.547a5.017 5.017 0 0 1 1.986 1.563c.513.677.837 1.489.971 2.432H56.39c-.103-.626-.394-1.113-.878-1.463-.482-.348-1.103-.523-1.863-.523-.718 0-1.344.16-1.878.476-.533.32-.945.77-1.231 1.356-.288.584-.43 1.277-.43 2.078 0 .801.148 1.515.445 2.11a3.27 3.27 0 0 0 1.262 1.379c.544.322 1.186.485 1.925.485.544 0 1.03-.084 1.454-.253.426-.17.762-.4 1.009-.693a1.5 1.5 0 0 0 .37-.993v-.37H53.51V11.31h3.865c.677 0 1.185.161 1.525.485.337.323.507.808.507 1.455v4.804h-2.648V16.73h-.077c-.299.503-.724.88-1.278 1.132-.554.252-1.237.377-2.048.377l-.003-.001Zm13.911 0c-1.283 0-2.405-.264-3.366-.793a5.603 5.603 0 0 1-2.24-2.233c-.533-.96-.8-2.09-.8-3.394 0-1.304.267-2.451.8-3.41a5.55 5.55 0 0 1 2.24-2.225c.961-.523 2.081-.785 3.366-.785 1.284 0 2.42.259 3.38.777a5.474 5.474 0 0 1 2.234 2.218c.528.96.792 2.1.792 3.425 0 1.324-.268 2.437-.801 3.403a5.56 5.56 0 0 1-2.24 2.233c-.96.523-2.08.785-3.365.785v-.001Zm.015-2.525c1.118 0 1.981-.353 2.587-1.062.605-.708.909-1.652.909-2.833 0-1.182-.304-2.137-.91-2.84-.605-.704-1.473-1.055-2.601-1.055-1.129 0-1.985.351-2.595 1.054-.611.704-.916 1.645-.916 2.825 0 1.18.305 2.14.916 2.85.61.708 1.48 1.061 2.61 1.061Z" />
         </svg>
-        <span className="font-medium">
+        <span className="font-inter font-medium">
           {isConnecting ? 'Connecting...' : 'Log in with FOGO'}
         </span>
       </button>

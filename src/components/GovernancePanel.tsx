@@ -118,8 +118,8 @@ export default function GovernancePanel({ className = '', onVote, isConnected = 
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">FOGO Governance</h2>
-          <p className="text-fogo-gray-400 text-sm mt-1">Shape the future of the FOGO ecosystem</p>
+          <h2 className="text-3xl font-inter-bold text-white mb-2">Forge Governance</h2>
+          <p className="text-fogo-gray-400 font-inter-light">Shape the future of the Forge ecosystem</p>
         </div>
         <div className="flex items-center space-x-6">
           <div className="text-right p-4 bg-fogo-gray-800 rounded-xl">

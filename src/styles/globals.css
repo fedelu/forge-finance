@@ -18,10 +18,10 @@ html {
 }
 
 body {
-  font-family: 'Inter', sans-serif;
-  background: linear-gradient(135deg, #000000 0%, #0A0A0A 100%);
+  font-family: 'Inter', system-ui, sans-serif;
+  background: linear-gradient(135deg, #0D1117 0%, #1A1A2E 100%);
   min-height: 100vh;
-  color: #FFFFFF;
+  color: #F8FAFC;
   overflow-x: hidden;
 }
 
@@ -36,25 +36,25 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #FF4500 0%, #FF6B00 100%);
+  background: linear-gradient(135deg, #FF6B35 0%, #FF8A5B 100%);
   border-radius: 4px;
   transition: all 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #E03E00 0%, #E55A00 100%);
-  box-shadow: 0 0 10px rgba(255, 69, 0, 0.4);
+  background: linear-gradient(135deg, #E55A2B 0%, #FF6B35 100%);
+  box-shadow: 0 0 10px rgba(255, 107, 53, 0.4);
 }
 
 /* Selection styles */
 ::selection {
-  background: rgba(255, 69, 0, 0.3);
-  color: #FFFFFF;
+  background: rgba(255, 107, 53, 0.3);
+  color: #F8FAFC;
 }
 
 ::-moz-selection {
-  background: rgba(255, 69, 0, 0.3);
-  color: #FFFFFF;
+  background: rgba(255, 107, 53, 0.3);
+  color: #F8FAFC;
 }
 
 /* Enhanced button styles - Fogo inspired */
@@ -220,6 +220,26 @@ body {
   backdrop-filter: blur(2px);
 }
 
+/* Inter font utilities */
+.font-inter {
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.font-inter-light {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 300;
+}
+
+.font-inter-bold {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 700;
+}
+
+.font-inter-black {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 900;
+}
+
 /* Animation delays */
 .delay-100 {
   animation-delay: 100ms;
@@ -260,4 +280,23 @@ body {
   .no-print {
     display: none !important;
   }
+}
+
+/* Wallet popup - ensure it's always on top */
+.wallet-popup-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 2147483647 !important; /* Maximum z-index value */
+  pointer-events: auto !important;
+  isolation: isolate !important;
+}
+
+.wallet-popup-content {
+  position: relative !important;
+  z-index: 2147483647 !important; /* Maximum z-index value */
+  pointer-events: auto !important;
+  isolation: isolate !important;
 }

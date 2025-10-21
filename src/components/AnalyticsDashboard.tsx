@@ -81,8 +81,8 @@ export const AnalyticsDashboard: React.FC = () => {
           <BanknotesIcon className="h-6 w-6 text-fogo-primary" />
         </div>
         <div>
-          <h1 className="text-3xl font-bold text-white">Portfolio</h1>
-          <p className="text-fogo-gray-400 text-sm">Track your FOGO portfolio performance</p>
+          <h1 className="text-3xl font-inter-bold text-white mb-2">Portfolio</h1>
+          <p className="text-fogo-gray-400 font-inter-light">Track your Forge portfolio performance</p>
         </div>
       </div>
 
@@ -94,8 +94,8 @@ export const AnalyticsDashboard: React.FC = () => {
               <CurrencyDollarIcon className="h-6 w-6 text-fogo-primary" />
             </div>
             <div>
-              <p className="text-fogo-gray-400 text-sm">APY Earnings</p>
-              <p className="text-2xl font-bold text-white">{formatCurrency(getTotalAPYEarnings())}</p>
+              <p className="text-fogo-gray-400 text-sm font-satoshi-light">APY Earnings</p>
+              <p className="text-2xl font-satoshi-bold text-white">{formatCurrency(getTotalAPYEarnings())}</p>
               <p className="text-xs text-fogo-primary mt-1">
                 {analytics.totalAPYWithdrawn > 0 ? `${formatCurrency(analytics.totalAPYWithdrawn)} withdrawn` : 'Live earnings'}
               </p>
@@ -109,8 +109,8 @@ export const AnalyticsDashboard: React.FC = () => {
               <ArrowUpIcon className="h-6 w-6 text-fogo-success" />
             </div>
             <div>
-              <p className="text-fogo-gray-400 text-sm">Total Deposits</p>
-              <p className="text-2xl font-bold text-white">{formatCurrency(analytics.totalDeposits)}</p>
+              <p className="text-fogo-gray-400 text-sm font-satoshi-light">Total Deposits</p>
+              <p className="text-2xl font-satoshi-bold text-white">{formatCurrency(analytics.totalDeposits)}</p>
             </div>
           </div>
         </div>
@@ -121,8 +121,8 @@ export const AnalyticsDashboard: React.FC = () => {
               <ArrowDownIcon className="h-6 w-6 text-fogo-error" />
             </div>
             <div>
-              <p className="text-fogo-gray-400 text-sm">Total Withdrawals</p>
-              <p className="text-2xl font-bold text-white">{formatCurrency(analytics.totalWithdrawals)}</p>
+              <p className="text-fogo-gray-400 text-sm font-satoshi-light">Total Withdrawals</p>
+              <p className="text-2xl font-satoshi-bold text-white">{formatCurrency(analytics.totalWithdrawals)}</p>
             </div>
           </div>
         </div>
@@ -133,8 +133,8 @@ export const AnalyticsDashboard: React.FC = () => {
               <ChartBarIcon className="h-6 w-6 text-fogo-accent" />
             </div>
             <div>
-              <p className="text-fogo-gray-400 text-sm">Transactions</p>
-              <p className="text-2xl font-bold text-white">{analytics.transactionCount}</p>
+              <p className="text-fogo-gray-400 text-sm font-satoshi-light">Transactions</p>
+              <p className="text-2xl font-satoshi-bold text-white">{analytics.transactionCount}</p>
             </div>
           </div>
         </div>
@@ -145,8 +145,8 @@ export const AnalyticsDashboard: React.FC = () => {
               <ClockIcon className="h-6 w-6 text-fogo-secondary" />
             </div>
             <div>
-              <p className="text-fogo-gray-400 text-sm">24h Volume</p>
-              <p className="text-2xl font-bold text-white">{formatCurrency(volume24h)}</p>
+              <p className="text-fogo-gray-400 text-sm font-satoshi-light">24h Volume</p>
+              <p className="text-2xl font-satoshi-bold text-white">{formatCurrency(volume24h)}</p>
             </div>
           </div>
         </div>
