@@ -154,11 +154,6 @@ export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onCl
                 className="w-full px-4 py-3 bg-fogo-gray-800 border border-fogo-gray-600 rounded-2xl text-white focus:outline-none focus:border-fogo-primary focus:ring-2 focus:ring-fogo-primary/20 transition-all duration-200"
                 placeholder="0.0"
               />
-              {fogoBalance !== null && (
-                <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-xs text-fogo-gray-400">
-                  Balance: {fogoBalance.toFixed(2)} FOGO
-                </div>
-              )}
             </div>
             {fogoBalance !== null && (
               <div className="mt-2 flex items-center justify-between text-xs text-fogo-gray-400">

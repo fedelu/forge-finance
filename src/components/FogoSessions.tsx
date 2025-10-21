@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef } from 'react';
 import { PublicKey, Connection } from '@solana/web3.js';
 import { 
   createSessionWithWallet,
@@ -398,6 +398,7 @@ export function FogoSessionsButton() {
   const [isOpen, setIsOpen] = useState(false);
   const [recipientAddress, setRecipientAddress] = useState('');
   const [sendAmount, setSendAmount] = useState('');
+  const walletPopupRef = useRef<HTMLDivElement>(null);
 
   // Listen for balance updates from crucible operations
   useEffect(() => {
@@ -411,6 +412,23 @@ export function FogoSessionsButton() {
       window.removeEventListener('fogoBalanceUpdated', handleBalanceUpdate as EventListener);
     };
   }, [refreshBalance]);
+
+  // Handle click outside to close wallet popup
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (walletPopupRef.current && !walletPopupRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
 
   const handleConnect = async () => {
     console.log('🔥 FOGO Sessions button clicked!');
@@ -476,7 +494,7 @@ export function FogoSessionsButton() {
 
         {/* Pyron/Brasa Finance style wallet popup */}
         {isOpen && (
-            <div className="absolute top-full right-0 mt-2 z-50 bg-fogo-gray-900 rounded-xl shadow-fogo-lg border border-fogo-gray-700 w-80 overflow-hidden">
+            <div ref={walletPopupRef} className="absolute top-full right-0 mt-2 z-50 bg-fogo-gray-900 rounded-xl shadow-fogo-lg border border-fogo-gray-700 w-80 overflow-hidden">
               {/* Header */}
               <div className="bg-gradient-to-r from-fogo-primary to-fogo-secondary p-4 text-white">
               <div className="flex items-center justify-between">
