@@ -52,7 +52,7 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
 
   const connect = async (publicKey?: PublicKey) => {
     try {
-      console.log('🔥 Starting FOGO Sessions connection with Phantom...');
+      console.log('🔥 Starting FOGO Sessions SIMULATION with Phantom...');
       setError(null);
       
       let walletPublicKey = publicKey;
@@ -68,35 +68,33 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
         console.log('✅ Connected to Phantom wallet:', walletPublicKey.toString());
       }
       
-      // Create FOGO session with Phantom public key
-      const config: OfficialFogoSessionConfig = {
-        network: 'fogo-testnet',
-        domain: window.location.origin
-      };
+      // SIMULATION MODE: No real FOGO Sessions API calls
+      // All FOGO functionality is simulated based on wallet balance
+      console.log('🎭 SIMULATION MODE: Real FOGO tokens are blocked');
+      console.log('💰 All FOGO operations will use simulated balances only');
       
-      // In a real implementation, this would call the actual FOGO Sessions API
-      // For now, we'll simulate the session creation
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      
+      // Create simulated FOGO session
       const sessionData: OfficialFogoSessionResponse = {
         success: true,
-        sessionId: 'fogo_' + Math.random().toString(36).substr(2, 9),
-        sessionKey: 'session_' + Math.random().toString(36).substr(2, 16),
+        sessionId: 'sim_fogo_' + Math.random().toString(36).substr(2, 9),
+        sessionKey: 'sim_session_' + Math.random().toString(36).substr(2, 16),
         userPublicKey: walletPublicKey.toString(),
         expiresAt: (Date.now() + (24 * 60 * 60 * 1000)).toString(), // 24 hours
-        message: 'FOGO Session established successfully with Phantom wallet'
+        message: 'FOGO Session established in SIMULATION MODE - No real FOGO tokens'
       };
       
       setWalletPublicKey(walletPublicKey);
       setSessionData(sessionData);
       
-      // Load FOGO balance for the connected wallet
+      // Load simulated FOGO balance for the connected wallet
       const storedBalance = localStorage.getItem(`fogo_balance_${walletPublicKey.toString()}`);
       if (storedBalance) {
         setFogoBalance(parseFloat(storedBalance));
+        console.log('💰 Loaded simulated FOGO balance:', parseFloat(storedBalance), 'FOGO');
       } else {
-        setFogoBalance(1000); // New wallet gets 1000 FOGO tokens
+        setFogoBalance(1000); // New wallet gets 1000 simulated FOGO tokens
         localStorage.setItem(`fogo_balance_${walletPublicKey.toString()}`, '1000');
+        console.log('💰 New wallet - 1000 simulated FOGO tokens allocated');
       }
       
       // Trigger wallet connection event to sync with main wallet context
@@ -104,14 +102,15 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
         detail: { publicKey: walletPublicKey.toString() } 
       }));
       
-      console.log('🔥 FOGO Session established successfully!');
+      console.log('🔥 FOGO Session SIMULATION established successfully!');
       console.log('Session ID:', sessionData.sessionId);
       console.log('Session Key:', sessionData.sessionKey);
       console.log('Phantom Public Key:', walletPublicKey.toString());
-      console.log('Expires:', new Date(sessionData.expiresAt).toLocaleString());
+      console.log('Simulated FOGO Balance:', fogoBalance, 'FOGO');
+      console.log('⚠️  WARNING: This is a simulation - no real FOGO tokens are involved');
       
     } catch (error: any) {
-      console.error('❌ Failed to establish FOGO Sessions:', error);
+      console.error('❌ Failed to establish FOGO Sessions simulation:', error);
       setError(error.message);
       throw error;
     }
@@ -147,7 +146,7 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
 
   const sendTransaction = async (instructions: any[]): Promise<string> => {
     try {
-      console.log('🔥 Sending transaction via FOGO Sessions...');
+      console.log('🔥 Sending SIMULATED transaction via FOGO Sessions...');
       
       if (!sessionData) {
         throw new Error('No active FOGO Session');
@@ -157,41 +156,43 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
         throw new Error('No wallet connected');
       }
       
-      // For now, we'll simulate the transaction sending
-      // In a real implementation, this would use the FOGO Sessions SDK
-      console.log('📦 Instructions:', instructions);
+      // SIMULATION MODE: All transactions are simulated
+      console.log('🎭 SIMULATION MODE: No real blockchain transactions');
+      console.log('📦 Simulated Instructions:', instructions);
       
       // Simulate transaction processing
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Generate a mock signature
-      const signature = 'fogo_' + Math.random().toString(36).substr(2, 9);
+      const signature = 'sim_fogo_' + Math.random().toString(36).substr(2, 9);
       
-      console.log('✅ FOGO Sessions transaction sent:', signature);
+      console.log('✅ FOGO Sessions SIMULATED transaction sent:', signature);
+      console.log('⚠️  WARNING: This is a simulation - no real blockchain transaction occurred');
       return signature;
       
     } catch (error: any) {
-      console.error('❌ Failed to send transaction via FOGO Sessions:', error);
+      console.error('❌ Failed to send simulated transaction via FOGO Sessions:', error);
       throw error;
     }
   };
 
-  // Single deposit function for FOGO tokens
+  // Single deposit function for SIMULATED FOGO tokens
   const depositToCrucible = async (amount: number) => {
     if (amount > fogoBalance) {
-      throw new Error('Insufficient FOGO balance');
+      throw new Error('Insufficient simulated FOGO balance');
     }
     
     if (amount <= 0) {
       throw new Error('Deposit amount must be greater than 0');
     }
     
-    console.log(`🏛️ Depositing ${amount} FOGO tokens`);
+    console.log(`🏛️ SIMULATING deposit of ${amount} FOGO tokens`);
+    console.log('🎭 SIMULATION MODE: No real FOGO tokens are deposited');
     
     // Simulate transaction processing
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Update balance
+    // Update simulated balance
     const newBalance = fogoBalance - amount;
     setFogoBalance(newBalance);
     
@@ -200,22 +201,24 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
       localStorage.setItem(`fogo_balance_${walletPublicKey.toString()}`, newBalance.toString());
     }
     
-    console.log(`✅ Successfully deposited ${amount} FOGO tokens (simulation)`);
-    return { success: true, transactionId: `sim_${Date.now()}` };
+    console.log(`✅ Successfully SIMULATED deposit of ${amount} FOGO tokens`);
+    console.log('⚠️  WARNING: This is a simulation - no real FOGO tokens were deposited');
+    return { success: true, transactionId: `sim_deposit_${Date.now()}` };
   };
 
-  // Single withdraw function for FOGO tokens
+  // Single withdraw function for SIMULATED FOGO tokens
   const withdrawFromCrucible = async (amount: number) => {
     if (amount <= 0) {
       throw new Error('Withdrawal amount must be greater than 0');
     }
     
-    console.log(`🏛️ Withdrawing ${amount} FOGO tokens`);
+    console.log(`🏛️ SIMULATING withdrawal of ${amount} FOGO tokens`);
+    console.log('🎭 SIMULATION MODE: No real FOGO tokens are withdrawn');
     
     // Simulate transaction processing
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Update balance
+    // Update simulated balance
     const newBalance = fogoBalance + amount;
     setFogoBalance(newBalance);
     
@@ -224,8 +227,9 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
       localStorage.setItem(`fogo_balance_${walletPublicKey.toString()}`, newBalance.toString());
     }
     
-    console.log(`✅ Successfully withdrew ${amount} FOGO tokens (simulation)`);
-    return { success: true, transactionId: `sim_${Date.now()}` };
+    console.log(`✅ Successfully SIMULATED withdrawal of ${amount} FOGO tokens`);
+    console.log('⚠️  WARNING: This is a simulation - no real FOGO tokens were withdrawn');
+    return { success: true, transactionId: `sim_withdraw_${Date.now()}` };
   };
 
   const refreshBalance = async () => {
@@ -233,15 +237,20 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
       const storedBalance = localStorage.getItem(`fogo_balance_${walletPublicKey.toString()}`);
       if (storedBalance) {
         setFogoBalance(parseFloat(storedBalance));
+        console.log('💰 Refreshed simulated FOGO balance:', parseFloat(storedBalance), 'FOGO');
       } else {
-        setFogoBalance(1000); // Default balance for new wallets
+        setFogoBalance(1000); // Default simulated balance for new wallets
         localStorage.setItem(`fogo_balance_${walletPublicKey.toString()}`, '1000');
+        console.log('💰 New wallet - 1000 simulated FOGO tokens allocated');
       }
+      console.log('🎭 SIMULATION MODE: Balance refreshed from local storage only');
     }
   };
 
-  // Calculate APY based on crucible type and time
+  // Calculate SIMULATED APY based on crucible type and time
   const calculateAPY = (principal: number, timeInDays: number): number => {
+    console.log('🎭 SIMULATION MODE: Calculating simulated APY');
+    
     // Base APY rates for different crucible types (simulation)
     const baseAPY = 0.12; // 12% base APY
     
@@ -260,17 +269,20 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
     
     const finalAPY = baseAPY * timeMultiplier * principalMultiplier;
     
-    console.log(`📊 APY Calculation: ${principal} FOGO for ${timeInDays} days`);
+    console.log(`📊 SIMULATED APY Calculation: ${principal} FOGO for ${timeInDays} days`);
     console.log(`   Base APY: ${(baseAPY * 100).toFixed(2)}%`);
     console.log(`   Time Multiplier: ${timeMultiplier}x`);
     console.log(`   Principal Multiplier: ${principalMultiplier}x`);
-    console.log(`   Final APY: ${(finalAPY * 100).toFixed(2)}%`);
+    console.log(`   Final SIMULATED APY: ${(finalAPY * 100).toFixed(2)}%`);
+    console.log('⚠️  WARNING: This is a simulation - no real APY is earned');
     
     return finalAPY;
   };
 
-  // Calculate compound interest with APY
+  // Calculate SIMULATED compound interest with APY
   const calculateCompoundInterest = (principal: number, apy: number, timeInDays: number): number => {
+    console.log('🎭 SIMULATION MODE: Calculating simulated compound interest');
+    
     // Convert APY to daily rate
     const dailyRate = apy / 365;
     
@@ -278,10 +290,11 @@ export function FogoSessionsProvider({ children }: { children: React.ReactNode }
     const finalAmount = principal * Math.pow(1 + dailyRate, timeInDays);
     const interest = finalAmount - principal;
     
-    console.log(`💰 Interest Calculation: ${principal} FOGO at ${(apy * 100).toFixed(2)}% APY for ${timeInDays} days`);
+    console.log(`💰 SIMULATED Interest Calculation: ${principal} FOGO at ${(apy * 100).toFixed(2)}% APY for ${timeInDays} days`);
     console.log(`   Daily Rate: ${(dailyRate * 100).toFixed(4)}%`);
     console.log(`   Final Amount: ${finalAmount.toFixed(6)} FOGO`);
-    console.log(`   Interest Earned: ${interest.toFixed(6)} FOGO`);
+    console.log(`   SIMULATED Interest Earned: ${interest.toFixed(6)} FOGO`);
+    console.log('⚠️  WARNING: This is a simulation - no real interest is earned');
     
     return interest;
   };
