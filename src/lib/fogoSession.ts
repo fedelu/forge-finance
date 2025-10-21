@@ -30,19 +30,22 @@ export function createFogoSessionClient(opts?: {
     throw new Error("Fogo Sessions: RPC URL and Network must be configured.");
   }
 
-  // Disable paymaster for localhost/development, enable for production
-  const isLocalhost = typeof window !== 'undefined' && 
-    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-  
-  const finalPaymasterUrl = isLocalhost ? undefined : paymasterUrl;
+  // Temporarily disable paymaster until domain is registered with Fogo team
+  // TODO: Re-enable paymaster once domain is registered
+  const finalPaymasterUrl = undefined;
 
   console.log('🔥 Initializing Fogo Sessions client with:', {
     rpcUrl,
     network,
     paymasterUrl: finalPaymasterUrl,
-    isLocalhost,
     hostname: typeof window !== 'undefined' ? window.location.hostname : 'server-side'
   });
+  
+  if (!finalPaymasterUrl) {
+    console.warn('⚠️ PAYMASTER DISABLED: Domain not registered with Fogo team');
+    console.warn('⚠️ Gasless transactions are not available until domain is registered');
+    console.warn('⚠️ Contact Fogo team to register your domain for paymaster access');
+  }
 
   // Create connection to Fogo testnet
   const connection = new Connection(rpcUrl, 'confirmed');
