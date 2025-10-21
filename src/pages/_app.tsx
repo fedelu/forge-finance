@@ -3,6 +3,7 @@ import type { AppProps } from 'next/app'
 import { useEffect, useState } from 'react'
 import { createFogoSessionClient } from '../lib/fogoSession'
 import { FogoSessionsProvider } from '../components/FogoSessions'
+import { SimulationProvider } from '../components/SimulationMode'
 
 export default function App({ Component, pageProps }: AppProps) {
   const [mounted, setMounted] = useState(false)
@@ -25,8 +26,10 @@ export default function App({ Component, pageProps }: AppProps) {
   }
 
   return (
-    <FogoSessionsProvider fogoClient={fogoClient}>
-      <Component {...pageProps} fogoClient={fogoClient} />
-    </FogoSessionsProvider>
+    <SimulationProvider>
+      <FogoSessionsProvider fogoClient={fogoClient}>
+        <Component {...pageProps} fogoClient={fogoClient} />
+      </FogoSessionsProvider>
+    </SimulationProvider>
   )
 }

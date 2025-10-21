@@ -9,6 +9,7 @@ import {
   clearStoredFogoSession
 } from '../lib/fogoSession';
 import { useFogoWallet } from '../hooks/useFogoWallet';
+import { useSimulation } from './SimulationMode';
 import { FOGO_TESTNET_CONFIG } from '../config/fogo-testnet';
 import WalletFallback from './WalletFallback';
 
@@ -61,14 +62,20 @@ export function FogoSessionsProvider({
   const [showFallback, setShowFallback] = useState(false);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
   
-  // Use the official Fogo wallet hook
+  // Use the official Fogo wallet hook and simulation mode
   const fogoWallet = useFogoWallet();
+  const { isSimulationMode, simulatedBalance, simulatedWallet, depositTokens, withdrawTokens } = useSimulation();
   
   // Use connection from fogoClient or create fallback
   const connection = fogoClient?.connection || new Connection(process.env.NEXT_PUBLIC_RPC_URL || 'https://testnet.fogo.io', 'confirmed');
 
-  // Function to fetch real FOGO balance
-  const fetchRealFogoBalance = async (publicKey: PublicKey): Promise<number> => {
+  // Function to fetch FOGO balance (real or simulated)
+  const fetchFogoBalance = async (publicKey: PublicKey): Promise<number> => {
+    if (isSimulationMode) {
+      console.log('🎮 Using simulated FOGO balance:', simulatedBalance);
+      return simulatedBalance;
+    }
+
     try {
       console.log('💰 Fetching real FOGO balance for:', publicKey.toString());
       setIsLoadingBalance(true);
@@ -117,9 +124,25 @@ export function FogoSessionsProvider({
     }
   };
 
-  // Sync with Fogo wallet state
+  // Sync with Fogo wallet state or simulation mode
   useEffect(() => {
     const syncWithFogoWallet = async () => {
+      if (isSimulationMode) {
+        console.log('🎮 Syncing with simulation mode');
+        setWalletPublicKey(new PublicKey(simulatedWallet));
+        setFogoBalance(simulatedBalance);
+        setIsEstablished(true);
+        setSessionData({
+          sessionId: 'simulation-session',
+          sessionKey: 'simulation-key',
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          walletPublicKey: simulatedWallet,
+          success: true,
+          message: 'Simulation mode active'
+        });
+        return;
+      }
+
       if (fogoWallet.connected && fogoWallet.publicKey && fogoClient) {
         console.log('🔄 Syncing with Fogo wallet:', fogoWallet.publicKey);
         
@@ -127,7 +150,7 @@ export function FogoSessionsProvider({
         setWalletPublicKey(publicKey);
         
         // Fetch real balance
-        const realBalance = await fetchRealFogoBalance(publicKey);
+        const realBalance = await fetchFogoBalance(publicKey);
         setFogoBalance(realBalance);
         
         // Create Fogo Session using official SDK
@@ -172,7 +195,7 @@ export function FogoSessionsProvider({
     };
 
     syncWithFogoWallet();
-  }, [fogoWallet.connected, fogoWallet.publicKey, fogoClient]);
+  }, [fogoWallet.connected, fogoWallet.publicKey, fogoClient, isSimulationMode, simulatedBalance, simulatedWallet]);
 
   // Initialize Fogo Sessions on mount
   useEffect(() => {
@@ -222,6 +245,22 @@ export function FogoSessionsProvider({
       console.log('🔥 Connecting to FOGO Sessions...');
       setError(null);
       
+      if (isSimulationMode) {
+        console.log('🎮 Connecting in simulation mode');
+        setWalletPublicKey(new PublicKey(simulatedWallet));
+        setFogoBalance(simulatedBalance);
+        setIsEstablished(true);
+        setSessionData({
+          sessionId: 'simulation-session',
+          sessionKey: 'simulation-key',
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          walletPublicKey: simulatedWallet,
+          success: true,
+          message: 'Simulation mode active'
+        });
+        return;
+      }
+      
       // Use Fogo wallet connection
       if (!fogoWallet.connected) {
         await fogoWallet.connect();
@@ -235,7 +274,7 @@ export function FogoSessionsProvider({
       console.log('✅ Connected to wallet:', walletPublicKey.toString());
       
       // Fetch real balance
-      const realBalance = await fetchRealFogoBalance(walletPublicKey);
+      const realBalance = await fetchFogoBalance(walletPublicKey);
       setFogoBalance(realBalance);
       
       // Create Fogo Session using official SDK
@@ -599,6 +638,7 @@ export function useSession() {
 // FOGO Sessions Button with Pyron Flow
 export function FogoSessionsButton() {
   const { isEstablished, connect, endSession, walletPublicKey, sessionData, fogoBalance, refreshBalance, error } = useSession();
+  const { isSimulationMode, setSimulationMode, simulatedBalance } = useSimulation();
   const [isConnecting, setIsConnecting] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
@@ -1241,7 +1281,10 @@ export function FogoSessionsButton() {
 
   // Initial login button
   return (
-    <div className="flex flex-col items-center space-y-2">
+    <div className="flex flex-col items-center space-y-4">
+      {/* Mode Toggle */}
+      <SimulationModeToggle />
+      
       <button
         onClick={handleConnect}
         className="px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-200 transform hover:scale-105 flex items-center space-x-2"
@@ -1260,6 +1303,9 @@ export function FogoSessionsButton() {
             fill="currentColor"
           />
         </svg>
+        {isSimulationMode && (
+          <span className="text-xs bg-yellow-500 text-white px-2 py-1 rounded">SIM</span>
+        )}
       </button>
       
       {error && (
