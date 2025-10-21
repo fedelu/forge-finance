@@ -66,8 +66,8 @@ export const AnalyticsDashboard: React.FC = () => {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 justify-items-center">
-        <div className="bg-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700 shadow-fogo hover:shadow-fogo-lg transition-all duration-300 hover:border-fogo-primary/30">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 justify-items-stretch">
+        <div className="bg-fogo-gray-900 rounded-2xl p-8 border border-fogo-gray-700 shadow-fogo hover:shadow-fogo-lg transition-all duration-300 hover:border-fogo-primary/30">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-fogo-primary/20 rounded-xl flex items-center justify-center">
               <CurrencyDollarIcon className="h-6 w-6 text-fogo-primary" />
@@ -82,7 +82,7 @@ export const AnalyticsDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700 shadow-fogo hover:shadow-fogo-lg transition-all duration-300 hover:border-fogo-success/30">
+        <div className="bg-fogo-gray-900 rounded-2xl p-8 border border-fogo-gray-700 shadow-fogo hover:shadow-fogo-lg transition-all duration-300 hover:border-fogo-success/30">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-fogo-success/20 rounded-xl flex items-center justify-center">
               <ArrowUpIcon className="h-6 w-6 text-fogo-success" />
@@ -94,7 +94,7 @@ export const AnalyticsDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700 shadow-fogo hover:shadow-fogo-lg transition-all duration-300 hover:border-fogo-error/30">
+        <div className="bg-fogo-gray-900 rounded-2xl p-8 border border-fogo-gray-700 shadow-fogo hover:shadow-fogo-lg transition-all duration-300 hover:border-fogo-error/30">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-fogo-error/20 rounded-xl flex items-center justify-center">
               <ArrowDownIcon className="h-6 w-6 text-fogo-error" />
@@ -106,7 +106,7 @@ export const AnalyticsDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700 shadow-fogo hover:shadow-fogo-lg transition-all duration-300 hover:border-fogo-accent/30">
+        <div className="bg-fogo-gray-900 rounded-2xl p-8 border border-fogo-gray-700 shadow-fogo hover:shadow-fogo-lg transition-all duration-300 hover:border-fogo-accent/30">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-fogo-accent/20 rounded-xl flex items-center justify-center">
               <ChartBarIcon className="h-6 w-6 text-fogo-accent" />
