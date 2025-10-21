@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { 
+  FireIcon,
   UserGroupIcon, 
   ChartBarIcon
 } from '@heroicons/react/24/outline'
