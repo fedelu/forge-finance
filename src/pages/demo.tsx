@@ -111,6 +111,19 @@ function DemoContent() {
                 {isEstablished && (
                   <>
                     <button
+                      onClick={() => setMainTab('dashboard')}
+                      className={`px-4 py-2 rounded-lg font-inter font-medium transition-all duration-200 ${
+                        mainTab === 'dashboard' 
+                          ? 'bg-fogo-primary text-white shadow-lg' 
+                          : 'text-fogo-gray-300 hover:text-white hover:bg-fogo-gray-800/50'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <ChartBarIcon className="w-4 h-4" />
+                        <span>Dashboard</span>
+                      </div>
+                    </button>
+                    <button
                       onClick={() => setMainTab('crucibles')}
                       className={`px-4 py-2 rounded-lg font-inter font-medium transition-all duration-200 ${
                         mainTab === 'crucibles' 
@@ -176,6 +189,20 @@ function DemoContent() {
             <div className="px-4 py-4 space-y-2">
               {isEstablished && (
                 <>
+                  <button
+                    onClick={() => {
+                      setMainTab('dashboard')
+                      setShowMobileMenu(false)
+                    }}
+                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-inter font-medium transition-all duration-200 ${
+                      mainTab === 'dashboard' 
+                        ? 'bg-fogo-primary text-white shadow-lg' 
+                        : 'text-fogo-gray-300 hover:text-white hover:bg-fogo-gray-800/50'
+                    }`}
+                  >
+                    <ChartBarIcon className="w-5 h-5" />
+                    <span>Dashboard</span>
+                  </button>
                   <button
                     onClick={() => {
                       setMainTab('crucibles')
