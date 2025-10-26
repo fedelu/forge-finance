@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useWallet } from '../contexts/WalletContext';
 import { useBalance } from '../contexts/BalanceContext';
-import { useCrucible } from '../contexts/CrucibleContext';
+import { useCrucible } from '../hooks/useCrucible';
 import { useAnalytics } from '../contexts/AnalyticsContext';
 import { useSession } from './FogoSessions';
+import { formatNumberWithCommas, getCTokenPrice, RATE_SCALE } from '../utils/math';
 import { Transaction, SystemProgram, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 
 interface FogoDepositModalProps {
@@ -15,7 +16,7 @@ interface FogoDepositModalProps {
 export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onClose, crucibleId }) => {
   const { connection, publicKey, sendTransaction, network, switchNetwork, getFogoBalance } = useWallet();
   const { subtractFromBalance, addToBalance } = useBalance();
-  const { updateCrucibleDeposit, getCrucible } = useCrucible();
+  const { wrapTokens, getCrucible, calculateWrapPreview } = useCrucible();
   const { addTransaction } = useAnalytics();
   const fogoSession = useSession();
   const [amount, setAmount] = useState('');
@@ -59,7 +60,7 @@ export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onCl
     setError(null);
 
     try {
-      console.log('Processing FOGO deposit...');
+      console.log('Processing FOGO wrap...');
       
       // Check if FOGO Sessions is available
       if (!fogoSession.depositToCrucible) {
@@ -67,28 +68,34 @@ export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onCl
         return;
       }
 
+      // Calculate cFOGO preview
+      const preview = calculateWrapPreview(crucibleId, amount);
+      
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       // Use FOGO Sessions context for deposit
       await fogoSession.depositToCrucible(depositAmount, crucibleId);
       
-      const mockSignature = 'sim_deposit_' + Math.random().toString(36).substr(2, 9);
-      console.log('FOGO deposit successful:', mockSignature);
+      // Wrap FOGO to cFOGO
+      await wrapTokens(crucibleId, amount);
+      
+      const mockSignature = 'sim_wrap_' + Math.random().toString(36).substr(2, 9);
+      console.log('FOGO wrap successful:', mockSignature);
 
-      // Update local state
-      subtractFromBalance('SOL', depositAmount * 0.5); // Convert FOGO to SOL for simulation
-      addToBalance('SPARK', depositAmount * 10);
-      addToBalance('HEAT', depositAmount * 5);
-
-      // Update crucible
-      updateCrucibleDeposit(crucibleId, depositAmount);
+      // Update local state - subtract FOGO from wallet and add cTokens
+      subtractFromBalance('FOGO', depositAmount);
+      
+      // Get the crucible type to determine which cToken to add
+      const targetPTokenSymbol = crucible?.ptokenSymbol === 'cFORGE' ? 'cFORGE' : 'cFOGO';
+      const ptokenAmount = parseFloat(preview.ptokenAmount);
+      addToBalance(targetPTokenSymbol, ptokenAmount);
 
       // Record transaction
       addTransaction({
-        type: 'deposit',
+        type: 'wrap',
         amount: depositAmount,
         token: 'FOGO',
-        distToken: targetSymbol,
+        distToken: targetPTokenSymbol,
         crucibleId,
         signature: mockSignature
       });
@@ -96,13 +103,13 @@ export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onCl
       // Update local FOGO balance display
       setFogoBalance(fogoSession.fogoBalance);
 
-      alert(`✅ FOGO DEPOSIT\n\n✅ ${depositAmount.toFixed(2)} FOGO deposited\n✅ ${(depositAmount * 10).toFixed(2)} SPARK earned\n✅ ${(depositAmount * 5).toFixed(2)} HEAT earned\n\nTransaction: ${mockSignature}`);
+      alert(`✅ FOGO WRAP SUCCESSFUL\n\n✅ ${depositAmount.toFixed(2)} FOGO wrapped\n✅ ${preview.ptokenAmount} cFOGO received\n✅ Est. FOGO value: ${preview.estimatedValue} FOGO\n\nTransaction: ${mockSignature}`);
 
       setAmount('');
       onClose();
     } catch (err: any) {
-      console.error('Deposit error:', err);
-      setError(err.message || 'Deposit failed');
+      console.error('Wrap error:', err);
+      setError(err.message || 'Wrap failed');
     } finally {
       setLoading(false);
     }
@@ -121,27 +128,38 @@ export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onCl
               </svg>
             </div>
             <h2 className="text-xl font-bold text-white">
-              Deposit FOGO Tokens - {crucible?.name}
+              Wrap {crucible?.baseToken} to {crucible?.ptokenSymbol} - {crucible?.name}
             </h2>
           </div>
         </div>
         
         <div className="flex-1 overflow-y-auto p-6">
           <div className="space-y-4">
-          {/* FOGO Token Info */}
+          {/* cFOGO Token Info */}
           <div className="p-4 bg-fogo-primary/10 rounded-2xl border border-fogo-primary/20">
-            <h4 className="text-sm font-semibold text-fogo-primary mb-2">FOGO Token Deposit</h4>
+            <h4 className="text-sm font-semibold text-fogo-primary mb-2">Wrapping Details</h4>
             <div className="text-xs text-fogo-gray-300 space-y-1">
-              <div>• Deposit your FOGO tokens from Phantom wallet</div>
-              <div>• Earn SPARK governance tokens</div>
-              <div>• Earn HEAT reward tokens</div>
-              <div>• APY: {((crucible?.apr || 0.15) * 100).toFixed(2)}%</div>
+              <div>• Wrap your {crucible?.baseToken} tokens to earn yield-bearing {crucible?.ptokenSymbol}</div>
+              <div>• Exchange rate: <span className="text-fogo-primary font-semibold">1 {crucible?.baseToken} = 1 {crucible?.ptokenSymbol}</span> (at deposit)</div>
+              <div>• {crucible?.baseToken} price: <span className="text-white font-semibold">${crucible?.baseToken === 'FOGO' ? '0.50' : '0.002'} USD</span></div>
+              <div>• {crucible?.ptokenSymbol} price: <span className="text-fogo-accent font-semibold">${(() => {
+                const hasDeposits = (crucible?.totalWrapped || BigInt(0)) > BigInt(0);
+                const exchangeRate = hasDeposits ? (crucible?.exchangeRate || RATE_SCALE) : RATE_SCALE;
+                const baseTokenPrice = crucible?.baseToken === 'FOGO' ? 0.5 : 0.002;
+                const currentPrice = getCTokenPrice(baseTokenPrice, exchangeRate);
+                return currentPrice.toFixed(4);
+              })()} USD</span> {(() => {
+                const hasDeposits = (crucible?.totalWrapped || BigInt(0)) > BigInt(0);
+                return hasDeposits ? '(includes accumulated yield)' : '(1:1 with ' + crucible?.baseToken + ')';
+              })()}</div>
+              <div>• Yield comes from {crucible?.ptokenSymbol} value increase over time</div>
+              <div>• Current APY: {crucible?.currentAPY?.toFixed(2) || ((crucible?.apr || 0.15) * 100).toFixed(2)}%</div>
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-fogo-gray-300 mb-2">
-              FOGO Amount
+              {crucible?.baseToken} Amount
             </label>
             <div className="relative">
               <input
@@ -157,7 +175,7 @@ export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onCl
             </div>
             {fogoBalance !== null && (
               <div className="mt-2 flex items-center justify-between text-xs text-fogo-gray-400">
-                <span>Available: {fogoBalance.toFixed(2)} FOGO</span>
+                <span>Available: {fogoBalance.toFixed(2)} {crucible?.baseToken}</span>
                 <button
                   onClick={refreshBalance}
                   className="text-fogo-primary hover:text-fogo-primary-light transition-colors"
@@ -168,14 +186,48 @@ export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onCl
             )}
           </div>
 
-          {/* Rewards Preview */}
+          {/* cFOGO Preview */}
           {amount && parseFloat(amount) > 0 && (
             <div className="p-4 bg-fogo-success/10 rounded-2xl border border-fogo-success/20">
-              <h4 className="text-sm font-semibold text-fogo-success mb-2">Rewards Preview</h4>
+              <h4 className="text-sm font-semibold text-fogo-success mb-2">{crucible?.ptokenSymbol} Preview</h4>
               <div className="text-xs text-fogo-gray-300 space-y-1">
-                <div>SPARK Rewards: {(parseFloat(amount) * 10).toFixed(0)} SPARK</div>
-                <div>HEAT Rewards: {(parseFloat(amount) * 5).toFixed(0)} HEAT</div>
-                <div>Annual APY: {((crucible?.apr || 0.15) * 100).toFixed(1)}%</div>
+                <div className="flex justify-between">
+                  <span>{crucible?.baseToken} to deposit:</span>
+                  <span className="text-white font-medium">{formatNumberWithCommas(parseFloat(amount))} {crucible?.baseToken}</span>
+                </div>
+            <div className="flex justify-between">
+              <span>Wrap Fee (1.5%):</span>
+              <span className="text-red-300 font-medium">-{formatNumberWithCommas(parseFloat(amount) * 0.015)} {crucible?.baseToken}</span>
+            </div>
+                <div className="flex justify-between border-t border-fogo-gray-600 pt-1">
+                  <span>Net deposit:</span>
+                  <span className="text-fogo-success font-medium">{formatNumberWithCommas(parseFloat(amount) * 0.985)} {crucible?.baseToken}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>{crucible?.ptokenSymbol} to receive:</span>
+                  <span className="text-fogo-accent font-medium">{calculateWrapPreview(crucibleId, amount).ptokenAmount} {crucible?.ptokenSymbol}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Current value (at $0.50):</span>
+                  <span className="text-white font-medium">${formatNumberWithCommas(parseFloat(amount) * 0.985 * 0.5)} USD</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Est. {crucible?.ptokenSymbol} value:</span>
+                  <span className="text-fogo-accent font-medium">${formatNumberWithCommas(parseFloat(calculateWrapPreview(crucibleId, amount).ptokenAmount) * (() => {
+                    const hasDeposits = (crucible?.totalWrapped || BigInt(0)) > BigInt(0);
+                    const exchangeRate = hasDeposits ? (crucible?.exchangeRate || RATE_SCALE) : RATE_SCALE;
+                    const baseTokenPrice = crucible?.baseToken === 'FOGO' ? 0.5 : 0.002;
+                    const currentPrice = getCTokenPrice(baseTokenPrice, exchangeRate);
+                    return currentPrice;
+                  })())} USD</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Current APY:</span>
+                  <span className="text-fogo-primary font-medium">{crucible?.currentAPY?.toFixed(1) || ((crucible?.apr || 0.15) * 100).toFixed(1)}%</span>
+                </div>
+                <div className="text-fogo-success text-xs mt-2">
+                  💡 Your {crucible?.ptokenSymbol} will automatically earn yield over time!
+                </div>
               </div>
             </div>
           )}
@@ -199,7 +251,7 @@ export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onCl
               disabled={loading || !amount || parseFloat(amount) <= 0}
               className="flex-1 px-4 py-3 bg-gradient-to-r from-fogo-primary to-fogo-secondary text-white rounded-2xl hover:from-fogo-primary-dark hover:to-fogo-secondary-dark transition-all duration-200 disabled:opacity-50 font-medium shadow-fogo hover:shadow-flame"
             >
-              {loading ? 'Depositing...' : 'Deposit FOGO'}
+              {loading ? 'Wrapping...' : `Wrap ${crucible?.baseToken}`}
             </button>
           </div>
         </div>

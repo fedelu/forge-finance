@@ -1,33 +1,38 @@
 import React, { useState } from 'react'
 import { 
-  BanknotesIcon, 
-  PlusIcon, 
   ArrowUpIcon, 
   ArrowDownIcon,
-  CurrencyDollarIcon,
-  ChartBarIcon
+  ChartBarIcon,
+  BoltIcon,
+  FireIcon
 } from '@heroicons/react/24/outline'
 import { useWallet } from '../contexts/WalletContext'
-import { useCrucible } from '../contexts/CrucibleContext'
+import { useCrucible } from '../hooks/useCrucible'
 import { useSession } from './FogoSessions'
-import { DepositModal } from './DepositModal'
-import { UltraSimpleModal } from './UltraSimpleModal'
-import { RealSolModal } from './RealSolModal'
 import { FogoDepositModal } from './FogoDepositModal'
-import { WorkingWithdrawModal } from './WorkingWithdrawModal'
 import { FogoWithdrawModal } from './FogoWithdrawModal'
-import { CrucibleCreationModal } from './CrucibleCreationModal'
+import { formatNumberWithCommas, getCTokenPrice, RATE_SCALE } from '../utils/math'
 
 interface Crucible {
   id: string
   name: string
   symbol: string
+  baseToken: 'FOGO' | 'FORGE'
+  ptokenSymbol: 'cFOGO' | 'cFORGE'
   tvl: number
   apr: number
   status: 'active' | 'paused' | 'maintenance'
   userDeposit: number
   userShares: number
   icon: string
+  // pToken specific fields
+  ptokenMint?: string
+  exchangeRate?: bigint
+  totalWrapped?: bigint
+  userPtokenBalance?: bigint
+  estimatedBaseValue?: bigint
+  currentAPY?: number
+  totalFeesCollected?: number
 }
 
 interface CrucibleManagerProps {
@@ -39,17 +44,12 @@ interface CrucibleManagerProps {
 
 export default function CrucibleManager({ className = '', onDeposit, onWithdraw, isConnected = false }: CrucibleManagerProps) {
   const { connected } = useWallet()
-  const { crucibles } = useCrucible()
+  const { crucibles, loading, error } = useCrucible()
   const { isEstablished, getCrucibleAPYEarnings } = useSession()
   const [activeTab, setActiveTab] = useState<'deposit' | 'withdraw' | 'manage'>('deposit')
   const [selectedCrucible, setSelectedCrucible] = useState<string | null>(null)
-  const [showDepositModal, setShowDepositModal] = useState(false)
-  const [showUltraSimpleModal, setShowUltraSimpleModal] = useState(false)
-  const [showRealSolModal, setShowRealSolModal] = useState(false)
   const [showFogoDepositModal, setShowFogoDepositModal] = useState(false)
-  const [showWorkingWithdrawModal, setShowWorkingWithdrawModal] = useState(false)
   const [showFogoWithdrawModal, setShowFogoWithdrawModal] = useState(false)
-  const [showCrucibleCreationModal, setShowCrucibleCreationModal] = useState(false)
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -73,121 +73,213 @@ export default function CrucibleManager({ className = '', onDeposit, onWithdraw,
     }
   }
 
-         const handleAction = (action: string, crucibleId: string) => {
-           if (!isEstablished) {
-             alert('⚠️ Please connect your FOGO wallet first!\n\nClick "Log in with FOGO" to start using the protocol.')
-             return
-           }
+  const handleAction = (action: string, crucibleId: string) => {
+    if (!isEstablished) {
+      alert('⚠️ Please connect your FOGO wallet first!\n\nClick "Sign in with FOGO" to start using the protocol.')
+      return
+    }
 
-           if (action === 'deposit') {
-             setSelectedCrucible(crucibleId);
-             // All deposits now use FOGO through Phantom wallet
-             setShowFogoDepositModal(true);
-           } else if (action === 'withdraw') {
-             setSelectedCrucible(crucibleId);
-             // All withdrawals now use FOGO through Phantom wallet
-             setShowFogoWithdrawModal(true);
-           }
-         }
+    if (action === 'deposit') {
+      setSelectedCrucible(crucibleId);
+      // All deposits now use FOGO through Phantom wallet
+      setShowFogoDepositModal(true);
+    } else if (action === 'withdraw') {
+      const crucible = crucibles.find(c => c.id === crucibleId);
+      if (crucible && crucible.userPtokenBalance === BigInt(0)) {
+        alert('⚠️ No open position to close!\n\nYou need to open a position first before you can close it.')
+        return
+      }
+      setSelectedCrucible(crucibleId);
+      // All withdrawals now use FOGO through Phantom wallet
+      setShowFogoWithdrawModal(true);
+    }
+  }
 
   return (
     <div className={`space-y-6 ${className}`}>
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-inter-bold text-white mb-2">Crucible Management</h2>
-          <p className="text-fogo-gray-400 font-inter-light">Manage your Forge token deposits and earn rewards</p>
-        </div>
-        <button 
-          onClick={() => setShowCrucibleCreationModal(true)}
-          className="bg-fogo-gray-700 hover:bg-fogo-gray-600 text-fogo-gray-300 hover:text-white px-6 py-3 rounded-2xl font-medium transition-all duration-200 flex items-center space-x-2 border border-fogo-gray-600 hover:border-fogo-gray-500"
-        >
-          <PlusIcon className="h-5 w-5" />
-          <span className="font-satoshi">Create Crucible</span>
-        </button>
-      </div>
-
-      {/* Action tabs removed - actions are now directly on crucible cards */}
-
-      {/* Crucibles List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {crucibles.map((crucible) => (
-          <div key={crucible.id} className="bg-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700 shadow-fogo hover:shadow-fogo-lg transition-all duration-300 hover:border-fogo-primary/30">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-12 h-12 bg-fogo-primary/20 rounded-2xl flex items-center justify-center">
-                <svg className="h-6 w-6 text-fogo-primary" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M14.724 0h-8.36L5.166 4.804h-3.61L.038 10.898a1.28 1.28 0 0 0 1.238 1.591h3.056L1.465 24l9.744-10.309c.771-.816.195-2.162-.925-2.162h-4.66l1.435-5.765h7.863l1.038-4.172A1.28 1.28 0 0 0 14.723 0ZM26.09 18.052h-2.896V5.58h9.086v2.525h-6.19v2.401h5.636v2.525H26.09v5.02Zm13.543.185c-1.283 0-2.404-.264-3.365-.793a5.603 5.603 0 0 1-2.24-2.233c-.533-.96-.8-2.09-.8-3.394 0-1.304.267-2.451.8-3.41a5.55 5.55 0 0 1 2.24-2.225c.96-.523 2.08-.785 3.365-.785 1.285 0 2.42.259 3.381.777a5.474 5.474 0 0 1 2.233 2.218c.528.96.793 2.1.793 3.425 0 1.324-.268 2.437-.801 3.403a5.56 5.56 0 0 1-2.24 2.233c-.961.523-2.081.785-3.366.785v-.001Zm.016-2.525c1.118 0 1.98-.353 2.586-1.062.606-.708.91-1.652.91-2.833 0-1.182-.304-2.137-.91-2.84-.605-.704-1.473-1.055-2.602-1.055-1.128 0-1.984.351-2.595 1.054-.61.704-.916 1.645-.916 2.825 0 1.18.306 2.14.916 2.85.61.708 1.48 1.061 2.61 1.061Zm13.703 2.525c-1.211 0-2.28-.27-3.203-.808a5.647 5.647 0 0 1-2.163-2.256c-.517-.964-.776-2.079-.776-3.34 0-1.263.267-2.423.8-3.388a5.635 5.635 0 0 1 2.256-2.249c.97-.533 2.096-.801 3.38-.801 1.057 0 1.992.182 2.803.547a5.017 5.017 0 0 1 1.986 1.563c.513.677.837 1.489.971 2.432H56.39c-.103-.626-.394-1.113-.878-1.463-.482-.348-1.103-.523-1.863-.523-.718 0-1.344.16-1.878.476-.533.32-.945.77-1.231 1.356-.288.584-.43 1.277-.43 2.078 0 .801.148 1.515.445 2.11a3.27 3.27 0 0 0 1.262 1.379c.544.322 1.186.485 1.925.485.544 0 1.03-.084 1.454-.253.426-.17.762-.4 1.009-.693a1.5 1.5 0 0 0 .37-.993v-.37H53.51V11.31h3.865c.677 0 1.185.161 1.525.485.337.323.507.808.507 1.455v4.804h-2.648V16.73h-.077c-.299.503-.724.88-1.278 1.132-.554.252-1.237.377-2.048.377l-.003-.001Zm13.911 0c-1.283 0-2.405-.264-3.366-.793a5.603 5.603 0 0 1-2.24-2.233c-.533-.96-.8-2.09-.8-3.394 0-1.304.267-2.451.8-3.41a5.55 5.55 0 0 1 2.24-2.225c.961-.523 2.081-.785 3.366-.785 1.284 0 2.42.259 3.38.777a5.474 5.474 0 0 1 2.234 2.218c.528.96.792 2.1.792 3.425 0 1.324-.268 2.437-.801 3.403a5.56 5.56 0 0 1-2.24 2.233c-.96.523-2.08.785-3.365.785v-.001Zm.015-2.525c1.118 0 1.981-.353 2.587-1.062.605-.708.909-1.652.909-2.833 0-1.182-.304-2.137-.91-2.84-.605-.704-1.473-1.055-2.601-1.055-1.129 0-1.985.351-2.595 1.054-.611.704-.916 1.645-.916 2.825 0 1.18.305 2.14.916 2.85.61.708 1.48 1.061 2.61 1.061Z" />
-                </svg>
+      {/* Crucible Stats - Compact */}
+      <div className="flex justify-center mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-6xl">
+          <div className="bg-gradient-to-br from-fogo-gray-900 via-fogo-gray-800 to-fogo-gray-900 rounded-xl p-4 border border-fogo-primary/20 hover:border-fogo-primary/40 transition-all duration-300 group">
+            <div className="text-center">
+              <div className="w-10 h-10 bg-gradient-to-br from-fogo-primary/20 to-fogo-primary/10 rounded-xl flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform duration-300">
+                <ChartBarIcon className="h-5 w-5 text-fogo-primary" />
               </div>
-              <h3 className="text-xl font-satoshi-bold text-white">{crucible.name}</h3>
-              <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(crucible.status)}`}>
-                {crucible.status}
-              </span>
-            </div>
-            <div className="space-y-3 text-sm font-satoshi-light text-fogo-gray-300 mb-6">
-              <div className="flex justify-between">
-                <span>TVL:</span>
-                <span className="font-satoshi text-white">{formatCurrency(crucible.tvl)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>APY:</span>
-                <span className="font-satoshi text-fogo-accent">{formatPercentage(crucible.apr)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Your Shares:</span>
-                <span className="font-satoshi text-white">{crucible.userShares.toLocaleString()} {crucible.symbol}</span>
-              </div>
-              {crucible.userDeposit > 0 && (
-                <div className="flex justify-between items-center pt-3 border-t border-fogo-gray-700">
-                  <span className="text-fogo-gray-400 text-sm">APY Earnings</span>
-                  <span className="font-satoshi-bold text-fogo-primary">
-                    +{getCrucibleAPYEarnings(crucible.id).toFixed(2)} FOGO
-                  </span>
-                </div>
-              )}
-            </div>
-            <div className="flex space-x-3">
-              <button
-                onClick={() => handleAction('deposit', crucible.id)}
-                className="flex-1 bg-gradient-to-r from-fogo-primary to-fogo-secondary hover:from-fogo-primary-dark hover:to-fogo-secondary-dark text-white px-4 py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center space-x-2 shadow-fogo hover:shadow-flame"
-              >
-                <ArrowUpIcon className="h-4 w-4" />
-                <span className="font-satoshi">Deposit</span>
-              </button>
-              <button
-                onClick={() => handleAction('withdraw', crucible.id)}
-                className="flex-1 bg-fogo-gray-700 hover:bg-fogo-gray-600 text-white px-4 py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center space-x-2 border border-fogo-gray-600 hover:border-fogo-primary/30"
-              >
-                <ArrowDownIcon className="h-4 w-4" />
-                <span className="font-satoshi">Withdraw</span>
-              </button>
+              <p className="text-fogo-gray-300 text-xs font-medium mb-1">Total TVL</p>
+              <p className="text-2xl font-bold text-white group-hover:text-fogo-primary transition-colors duration-300">
+                ${crucibles.reduce((sum, c) => sum + c.tvl, 0).toLocaleString()}
+              </p>
             </div>
           </div>
-        ))}
+
+          <div className="bg-gradient-to-br from-fogo-gray-900 via-fogo-gray-800 to-fogo-gray-900 rounded-xl p-4 border border-fogo-accent/20 hover:border-fogo-accent/40 transition-all duration-300 group">
+            <div className="text-center">
+              <div className="w-10 h-10 bg-gradient-to-br from-fogo-accent/20 to-fogo-accent/10 rounded-xl flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform duration-300">
+                <BoltIcon className="h-5 w-5 text-fogo-accent" />
+              </div>
+              <p className="text-fogo-gray-300 text-xs font-medium mb-1">APY Earned</p>
+              <p className="text-2xl font-bold text-white group-hover:text-fogo-accent transition-colors duration-300">
+                ${crucibles.reduce((sum, c) => sum + (c.apyEarnedByUsers || 0), 0).toLocaleString()}
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-fogo-gray-900 via-fogo-gray-800 to-fogo-gray-900 rounded-xl p-4 border border-fogo-primary/20 hover:border-fogo-primary/40 transition-all duration-300 group">
+            <div className="text-center">
+              <div className="w-10 h-10 bg-gradient-to-br from-fogo-primary/20 to-fogo-primary/10 rounded-xl flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform duration-300">
+                <FireIcon className="h-5 w-5 text-fogo-primary" />
+              </div>
+              <p className="text-fogo-gray-300 text-xs font-medium mb-1">Total Fees</p>
+              <p className="text-2xl font-bold text-white group-hover:text-fogo-primary transition-colors duration-300">
+                ${crucibles.reduce((sum, c) => sum + (c.totalFeesCollected || 0), 0).toLocaleString()}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
+      {/* Loading State */}
+      {loading && (
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-fogo-primary mx-auto mb-4"></div>
+            <p className="text-fogo-gray-300">Loading crucibles...</p>
+          </div>
+        </div>
+      )}
 
-             {/* Modals */}
-             {selectedCrucible && (
-               <>
-                 <FogoDepositModal
-                   isOpen={showFogoDepositModal}
-                   onClose={() => setShowFogoDepositModal(false)}
-                   crucibleId={selectedCrucible}
-                 />
-                 <FogoWithdrawModal
-                   isOpen={showFogoWithdrawModal}
-                   onClose={() => setShowFogoWithdrawModal(false)}
-                   crucibleId={selectedCrucible}
-                 />
-               </>
-             )}
+      {/* Error State */}
+      {error && (
+        <div className="bg-red-900/20 border border-red-500/30 rounded-2xl p-6 text-center">
+          <p className="text-red-400 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
-      {/* Crucible Creation Modal */}
-      <CrucibleCreationModal
-        isOpen={showCrucibleCreationModal}
-        onClose={() => setShowCrucibleCreationModal(false)}
-      />
+      {/* Crucibles List */}
+      {!loading && !error && (
+        <div className="space-y-4">
+          <div className="text-center">
+            <h2 className="text-2xl font-inter-bold text-white mb-2">Available Crucibles</h2>
+            <p className="text-fogo-gray-400 text-sm">Choose your preferred token to start earning yield</p>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-7xl mx-auto">
+            {crucibles.map((crucible) => (
+            <div key={crucible.id} className="bg-gradient-to-br from-fogo-gray-900 via-fogo-gray-800 to-fogo-gray-900 rounded-2xl p-5 border border-fogo-gray-600/50 shadow-xl hover:shadow-fogo-primary/20 transition-all duration-500 hover:border-fogo-primary/40 hover:scale-[1.01] group backdrop-blur-sm relative overflow-hidden">
+              {/* Background Pattern */}
+              <div className="absolute inset-0 bg-gradient-to-br from-fogo-primary/5 to-fogo-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-14 h-14 bg-gradient-to-br from-fogo-primary/30 to-fogo-accent/30 rounded-2xl flex items-center justify-center group-hover:from-fogo-primary/40 group-hover:to-fogo-accent/40 transition-all duration-500 shadow-lg group-hover:shadow-fogo-primary/20">
+                      {crucible.icon.startsWith('/') ? (
+                        <img 
+                          src={crucible.icon} 
+                          alt={`${crucible.name} icon`} 
+                          className="h-9 w-9 object-contain group-hover:scale-110 transition-transform duration-300"
+                        />
+                      ) : (
+                        <span className="text-2xl group-hover:scale-110 transition-transform duration-300">{crucible.icon}</span>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-satoshi-bold text-white group-hover:text-fogo-primary transition-colors duration-300 mb-1">{crucible.name}</h3>
+                      <p className="text-fogo-gray-300 text-sm font-medium">{crucible.baseToken} → {crucible.ptokenSymbol}</p>
+                    </div>
+                  </div>
+                  <span className={`px-3 py-1.5 rounded-full text-xs font-bold ${getStatusColor(crucible.status)} shadow-lg`}>
+                    {crucible.status.toUpperCase()}
+                  </span>
+                </div>
+                <div className="space-y-3 text-sm font-satoshi-light text-fogo-gray-200 mb-6">
+                  <div className="flex justify-between items-center py-3 px-3 bg-fogo-gray-800/50 rounded-lg border border-fogo-gray-700/50">
+                    <span className="text-fogo-gray-300 font-medium text-sm">TVL:</span>
+                    <span className="font-satoshi-bold text-lg text-white">${crucible.tvl.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-3 px-3 bg-fogo-gray-800/50 rounded-lg border border-fogo-gray-700/50">
+                    <span className="text-fogo-gray-300 font-medium text-sm">APY:</span>
+                    <span className="font-satoshi-bold text-lg text-fogo-accent">{(crucible.apr * 100).toFixed(1)}%</span>
+                  </div>
+                  <div className="flex justify-between items-center py-3 px-3 bg-fogo-gray-800/50 rounded-lg border border-fogo-gray-700/50">
+                    <span className="text-fogo-gray-300 font-medium text-sm">cToken Price:</span>
+                    <span className="font-satoshi-bold text-lg text-fogo-accent">
+                      ${(() => {
+                        // Calculate price from exchange rate
+                        // Only show accumulated yield if there are deposits (totalWrapped > 0)
+                        const hasDeposits = (crucible.totalWrapped || BigInt(0)) > BigInt(0);
+                        const exchangeRate = hasDeposits ? (crucible.exchangeRate || RATE_SCALE) : RATE_SCALE;
+                        const baseTokenPrice = crucible.baseToken === 'FOGO' ? 0.5 : 0.002;
+                        const currentPrice = getCTokenPrice(baseTokenPrice, exchangeRate);
+                        return currentPrice.toFixed(4);
+                      })()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-3 px-3 bg-fogo-gray-800/50 rounded-lg border border-fogo-gray-700/50">
+                    <span className="text-fogo-gray-300 font-medium text-sm">Yield Earned:</span>
+                    <span className="font-satoshi-bold text-lg text-fogo-primary">
+                      ${(crucible.apyEarnedByUsers || 0).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Enhanced CTA Buttons */}
+                <div className="space-y-2">
+                  {/* Primary Open Position Button */}
+                  <button
+                    onClick={() => handleAction('deposit', crucible.id)}
+                    className="w-full bg-gradient-to-r from-fogo-primary to-fogo-accent hover:from-fogo-primary/90 hover:to-fogo-accent/90 text-white font-satoshi-bold py-3 rounded-xl transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg hover:shadow-fogo-primary/25 group relative overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative flex items-center justify-center space-x-2">
+                      <ArrowUpIcon className="h-5 w-5 group-hover:scale-110 transition-transform duration-300" />
+                      <span className="text-base">Open Position</span>
+                    </div>
+                  </button>
+
+                  {/* Secondary Close Position Button */}
+                  <button
+                    onClick={() => handleAction('withdraw', crucible.id)}
+                    disabled={crucible.userPtokenBalance === BigInt(0)}
+                    className={`w-full py-3 rounded-xl font-satoshi-bold transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg flex items-center justify-center space-x-2 border relative overflow-hidden group ${
+                      crucible.userPtokenBalance === BigInt(0)
+                        ? 'bg-fogo-gray-900 text-fogo-gray-500 border-fogo-gray-800 cursor-not-allowed'
+                        : 'bg-fogo-gray-800 hover:bg-fogo-gray-700 text-fogo-gray-300 hover:text-white border-fogo-gray-600 hover:border-fogo-gray-500'
+                    }`}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-fogo-gray-700/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative flex items-center justify-center space-x-2">
+                      <ArrowDownIcon className="h-5 w-5 group-hover:scale-110 transition-transform duration-300" />
+                      <span className="text-base">Close Position</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Modals */}
+      {selectedCrucible && (
+        <>
+          <FogoDepositModal
+            isOpen={showFogoDepositModal}
+            onClose={() => setShowFogoDepositModal(false)}
+            crucibleId={selectedCrucible}
+          />
+          <FogoWithdrawModal
+            isOpen={showFogoWithdrawModal}
+            onClose={() => setShowFogoWithdrawModal(false)}
+            crucibleId={selectedCrucible}
+          />
+        </>
+      )}
     </div>
   )
 }

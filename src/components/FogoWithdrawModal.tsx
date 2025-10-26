@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useWallet } from '../contexts/WalletContext';
 import { useBalance } from '../contexts/BalanceContext';
-import { useCrucible } from '../contexts/CrucibleContext';
+import { useCrucible } from '../hooks/useCrucible';
 import { useAnalytics } from '../contexts/AnalyticsContext';
 import { useSession } from './FogoSessions';
+import { formatNumberWithCommas, getCTokenPrice, RATE_SCALE } from '../utils/math';
 import { Transaction, SystemProgram, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { calculateAPYRewards, getTimeInCrucible, formatAPYBreakdown } from '../utils/apyCalculations';
 
 interface FogoWithdrawModalProps {
   isOpen: boolean;
@@ -16,17 +16,20 @@ interface FogoWithdrawModalProps {
 export const FogoWithdrawModal: React.FC<FogoWithdrawModalProps> = ({ isOpen, onClose, crucibleId }) => {
   const { connection, publicKey, sendTransaction, network, switchNetwork } = useWallet();
   const { addToBalance, subtractFromBalance } = useBalance();
-  const { updateCrucibleWithdraw, getCrucible } = useCrucible();
+  const { unwrapTokens, unwrapTokensToUSDC, getCrucible, calculateUnwrapPreview } = useCrucible();
   const { addTransaction, analytics } = useAnalytics();
   const fogoSession = useSession();
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Removed withdraw mode - always use simulation
+  const [withdrawalMode, setWithdrawalMode] = useState<'token' | 'usdc'>('token');
 
   const crucible = getCrucible(crucibleId);
   const targetSymbol = useMemo(() => crucible?.symbol || 'FOGO', [crucible?.symbol]);
-  const availableAmount = useMemo(() => crucible?.userDeposit || 0, [crucible?.userDeposit]);
+  const availableAmount = useMemo(() => {
+    if (!crucible?.userPtokenBalance) return 0;
+    return Number(crucible.userPtokenBalance) / 1e9; // Convert from lamports to tokens
+  }, [crucible?.userPtokenBalance]);
 
   // APY Calculation - find the original deposit timestamp for this crucible
   const depositTimestamp = useMemo(() => {
@@ -57,7 +60,14 @@ export const FogoWithdrawModal: React.FC<FogoWithdrawModalProps> = ({ isOpen, on
   }, [amount, crucible?.apr]);
 
   const apyBreakdown = useMemo(() => {
-    return apyCalculation ? formatAPYBreakdown(apyCalculation) : null;
+    if (!apyCalculation) return null;
+    return {
+      principal: apyCalculation.principal.toFixed(6),
+      rewards: apyCalculation.totalRewards.toFixed(6),
+      total: apyCalculation.totalWithdrawal.toFixed(6),
+      apyPercentage: (apyCalculation.apyRate * 100).toFixed(1),
+      timeInDays: apyCalculation.timeInDays.toFixed(0)
+    };
   }, [apyCalculation]);
 
   const handleWithdraw = async () => {
@@ -69,60 +79,84 @@ export const FogoWithdrawModal: React.FC<FogoWithdrawModalProps> = ({ isOpen, on
     const withdrawAmount = parseFloat(amount);
     
     if (withdrawAmount > availableAmount) {
-      setError(`Maximum withdrawable amount is ${availableAmount.toFixed(2)} ${targetSymbol}`);
+      setError(`Maximum withdrawable amount is ${formatNumberWithCommas(availableAmount)} cFOGO`);
       return;
     }
-
-    // Calculate total withdrawal including APY rewards
-    const totalWithdrawal = apyCalculation ? apyCalculation.totalWithdrawal : withdrawAmount;
-    const apyRewards = apyCalculation ? apyCalculation.totalRewards : 0;
 
     setLoading(true);
     setError(null);
 
     try {
-      console.log('Processing FOGO withdrawal...');
-      
-      // Check if FOGO Sessions is available
-      if (!fogoSession.withdrawFromCrucible) {
-        setError('FOGO Sessions not available. Please connect to FOGO Sessions first.');
-        return;
+      if (withdrawalMode === 'usdc') {
+        console.log('Processing cFOGO unwrap to USDC...');
+        await unwrapTokensToUSDC(crucibleId, amount);
+        
+        // Add USDC to balance and subtract cTokens
+        const preview = calculateUnwrapPreview(crucibleId, amount);
+        const usdcAmount = parseFloat(preview.baseAmount) * 0.985; // 1.5% fee
+        
+        const targetPTokenSymbol = crucible?.ptokenSymbol === 'cFORGE' ? 'cFORGE' : 'cFOGO';
+        subtractFromBalance(targetPTokenSymbol, withdrawAmount);
+        addToBalance('USDC', usdcAmount);
+        
+        // Add transaction record
+        addTransaction({
+          type: 'withdraw',
+          amount: usdcAmount,
+          token: 'USDC',
+          crucibleId,
+          signature: `mock-usdc-${Date.now()}`,
+          usdValue: usdcAmount,
+          apyRewards: 0 // USDC withdrawal doesn't include APY rewards
+        });
+        
+        console.log(`Successfully withdrew ${formatNumberWithCommas(usdcAmount)} USDC`);
+      } else {
+        console.log('Processing cFOGO unwrap to token...');
+        
+        // Check if FOGO Sessions is available
+        if (!fogoSession.withdrawFromCrucible) {
+          setError('FOGO Sessions not available. Please connect to FOGO Sessions first.');
+          return;
+        }
+
+        // Calculate FOGO to receive from unwrapping
+        const preview = calculateUnwrapPreview(crucibleId, amount);
+        const fogoToReceive = parseFloat(preview.baseAmount);
+
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Use FOGO Sessions context for withdrawal
+        await fogoSession.withdrawFromCrucible(fogoToReceive, 0);
+        
+        // Unwrap cFOGO to FOGO
+        await unwrapTokens(crucibleId, amount);
+        
+        const mockSignature = 'sim_unwrap_pfogo_' + Math.random().toString(36).substr(2, 9);
+        console.log('cFOGO unwrap successful:', mockSignature);
+
+        // Update local state - subtract cTokens and add FOGO received from unwrapping
+        const targetPTokenSymbol = crucible?.ptokenSymbol === 'cFORGE' ? 'cFORGE' : 'cFOGO';
+        subtractFromBalance(targetPTokenSymbol, withdrawAmount);
+        addToBalance('FOGO', fogoToReceive);
+
+        // Record transaction
+        addTransaction({
+          type: 'unwrap',
+          amount: fogoToReceive,
+          token: 'FOGO',
+          crucibleId,
+          signature: mockSignature
+        });
+
+        alert(`✅ cFOGO UNWRAP SUCCESSFUL\n\n✅ ${formatNumberWithCommas(withdrawAmount)} cFOGO unwrapped\n✅ Received: ${formatNumberWithCommas(fogoToReceive)} FOGO\n✅ Yield earned: ${formatNumberWithCommas(fogoToReceive - withdrawAmount)} FOGO\n\nTransaction: ${mockSignature}`);
       }
-
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Use FOGO Sessions context for withdrawal (including APY rewards)
-      await fogoSession.withdrawFromCrucible(withdrawAmount, apyRewards);
-      
-      const mockSignature = 'sim_withdraw_fogo_' + Math.random().toString(36).substr(2, 9);
-      console.log('FOGO withdrawal successful:', mockSignature);
-
-      // Update local state - add total withdrawal (principal + APY rewards) to FOGO balance
-      addToBalance('FOGO', totalWithdrawal);
-      subtractFromBalance('SPARK', withdrawAmount * 10);
-      subtractFromBalance('HEAT', withdrawAmount * 5);
-
-      // Update crucible
-      updateCrucibleWithdraw(crucibleId, withdrawAmount);
-
-      // Record transaction with APY rewards
-      addTransaction({
-        type: 'withdraw',
-        amount: totalWithdrawal, // Record total withdrawal amount (principal + APY)
-        token: 'FOGO',
-        crucibleId,
-        signature: mockSignature,
-        apyRewards: apyRewards,
-        totalWithdrawal: totalWithdrawal
-      });
-
-      alert(`✅ FOGO WITHDRAWAL\n\n✅ Principal: ${withdrawAmount.toFixed(2)} FOGO\n✅ APY Rewards: ${apyRewards.toFixed(2)} FOGO\n✅ Total Withdrawn: ${totalWithdrawal.toFixed(2)} FOGO\n✅ USD Value: $${(totalWithdrawal * 0.5).toFixed(2)}\n\nTransaction: ${mockSignature}`);
 
       setAmount('');
       onClose();
     } catch (err: any) {
-      console.error('Withdrawal error:', err);
-      setError(err.message || 'Withdrawal failed');
+      console.error('Unwrap error:', err);
+      setError(err.message || 'Unwrap failed');
     } finally {
       setLoading(false);
     }
@@ -141,37 +175,82 @@ export const FogoWithdrawModal: React.FC<FogoWithdrawModalProps> = ({ isOpen, on
               </svg>
             </div>
             <h2 className="text-xl font-bold text-white">
-              Withdraw FOGO Tokens - {crucible?.name}
+              Unwrap {crucible?.ptokenSymbol} to {crucible?.baseToken} - {crucible?.name}
             </h2>
           </div>
         </div>
         
         <div className="flex-1 overflow-y-auto p-6">
           <div className="space-y-4">
-          {/* FOGO Token Info */}
+          {/* cFOGO Token Info */}
           <div className="p-3 bg-purple-900/30 rounded-lg">
-            <h4 className="text-sm font-semibold text-purple-300 mb-2">FOGO Token Withdrawal</h4>
+            <h4 className="text-sm font-semibold text-purple-300 mb-2">Unwrapping Details</h4>
             <div className="text-xs text-purple-200 space-y-1">
-              <div>• Withdraw your FOGO tokens from crucible</div>
-              <div>• Receive APY rewards based on time in crucible</div>
-              <div>• Earned SPARK and HEAT tokens are returned</div>
-              <div>• APY: {((crucible?.apr || 0.15) * 100).toFixed(2)}%</div>
+              <div>• Unwrap your {crucible?.ptokenSymbol} tokens to receive {crucible?.baseToken} + yield</div>
+              <div>• {crucible?.baseToken} price: <span className="text-white font-semibold">${crucible?.baseToken === 'FOGO' ? '0.50' : '0.002'} USD</span></div>
+              <div>• {crucible?.ptokenSymbol} current price: <span className="text-purple-300 font-semibold">${(() => {
+                const hasDeposits = (crucible?.totalWrapped || BigInt(0)) > BigInt(0);
+                const exchangeRate = hasDeposits ? (crucible?.exchangeRate || RATE_SCALE) : RATE_SCALE;
+                const baseTokenPrice = crucible?.baseToken === 'FOGO' ? 0.5 : 0.002;
+                const currentPrice = getCTokenPrice(baseTokenPrice, exchangeRate);
+                return currentPrice.toFixed(4);
+              })()} USD</span> {(() => {
+                const hasDeposits = (crucible?.totalWrapped || BigInt(0)) > BigInt(0);
+                return hasDeposits ? '(includes accumulated yield)' : '(1:1 with ' + crucible?.baseToken + ')';
+              })()}</div>
+              <div>• You receive MORE {crucible?.baseToken} than deposited due to value appreciation</div>
+              <div>• Current APY: {crucible?.currentAPY?.toFixed(2) || ((crucible?.apr || 0.15) * 100).toFixed(2)}%</div>
             </div>
           </div>
 
           {/* Available Balance */}
           <div className="p-3 bg-gray-700 rounded-lg">
             <div className="text-sm text-gray-300">
-              Available: {availableAmount.toFixed(2)} {targetSymbol}
+              Available: {formatNumberWithCommas(availableAmount)} {crucible?.ptokenSymbol}
             </div>
             <div className="text-xs text-gray-400">
-              APY: {((crucible?.apr || 0.08) * 100).toFixed(2)}% | Full year rewards (365 days)
+              Est. {crucible?.baseToken} value: {crucible?.estimatedBaseValue ? (Number(crucible.estimatedBaseValue) / 1e9).toFixed(6) : '0.000000'} {crucible?.baseToken}
+            </div>
+          </div>
+
+          {/* Withdrawal Mode Selector */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Withdrawal Method
+            </label>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setWithdrawalMode('token')}
+                className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  withdrawalMode === 'token'
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
+              >
+                Receive {targetSymbol}
+              </button>
+              <button
+                onClick={() => setWithdrawalMode('usdc')}
+                className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  withdrawalMode === 'usdc'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
+              >
+                Receive USDC (1.5% fee)
+              </button>
+            </div>
+            <div className="text-xs text-gray-400 mt-1">
+              {withdrawalMode === 'usdc' 
+                ? 'Convert to USDC with 1.5% commission fee'
+                : 'Receive original token with yield included'
+              }
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Amount ({targetSymbol})
+              Amount ({crucible?.ptokenSymbol})
             </label>
             <div className="flex space-x-2">
               <input
@@ -193,27 +272,60 @@ export const FogoWithdrawModal: React.FC<FogoWithdrawModalProps> = ({ isOpen, on
             </div>
           </div>
 
-          {/* APY Rewards Breakdown */}
-          {apyBreakdown && (
-            <div className="p-4 bg-green-900/30 border border-green-600 rounded-lg">
-              <h4 className="text-green-300 font-semibold mb-3">💰 APY Rewards Breakdown</h4>
+          {/* Unwrap Preview */}
+          {amount && parseFloat(amount) > 0 && (
+            <div className={`p-4 border rounded-lg ${
+              withdrawalMode === 'usdc' 
+                ? 'bg-blue-900/30 border-blue-600' 
+                : 'bg-green-900/30 border-green-600'
+            }`}>
+              <h4 className={`font-semibold mb-3 ${
+                withdrawalMode === 'usdc' ? 'text-blue-300' : 'text-green-300'
+              }`}>
+                💰 Unwrap Preview
+              </h4>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-300">Principal:</span>
-                  <span className="text-white font-medium">{apyBreakdown.principal} {targetSymbol}</span>
+                  <span className="text-gray-300">{crucible?.ptokenSymbol} to unwrap:</span>
+                  <span className="text-white font-medium">{formatNumberWithCommas(parseFloat(amount))} {crucible?.ptokenSymbol}</span>
                 </div>
+                {withdrawalMode === 'usdc' ? (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-gray-300">USDC to receive:</span>
+                      <span className="text-blue-400 font-medium">
+                        {formatNumberWithCommas(parseFloat(calculateUnwrapPreview(crucibleId, amount).baseAmount) * 0.985)} USDC
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-300">Commission fee (1.5%):</span>
+                      <span className="text-red-300 font-medium">
+                        -{formatNumberWithCommas(parseFloat(calculateUnwrapPreview(crucibleId, amount).baseAmount) * 0.015)} USDC
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-gray-300">{targetSymbol} to receive:</span>
+                      <span className="text-green-400 font-medium">{calculateUnwrapPreview(crucibleId, amount).baseAmount} {targetSymbol}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-300">Yield included:</span>
+                      <span className="text-green-300 font-medium">
+                        +{((parseFloat(calculateUnwrapPreview(crucibleId, amount).baseAmount) - parseFloat(amount)) / parseFloat(amount) * 100).toFixed(2)}%
+                      </span>
+                    </div>
+                  </>
+                )}
                 <div className="flex justify-between">
-                  <span className="text-gray-300">APY Rewards ({apyBreakdown.apyPercentage}% for {apyBreakdown.timeInDays} days):</span>
-                  <span className="text-green-400 font-medium">+{apyBreakdown.rewards} {targetSymbol}</span>
-                </div>
-                <div className="border-t border-green-600 pt-2">
-                  <div className="flex justify-between">
-                    <span className="text-green-300 font-semibold">Total Withdrawal:</span>
-                    <span className="text-green-400 font-bold">{apyBreakdown.total} {targetSymbol}</span>
-                  </div>
+                  <span className="text-gray-300">Yield earned:</span>
+                  <span className="text-green-400 font-medium">
+                    +{(parseFloat(calculateUnwrapPreview(crucibleId, amount).baseAmount) - parseFloat(amount)).toFixed(6)} {crucible?.baseToken}
+                  </span>
                 </div>
                 <div className="text-xs text-green-200 mt-2">
-                  💡 You'll receive the full amount including APY rewards!
+                  💡 Your {crucible?.ptokenSymbol} has earned yield through exchange rate growth!
                 </div>
               </div>
             </div>
@@ -238,7 +350,7 @@ export const FogoWithdrawModal: React.FC<FogoWithdrawModalProps> = ({ isOpen, on
               disabled={loading || !amount || parseFloat(amount) <= 0}
               className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
             >
-              {loading ? 'Withdrawing...' : 'Withdraw FOGO'}
+              {loading ? 'Unwrapping...' : 'Unwrap cFOGO'}
             </button>
           </div>
         </div>
