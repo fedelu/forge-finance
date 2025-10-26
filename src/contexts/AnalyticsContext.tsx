@@ -1,9 +1,8 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
-import { calculateRealTimeAPY } from '../utils/apyCalculations';
 
 interface Transaction {
   id: string;
-  type: 'deposit' | 'withdraw';
+  type: 'deposit' | 'withdraw' | 'wrap' | 'unwrap';
   amount: number;
   token: string; // input token (SOL)
   distToken?: string; // crucible native token for distribution
@@ -13,6 +12,7 @@ interface Transaction {
   apyRewards?: number; // APY rewards earned/withdrawn
   totalWithdrawal?: number; // Total amount including APY rewards
   usdValue?: number; // USD value of the transaction
+  pfogoAmount?: number; // pFOGO amount for unwrap transactions
 }
 
 interface AnalyticsData {
@@ -77,15 +77,15 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({ children }
     setAnalytics(prev => {
       const newTransactions = [newTransaction, ...prev.transactions].slice(0, 100); // Keep last 100
       
-      const price = (token: string) => ({ SOL: 200, USDC: 1, ETH: 4000, BTC: 110000, FOGO: 0.5 } as any)[token] || 1;
+      const price = (token: string) => ({ SOL: 200, USDC: 1, ETH: 4000, BTC: 110000, FOGO: 0.5, FORGE: 0.002 } as any)[token] || 1;
       const toUsd = (tx: Transaction) => tx.amount * price(tx.token);
 
       const totalDeposits = newTransactions
-        .filter(tx => tx.type === 'deposit')
+        .filter(tx => tx.type === 'deposit' || tx.type === 'wrap')
         .reduce((sum, tx) => sum + toUsd(tx), 0);
       
       const totalWithdrawals = newTransactions
-        .filter(tx => tx.type === 'withdraw')
+        .filter(tx => tx.type === 'withdraw' || tx.type === 'unwrap')
         .reduce((sum, tx) => sum + toUsd(tx), 0);
 
       // Calculate APY rewards tracking
@@ -94,14 +94,14 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({ children }
         .reduce((sum, tx) => sum + (tx.apyRewards || 0) * price(tx.token), 0);
 
       const totalAPYWithdrawn = newTransactions
-        .filter(tx => tx.type === 'withdraw' && tx.apyRewards && tx.apyRewards > 0)
+        .filter(tx => (tx.type === 'withdraw' || tx.type === 'unwrap') && tx.apyRewards && tx.apyRewards > 0)
         .reduce((sum, tx) => sum + (tx.apyRewards || 0) * price(tx.token), 0);
       
       // Net volume = deposits - withdrawals (USD)
       const totalVolume = totalDeposits - totalWithdrawals;
       
-      const depositTransactions = newTransactions.filter(tx => tx.type === 'deposit');
-      const withdrawalTransactions = newTransactions.filter(tx => tx.type === 'withdraw');
+      const depositTransactions = newTransactions.filter(tx => tx.type === 'deposit' || tx.type === 'wrap');
+      const withdrawalTransactions = newTransactions.filter(tx => tx.type === 'withdraw' || tx.type === 'unwrap');
       
       const averageDeposit = depositTransactions.length > 0 
         ? totalDeposits / depositTransactions.length 
@@ -115,7 +115,7 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({ children }
       const dailyVolume: { [key: string]: number } = {};
       newTransactions.forEach(tx => {
         const date = new Date(tx.timestamp).toISOString().split('T')[0];
-        const signed = tx.type === 'deposit' ? toUsd(tx) : -toUsd(tx);
+        const signed = (tx.type === 'deposit' || tx.type === 'wrap') ? toUsd(tx) : -toUsd(tx);
         dailyVolume[date] = (dailyVolume[date] || 0) + signed;
       });
 
@@ -123,7 +123,7 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({ children }
       const tokenDistribution: { [key: string]: number } = {};
       newTransactions.forEach(tx => {
         const key = tx.distToken || tx.token;
-        const signed = (tx.type === 'deposit' ? 1 : -1) * tx.amount;
+        const signed = ((tx.type === 'deposit' || tx.type === 'wrap') ? 1 : -1) * tx.amount;
         tokenDistribution[key] = (tokenDistribution[key] || 0) + signed;
       });
 
@@ -169,7 +169,7 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({ children }
   }, [analytics.tokenDistribution]);
 
   const getRecentTransactions = useCallback((limit: number = 10) => {
-    const price = (token: string) => ({ SOL: 200, USDC: 1, ETH: 4000, BTC: 110000, FOGO: 0.5 } as any)[token] || 1;
+    const price = (token: string) => ({ SOL: 200, USDC: 1, ETH: 4000, BTC: 110000, FOGO: 0.5, FORGE: 0.002 } as any)[token] || 1;
     
     return analytics.transactions
       .slice(0, limit)
@@ -181,10 +181,10 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({ children }
 
   // Calculate APY earnings from withdrawals (simplified yearly approach)
   const getRealTimeAPYEarnings = useCallback(() => {
-    const price = (token: string) => ({ SOL: 200, USDC: 1, ETH: 4000, BTC: 110000, FOGO: 0.5 } as any)[token] || 1;
+    const price = (token: string) => ({ SOL: 200, USDC: 1, ETH: 4000, BTC: 110000, FOGO: 0.5, FORGE: 0.002 } as any)[token] || 1;
     
     // Get all withdrawals that have APY rewards
-    const withdrawals = analytics.transactions.filter(tx => tx.type === 'withdraw' && tx.apyRewards && tx.apyRewards > 0);
+    const withdrawals = analytics.transactions.filter(tx => (tx.type === 'withdraw' || tx.type === 'unwrap') && tx.apyRewards && tx.apyRewards > 0);
     
     let totalAPYEarnings = 0;
     

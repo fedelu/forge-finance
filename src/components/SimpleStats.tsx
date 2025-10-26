@@ -11,7 +11,7 @@ import {
   CubeIcon,
   CurrencyDollarIcon as DollarIcon
 } from '@heroicons/react/24/outline'
-import { useCrucible } from '../contexts/CrucibleContext'
+import { useCrucible } from '../hooks/useCrucible'
 import { useAnalytics } from '../contexts/AnalyticsContext'
 
 interface ProtocolStats {
@@ -130,6 +130,13 @@ export default function SimpleStats({ className = '' }: SimpleStatsProps) {
     return `${sign}${formatted}${isPercentage ? '%' : ''}`
   }
 
+  const formatNumberWithCommas = (value: number) => {
+    return value.toLocaleString('en-US', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2
+    })
+  }
+
   const StatCard = ({ 
     title, 
     value, 
@@ -213,6 +220,51 @@ export default function SimpleStats({ className = '' }: SimpleStatsProps) {
         </div>
       </div>
       
+      {/* Per-Crucible Stats */}
+      {isClient && crucibles.length > 0 && (
+        <div className="bg-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700 shadow-fogo">
+          <h3 className="text-xl font-inter-bold text-white mb-6">Per-Crucible Statistics</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {crucibles.map((crucible) => {
+              const yieldEarned = crucible.apyEarnedByUsers || 0; // APY-based yield earned
+              return (
+                <div key={crucible.id} className="bg-fogo-gray-800 rounded-xl p-6 border border-fogo-gray-600">
+                  <div className="flex items-center space-x-3 mb-4">
+                    {crucible.icon.startsWith('/') ? (
+                      <img 
+                        src={crucible.icon} 
+                        alt={`${crucible.name} icon`} 
+                        className="w-8 h-8 rounded-lg"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 bg-fogo-primary/20 rounded-lg flex items-center justify-center">
+                        <span className="text-fogo-primary font-bold text-sm">{crucible.symbol[0]}</span>
+                      </div>
+                    )}
+                    <h4 className="text-lg font-inter-bold text-white">{crucible.name} Crucible</h4>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-fogo-gray-400 text-sm">TVL:</span>
+                      <span className="text-white font-inter-bold">{formatCurrency(crucible.tvl)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-fogo-gray-400 text-sm">APY:</span>
+                      <span className="text-fogo-accent font-inter-bold">{(crucible.apr * 100).toFixed(1)}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-fogo-gray-400 text-sm">Yield Earned:</span>
+                      <span className="text-fogo-primary font-inter-bold">{formatCurrency(yieldEarned)}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Main Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
         <StatCard

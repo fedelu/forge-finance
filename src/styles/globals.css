@@ -300,3 +300,49 @@ body {
   pointer-events: auto !important;
   isolation: isolate !important;
 }
+
+/* Header Logo Styles */
+.header-logo {
+  width: 240px; /* 4× the current ~60px scale */
+  height: auto;
+  object-fit: contain;
+  image-rendering: auto;
+  max-height: 60px; /* Prevent logo from being too tall */
+}
+
+/* Ensure header container maintains proper alignment */
+.container,
+.navbar,
+nav {
+  display: flex;
+  align-items: center;
+}
+
+/* Responsive behavior for small screens */
+@media (max-width: 768px) {
+  .header-logo {
+    width: 200px;
+    max-height: 50px;
+  }
+}
+
+@media (max-width: 600px) {
+  .header-logo {
+    width: 180px;
+    max-height: 45px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-logo {
+    width: 150px;
+    max-height: 40px;
+  }
+}
+
+@media (max-width: 360px) {
+  .header-logo {
+    width: 120px;
+    max-height: 35px;
+  }
+}

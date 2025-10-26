@@ -12,6 +12,9 @@ interface BalanceContextType {
   addToBalance: (symbol: string, amount: number) => void;
   subtractFromBalance: (symbol: string, amount: number) => void;
   getBalance: (symbol: string) => number;
+  wrappedFogo: number;
+  addWrappedFogo: (amount: number) => void;
+  subtractWrappedFogo: (amount: number) => void;
 }
 
 const BalanceContext = createContext<BalanceContextType | undefined>(undefined);
@@ -30,14 +33,17 @@ interface BalanceProviderProps {
 
 export const BalanceProvider: React.FC<BalanceProviderProps> = ({ children }) => {
   const [balances, setBalances] = useState<TokenBalance[]>([
-    { symbol: 'FOGO', amount: 10000, usdValue: 5000 }, // Start with 10,000 FOGO ($5,000)
+    { symbol: 'FOGO', amount: 10000, usdValue: 5000 }, // Start with 10,000 FOGO ($5,000 at $0.50 each)
+    { symbol: 'FORGE', amount: 5000, usdValue: 10 }, // Start with 5,000 FORGE ($10 at $0.002 each)
+    { symbol: 'cFOGO', amount: 0, usdValue: 0 }, // Start with 0 cFOGO (worth $0.5224 each)
+    { symbol: 'cFORGE', amount: 0, usdValue: 0 }, // Start with 0 cFORGE (worth $0.0025 each)
     { symbol: 'SOL', amount: 0, usdValue: 0 }, // Start with 0 SOL
     { symbol: 'USDC', amount: 0, usdValue: 0 }, // Start with 0 USDC
     { symbol: 'ETH', amount: 0, usdValue: 0 }, // Start with 0 ETH
     { symbol: 'BTC', amount: 0, usdValue: 0 }, // Start with 0 BTC
-    { symbol: 'SPARK', amount: 0, usdValue: 0 }, // Start with 0 SPARK
-    { symbol: 'HEAT', amount: 0, usdValue: 0 }, // Start with 0 HEAT
   ]);
+  
+  const [wrappedFogo, setWrappedFogo] = useState<number>(0);
 
   const updateBalance = (symbol: string, amount: number) => {
     setBalances(prev => {
@@ -102,9 +108,20 @@ export const BalanceProvider: React.FC<BalanceProviderProps> = ({ children }) =>
     return balance ? balance.amount : 0;
   };
 
+  const addWrappedFogo = (amount: number) => {
+    setWrappedFogo(prev => prev + amount);
+  };
+
+  const subtractWrappedFogo = (amount: number) => {
+    setWrappedFogo(prev => Math.max(0, prev - amount));
+  };
+
   const getTokenPrice = (symbol: string): number => {
     const prices: { [key: string]: number } = {
       'FOGO': 0.5,
+      'FORGE': 0.002,
+      'cFOGO': 0.5224,  // cFOGO is worth more than FOGO due to accumulated value
+      'cFORGE': 0.0025, // cFORGE is worth more than FORGE due to accumulated value
       'SOL': 200,
       'USDC': 1,
       'ETH': 4000,
@@ -123,6 +140,9 @@ export const BalanceProvider: React.FC<BalanceProviderProps> = ({ children }) =>
         addToBalance,
         subtractFromBalance,
         getBalance,
+        wrappedFogo,
+        addWrappedFogo,
+        subtractWrappedFogo,
       }}
     >
       {children}

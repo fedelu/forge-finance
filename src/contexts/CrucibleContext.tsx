@@ -93,7 +93,7 @@ export const CrucibleProvider: React.FC<CrucibleProviderProps> = ({ children }) 
     }
   ]);
 
-  const price = (symbol: string) => ({ SOL: 200, USDC: 1, ETH: 4000, BTC: 110000, FOGO: 0.5 } as any)[symbol] || 1;
+  const price = (symbol: string) => ({ SOL: 200, USDC: 1, ETH: 4000, BTC: 110000, FOGO: 0.5, FORGE: 0.002 } as any)[symbol] || 1;
 
   const updateCrucibleDeposit = useCallback((crucibleId: string, amount: number) => {
     console.log(`CrucibleContext: Adding deposit of ${amount} to ${crucibleId}`);
