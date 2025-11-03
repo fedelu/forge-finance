@@ -139,11 +139,9 @@ export default function CTokenWithdrawModal({
       // Call unwrapTokens which handles the unwrapping, fee calculation, APY earnings, and updates
       const result = await unwrapTokens(crucibleAddress, amount)
       
-      // Update wallet balances
-      const ctokenAmount = parseFloat(amount)
-      subtractFromBalance(ctokenSymbol, ctokenAmount)
-      
-      // Add base tokens received (includes APY earnings)
+      // Update wallet balances - add base tokens received
+      // Note: unwrapTokens already updates Crucible userBalances internally,
+      // so we only need to update the wallet's base token balance
       if (result && result.baseAmount) {
         addToBalance(baseTokenSymbol, result.baseAmount)
         
@@ -152,6 +150,7 @@ export default function CTokenWithdrawModal({
         alert(`✅ Position closed successfully!\n\nReceived: ${result.baseAmount.toFixed(4)} ${baseTokenSymbol}${apyMessage}`)
       } else {
         // Fallback calculation if result is null
+        const ctokenAmount = parseFloat(amount)
         const baseAmountBeforeFee = ctokenAmount * exchangeRate
         const feeAmount = baseAmountBeforeFee * 0.015
         const netAmount = baseAmountBeforeFee - feeAmount

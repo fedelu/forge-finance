@@ -135,9 +135,9 @@ export const FogoWithdrawModal: React.FC<FogoWithdrawModalProps> = ({ isOpen, on
         const mockSignature = 'sim_unwrap_pfogo_' + Math.random().toString(36).substr(2, 9);
         console.log('cFOGO unwrap successful:', mockSignature);
 
-        // Update local state - subtract cTokens and add FOGO received from unwrapping
-        const targetPTokenSymbol = crucible?.ptokenSymbol === 'cFORGE' ? 'cFORGE' : 'cFOGO';
-        subtractFromBalance(targetPTokenSymbol, withdrawAmount);
+        // Update local state - add FOGO received from unwrapping
+        // Note: unwrapTokens already updates Crucible userBalances internally,
+        // so we only need to update the wallet's FOGO balance
         addToBalance('FOGO', fogoToReceive);
 
         // Record transaction

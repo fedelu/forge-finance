@@ -345,7 +345,7 @@ export const CrucibleProvider: React.FC<CrucibleProviderProps> = ({ children }) 
       // Total amount to return = net amount (after fee) + APY earnings
       const totalAmountToReturn = netAmount + apyEarnedTokens
       
-      // Update user balances - kill pTokens and return base tokens
+      // Update user balances - subtract pTokens that were unwrapped and return base tokens
       setUserBalances(prev => {
         const current = prev[crucibleId] || {
           ptokenBalance: BigInt(0),
@@ -355,14 +355,29 @@ export const CrucibleProvider: React.FC<CrucibleProviderProps> = ({ children }) 
           depositTimestamp: undefined
         };
         
+        // Calculate new ptoken balance after unwrap
+        const newPTokenBalance = current.ptokenBalance > ptokenAmount 
+          ? current.ptokenBalance - ptokenAmount 
+          : BigInt(0);
+        
+        // Calculate proportional baseDeposited and estimatedBaseValue to subtract
+        const ptokenBalanceNumber = Number(current.ptokenBalance) || 1
+        const proportionUnwrapped = Number(ptokenAmount) / ptokenBalanceNumber
+        const newBaseDeposited = current.ptokenBalance > ptokenAmount 
+          ? current.baseDeposited * (1 - proportionUnwrapped)
+          : 0
+        const newEstimatedBaseValue = current.ptokenBalance > ptokenAmount
+          ? BigInt(Math.floor(Number(current.estimatedBaseValue) * (1 - proportionUnwrapped)))
+          : BigInt(0)
+        
         return {
           ...prev,
           [crucibleId]: {
-            ptokenBalance: BigInt(0), // Kill all pTokens
-            baseDeposited: 0, // Reset deposited amount
-            estimatedBaseValue: BigInt(0), // Reset estimated value
+            ptokenBalance: newPTokenBalance, // Subtract unwrapped amount
+            baseDeposited: newBaseDeposited, // Proportional base deposited
+            estimatedBaseValue: newEstimatedBaseValue, // Proportional estimated value
             apyEarnedUSD: current.apyEarnedUSD + (apyEarnedTokens * (crucible.baseToken === 'FOGO' ? 0.5 : 0.002)), // Track APY earnings in USD
-            depositTimestamp: undefined // Clear timestamp to restart exchange rate growth on next deposit
+            depositTimestamp: newPTokenBalance > 0 ? current.depositTimestamp : undefined // Keep timestamp if position still open
           }
         };
       });
