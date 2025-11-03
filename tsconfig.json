@@ -1,4 +1,13 @@
 {
+  "exclude": [
+    "node_modules",
+    ".next",
+    "out",
+    "scripts/**/*",
+    "migrations/**/*",
+    "tools/**/*",
+    "target/**/*"
+  ],
   "compilerOptions": {
     "lib": [
       "dom",
