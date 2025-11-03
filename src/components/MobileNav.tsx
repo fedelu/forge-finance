@@ -20,6 +20,7 @@ export default function MobileNav({ activeTab, onTabChange }: MobileNavProps) {
 
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: HomeIcon },
+    { id: 'lending', label: 'Lending', icon: BanknotesIcon },
     { id: 'crucibles', label: 'Crucibles', icon: BanknotesIcon },
     { id: 'governance', label: 'Governance', icon: UserGroupIcon },
     { id: 'analytics', label: 'Analytics', icon: ChartBarIcon },

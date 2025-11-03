@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
+import dynamic from 'next/dynamic'
 
-export default function Home() {
+function Home() {
   const router = useRouter()
   const [isRedirecting, setIsRedirecting] = useState(true)
 
@@ -27,3 +28,4 @@ export default function Home() {
 
   return null
 }
+export default dynamic(() => Promise.resolve(Home), { ssr: false })

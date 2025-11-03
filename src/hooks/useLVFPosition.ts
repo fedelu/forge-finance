@@ -1,0 +1,765 @@
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { PublicKey } from '@solana/web3.js'
+import { useWallet } from '../contexts/WalletContext'
+import { useSession } from '../components/FogoSessions'
+import { useCrucible as useCrucibleContext } from '../contexts/CrucibleContext'
+import { useCrucible } from '../hooks/useCrucible'
+import { useBalance } from '../contexts/BalanceContext'
+import { RATE_SCALE } from '../utils/math'
+
+interface LeveragedPosition {
+  id: string
+  owner: string
+  token: string // 'FOGO' or 'FORGE'
+  collateral: number // Base token amount
+  borrowedUSDC: number
+  depositUSDC?: number // USDC deposited (for 1.5x leverage)
+  leverageFactor: number // 1.5 or 2.0
+  entryPrice: number
+  currentValue: number // USD
+  yieldEarned: number
+  timestamp?: number // When position was opened (for interest calculation)
+  isOpen: boolean
+  health: number // Health factor (collateral_value / borrowed_value * 100)
+}
+
+interface UseLVFPositionProps {
+  crucibleAddress: string
+  baseTokenSymbol: 'FOGO' | 'FORGE'
+}
+
+export function useLVFPosition({ crucibleAddress, baseTokenSymbol }: UseLVFPositionProps) {
+  // Check wallet connection - try Fogo Sessions first (main wallet system)
+  let walletContext: any = null
+  let sessionContext: any = null
+  
+  // Try Fogo Sessions first (this is the main wallet system in the app)
+  try {
+    sessionContext = useSession()
+  } catch (e) {
+    // Fogo Sessions not available
+  }
+  
+  // Try WalletContext as fallback
+  try {
+    walletContext = useWallet()
+  } catch (e) {
+    // WalletContext not available
+  }
+  
+  // Try to get CrucibleContext for TVL updates (legacy context)
+  let crucibleContext: any = null
+  try {
+    crucibleContext = useCrucibleContext()
+  } catch (e) {
+    // CrucibleContext not available (might not be in provider) - this is expected in some contexts
+    // Don't log warning as it's not an error, just a missing provider
+    crucibleContext = null
+  }
+  
+  // Also try to get useCrucible hook (main crucible system)
+  // Note: This hook call must be unconditional (React rules)
+  // If the provider is not available, React will throw an error but we handle it gracefully
+  // by checking if crucibleHook is null before using it
+  let crucibleHook: any = null
+  try {
+    crucibleHook = useCrucible()
+  } catch (e: any) {
+    // React hooks throw errors that can't be caught with try-catch
+    // The error will be logged to console by React itself, but functionality will continue
+    // We check for null before using crucibleHook, so it's safe
+    crucibleHook = null
+  }
+  
+  // Get balance context to subtract LP tokens when closing positions
+  // Note: Must be called unconditionally per React rules
+  let balanceContext: any = null
+  try {
+    balanceContext = useBalance()
+  } catch (e: any) {
+    // BalanceContext might not be available - this is fine, we can still work without it
+    // React will log the error if hook is called outside provider
+    balanceContext = null
+  }
+
+  // Determine which wallet context to use
+  // Prioritize Fogo Sessions, fallback to WalletContext
+  let publicKey: PublicKey | null = null
+  
+  if (sessionContext?.walletPublicKey) {
+    if (sessionContext.walletPublicKey instanceof PublicKey) {
+      publicKey = sessionContext.walletPublicKey
+    } else if (typeof sessionContext.walletPublicKey === 'string') {
+      try {
+        publicKey = new PublicKey(sessionContext.walletPublicKey)
+      } catch (e) {
+        console.warn('Invalid public key from Fogo Sessions:', e)
+      }
+    }
+  } else if (walletContext?.publicKey) {
+    publicKey = walletContext.publicKey
+  }
+  
+  const sendTransaction: ((tx: any) => Promise<string>) | undefined = 
+    walletContext?.sendTransaction || sessionContext?.sendTransaction
+  const connection: any = walletContext?.connection || null
+
+  const [positions, setPositions] = useState<LeveragedPosition[]>([])
+  const [loading, setLoading] = useState(false)
+  
+  // Use ref to store latest fetchPositions callback
+  const fetchPositionsRef = useRef<(() => Promise<void>) | null>(null)
+
+  // Fetch all leveraged positions for this crucible
+  const fetchPositions = useCallback(async () => {
+    // Try to get current publicKey from all possible sources
+    let currentPublicKey: PublicKey | null = publicKey
+    
+    // Prioritize sessionContext FIRST (most reliable)
+    if (sessionContext?.walletPublicKey) {
+      try {
+        if (sessionContext.walletPublicKey instanceof PublicKey) {
+          currentPublicKey = sessionContext.walletPublicKey
+        } else if (typeof sessionContext.walletPublicKey === 'string') {
+          currentPublicKey = new PublicKey(sessionContext.walletPublicKey)
+        } else if (typeof sessionContext.walletPublicKey === 'object' && sessionContext.walletPublicKey !== null) {
+          if ('_bn' in sessionContext.walletPublicKey || 'toBase58' in sessionContext.walletPublicKey || 'toString' in sessionContext.walletPublicKey) {
+            const pkString = sessionContext.walletPublicKey.toString ? sessionContext.walletPublicKey.toString() : 
+                            sessionContext.walletPublicKey.toBase58 ? sessionContext.walletPublicKey.toBase58() : 
+                            String(sessionContext.walletPublicKey)
+            currentPublicKey = new PublicKey(pkString)
+          }
+        }
+      } catch (e) {
+        console.warn('Error parsing session wallet public key (fetchPositions):', e)
+      }
+    }
+    
+    // Fallback to wallet context
+    if (!currentPublicKey && walletContext?.publicKey) {
+      currentPublicKey = walletContext.publicKey
+    }
+    
+    if (!currentPublicKey || !crucibleAddress) {
+      console.log('⚠️ Cannot fetch positions - missing publicKey or crucibleAddress')
+      setPositions([])
+      return
+    }
+
+    try {
+      setLoading(true)
+      // TODO: In production, fetch from on-chain
+      // For now, fetch from localStorage (mock)
+      try {
+        const storedPositions = JSON.parse(localStorage.getItem('leveraged_positions') || '[]')
+        console.log('📊 All stored leveraged positions:', storedPositions.length)
+        
+        // Get all possible wallet address formats
+        const walletAddresses = [
+          currentPublicKey.toBase58(),
+          currentPublicKey.toString(),
+          publicKey?.toBase58(),
+          publicKey?.toString(),
+        ].filter(Boolean) as string[]
+        
+        console.log('🔍 Looking for positions with:', {
+          walletAddresses,
+          token: baseTokenSymbol
+        })
+        
+        // Filter positions for this crucible and wallet
+        // Check all owner formats to handle different wallet address formats
+        const userPositions = storedPositions.filter((p: LeveragedPosition) => {
+          const ownerMatch = walletAddresses.some(addr => p.owner === addr || p.owner?.toLowerCase() === addr?.toLowerCase())
+          const tokenMatch = p.token === baseTokenSymbol
+          const isOpen = p.isOpen === true // Strict check
+          
+          const matches = ownerMatch && tokenMatch && isOpen
+          
+          if (matches) {
+            console.log('✅ Found matching position:', {
+              id: p.id,
+              owner: p.owner,
+              token: p.token,
+              isOpen
+            })
+          }
+          
+          return matches
+        })
+        
+        console.log('✅ Found', userPositions.length, 'matching positions for', baseTokenSymbol)
+        setPositions(userPositions)
+      } catch (e) {
+        console.warn('Failed to load positions from storage:', e)
+        setPositions([])
+      }
+    } catch (error) {
+      console.error('Error fetching LVF positions:', error)
+      setPositions([])
+    } finally {
+      setLoading(false)
+    }
+  }, [publicKey, sessionContext, walletContext, crucibleAddress, baseTokenSymbol])
+
+  // Open a leveraged position
+  const openPosition = useCallback(
+    async (collateralAmount: number, leverageFactor: number) => {
+      console.log('🚀 openPosition called with:', { collateralAmount, leverageFactor, crucibleAddress, baseTokenSymbol })
+      
+      // Use the publicKey from the hook level (already extracted from contexts)
+      // Prioritize sessionContext FIRST (most reliable)
+      let currentPublicKey: PublicKey | null = null
+      
+      // FIRST PRIORITY: Check session context - it's the main wallet system
+      if (sessionContext?.walletPublicKey) {
+        try {
+          if (sessionContext.walletPublicKey instanceof PublicKey) {
+            currentPublicKey = sessionContext.walletPublicKey
+            console.log('✅ Using walletPublicKey from sessionContext (LVF):', currentPublicKey.toString())
+          } else if (typeof sessionContext.walletPublicKey === 'string') {
+            currentPublicKey = new PublicKey(sessionContext.walletPublicKey)
+            console.log('✅ Converted walletPublicKey string from sessionContext (LVF):', currentPublicKey.toString())
+          } else if (typeof sessionContext.walletPublicKey === 'object' && sessionContext.walletPublicKey !== null) {
+            // Handle serialized PublicKey object (e.g., {_bn: ...})
+            if ('_bn' in sessionContext.walletPublicKey || 'toBase58' in sessionContext.walletPublicKey || 'toString' in sessionContext.walletPublicKey) {
+              const pkString = sessionContext.walletPublicKey.toString ? sessionContext.walletPublicKey.toString() : 
+                              sessionContext.walletPublicKey.toBase58 ? sessionContext.walletPublicKey.toBase58() : 
+                              String(sessionContext.walletPublicKey)
+              currentPublicKey = new PublicKey(pkString)
+              console.log('✅ Converted walletPublicKey object from sessionContext (LVF):', currentPublicKey.toString())
+            }
+          }
+        } catch (e) {
+          console.warn('Error parsing session wallet public key (LVF):', e, sessionContext.walletPublicKey)
+        }
+      }
+      
+      // SECOND PRIORITY: Fallback to hook-level publicKey
+      if (!currentPublicKey && publicKey) {
+        currentPublicKey = publicKey
+        console.log('✅ Using hook-level publicKey (LVF):', currentPublicKey.toString())
+      }
+      
+      // THIRD PRIORITY: Fallback to wallet context
+      if (!currentPublicKey && walletContext?.publicKey) {
+        currentPublicKey = walletContext.publicKey
+        console.log('✅ Using walletContext publicKey (LVF):', currentPublicKey.toString())
+      }
+      
+      if (!currentPublicKey) {
+        const debugInfo = {
+          hookPublicKey: publicKey?.toString?.() || publicKey || 'null',
+          sessionContextExists: !!sessionContext,
+          sessionWalletPublicKey: sessionContext?.walletPublicKey?.toString?.() || sessionContext?.walletPublicKey || 'undefined',
+          sessionWalletPublicKeyType: typeof sessionContext?.walletPublicKey,
+          walletContextExists: !!walletContext,
+          walletContextPublicKey: walletContext?.publicKey?.toString?.() || walletContext?.publicKey || 'undefined'
+        }
+        console.error('❌ Wallet connection check failed (LVF):', debugInfo)
+        throw new Error('Wallet not connected. Please connect your wallet first.')
+      }
+      
+      console.log('✅ Wallet connection verified (LVF):', currentPublicKey.toString())
+      console.log('📋 Crucible info check:', { crucibleAddress, baseTokenSymbol, hasCrucible: !!crucibleAddress })
+      
+      if (!crucibleAddress) {
+        console.error('❌ Crucible information missing!')
+        throw new Error('Crucible information missing')
+      }
+
+      if (leverageFactor < 1.5 || leverageFactor > 2.0) {
+        throw new Error('Leverage must be between 1.5x and 2x')
+      }
+
+      setLoading(true)
+      try {
+        // Calculate 1.5% protocol fee first
+        const protocolFeePercent = 0.015 // 1.5%
+        const protocolFee = collateralAmount * protocolFeePercent
+        const collateralAfterFee = collateralAmount - protocolFee
+        
+        // Calculate borrowed USDC and deposited USDC based on ORIGINAL collateral value (before fee)
+        // This matches the calculation in CTokenDepositModal
+        const baseTokenPrice = baseTokenSymbol === 'FOGO' ? 0.5 : 0.002
+        const originalCollateralValue = collateralAmount * baseTokenPrice // Use original amount, not after fee
+        const borrowedUSDC = originalCollateralValue * (leverageFactor - 1)
+        
+        // Calculate deposited USDC based on leverage factor (using original collateral value)
+        // For 1.5x: depositUSDC = 0.5 * originalCollateralValue (equal to borrowed)
+        // For 2x: depositUSDC = 0 (only borrowed)
+        let depositUSDC = 0
+        if (leverageFactor === 1.5) {
+          depositUSDC = originalCollateralValue * 0.5 // 50% deposited, 50% borrowed
+        } else if (leverageFactor === 2.0) {
+          depositUSDC = 0 // 100% borrowed, 0% deposited
+        }
+
+        // TODO: In production, create and send open_leveraged_position instruction
+        // const transaction = new Transaction()
+        // transaction.add(openLeveragedPositionInstruction(...))
+        // const signature = await sendTransaction(transaction, connection)
+        // await connection.confirmTransaction(signature)
+
+        // For now, simulate
+        console.log('⏳ Simulating transaction (1.5s)...')
+        await new Promise((resolve) => setTimeout(resolve, 1500))
+        console.log('✅ Simulation complete, creating position object...')
+
+        // Add to positions
+        const positionTimestamp = Date.now()
+        const newPosition: LeveragedPosition = {
+          id: `lvf_${positionTimestamp}_${Math.random().toString(36).substr(2, 9)}`,
+          owner: currentPublicKey.toBase58(),
+          token: baseTokenSymbol,
+          collateral: collateralAfterFee, // Use collateral after fee
+          borrowedUSDC,
+          depositUSDC, // Store deposited USDC
+          leverageFactor,
+          entryPrice: baseTokenPrice,
+          currentValue: (collateralAfterFee * baseTokenPrice) * leverageFactor,
+          yieldEarned: 0,
+          timestamp: positionTimestamp, // Store timestamp for interest calculation
+          isOpen: true,
+          health: 200, // 2.0 = safe
+        }
+
+        console.log('📦 Creating position object:', newPosition)
+        
+        // Store to localStorage FIRST (synchronously, before state update)
+        // This ensures FogoSessions can read it when events fire
+        try {
+          const allStoredPositions = JSON.parse(localStorage.getItem('leveraged_positions') || '[]')
+          const existingIndex = allStoredPositions.findIndex((p: LeveragedPosition) => p.id === newPosition.id)
+          if (existingIndex >= 0) {
+            allStoredPositions[existingIndex] = newPosition
+          } else {
+            allStoredPositions.push(newPosition)
+          }
+          localStorage.setItem('leveraged_positions', JSON.stringify(allStoredPositions))
+          console.log('✅ Stored leveraged position to localStorage:', newPosition.id, 'Total stored:', allStoredPositions.length)
+        } catch (e) {
+          console.error('❌ Failed to store position to localStorage:', e)
+          throw e // Don't continue if we can't save
+        }
+        
+        // Update crucible TVL with deposit + borrow amount
+        // TVL should increase by: collateral value + borrowed USDC value
+        // baseTokenPrice is already defined above, reuse it
+        const collateralValueUSD = collateralAfterFee * baseTokenPrice
+        const totalTVLIncreaseUSD = collateralValueUSD + borrowedUSDC
+        
+        console.log('📊 Updating crucible TVL:', {
+          crucibleAddress,
+          collateralValueUSD,
+          borrowedUSDC,
+          totalTVLIncreaseUSD,
+          hasCrucibleContext: !!crucibleContext,
+          hasCrucibleHook: !!crucibleHook
+        })
+        
+        // Update via useCrucible hook (main system used by CrucibleManager)
+        if (crucibleHook?.updateCrucibleTVL) {
+          crucibleHook.updateCrucibleTVL(crucibleAddress, totalTVLIncreaseUSD)
+          console.log('📊 Updated crucible TVL via hook:', crucibleAddress, 'added:', totalTVLIncreaseUSD)
+        }
+        
+        // Also try CrucibleContext (legacy)
+        if (crucibleContext?.updateCrucibleTVL) {
+          crucibleContext.updateCrucibleTVL(crucibleAddress, totalTVLIncreaseUSD)
+        }
+        
+        // Update React state SECOND (like wrapTokens does with userBalances)
+        // This makes the position immediately visible in the portfolio
+        setPositions((prev) => {
+          console.log('🔄 setPositions callback called, prev positions:', prev.length, prev.map(p => p.id))
+          // Check if position already exists (avoid duplicates)
+          if (prev.find(p => p.id === newPosition.id)) {
+            console.log('⚠️ Position already in state:', newPosition.id)
+            return prev
+          }
+          const updated = [...prev, newPosition]
+          console.log('✅ Added position to state immediately:', newPosition.id, 'Total positions:', updated.length)
+          return updated
+        })
+        
+        // IMMEDIATELY dispatch events to trigger wallet and portfolio updates
+        // The portfolio will see the updated state automatically (like wrapTokens)
+        window.dispatchEvent(new CustomEvent('lvfPositionOpened', { 
+          detail: { 
+            positionId: newPosition.id,
+            crucibleAddress, 
+            baseTokenSymbol,
+            leverage: leverageFactor
+          } 
+        }))
+        
+        // Force a custom event that FogoSessions will catch
+        window.dispatchEvent(new CustomEvent('forceRecalculateLP', {}))
+        
+        // Refetch positions immediately to ensure portfolio sees it
+        // Force immediate refetch after state update (multiple attempts to ensure it works)
+        setTimeout(() => {
+          console.log('🔄 Refetching positions after opening (50ms)...')
+          fetchPositions()
+        }, 50)
+        
+        setTimeout(() => {
+          console.log('🔄 Refetching positions after opening (200ms)...')
+          fetchPositions()
+        }, 200)
+        
+        console.log('📢 Dispatched events for position:', newPosition.id)
+        
+        return newPosition
+      } catch (error: any) {
+        console.error('Error opening position:', error)
+        throw error
+      } finally {
+        setLoading(false)
+      }
+    },
+    [publicKey, sessionContext, walletContext, crucibleContext, crucibleHook, crucibleAddress, baseTokenSymbol, sendTransaction, connection, fetchPositions]
+  )
+
+  // Close a leveraged position
+  const closePosition = useCallback(
+    async (positionId: string) => {
+      // Check wallet connection - same logic as openPosition
+      let currentPublicKey: PublicKey | null = null
+      
+      // FIRST PRIORITY: Check session context - it's the main wallet system
+      if (sessionContext?.walletPublicKey) {
+        try {
+          if (sessionContext.walletPublicKey instanceof PublicKey) {
+            currentPublicKey = sessionContext.walletPublicKey
+            console.log('✅ Using walletPublicKey from sessionContext (close LVF):', currentPublicKey.toString())
+          } else if (typeof sessionContext.walletPublicKey === 'string') {
+            currentPublicKey = new PublicKey(sessionContext.walletPublicKey)
+            console.log('✅ Converted walletPublicKey string from sessionContext (close LVF):', currentPublicKey.toString())
+          } else if (typeof sessionContext.walletPublicKey === 'object' && sessionContext.walletPublicKey !== null) {
+            // Handle serialized PublicKey object (e.g., {_bn: ...})
+            if ('_bn' in sessionContext.walletPublicKey || 'toBase58' in sessionContext.walletPublicKey || 'toString' in sessionContext.walletPublicKey) {
+              const pkString = sessionContext.walletPublicKey.toString ? sessionContext.walletPublicKey.toString() : 
+                              sessionContext.walletPublicKey.toBase58 ? sessionContext.walletPublicKey.toBase58() : 
+                              String(sessionContext.walletPublicKey)
+              currentPublicKey = new PublicKey(pkString)
+              console.log('✅ Converted walletPublicKey object from sessionContext (close LVF):', currentPublicKey.toString())
+            }
+          }
+        } catch (e) {
+          console.warn('Error parsing session wallet public key (close LVF):', e, sessionContext.walletPublicKey)
+        }
+      }
+      
+      // Fallback to hook-level publicKey
+      if (!currentPublicKey && publicKey) {
+        currentPublicKey = publicKey
+        console.log('✅ Using publicKey from hook level (close LVF):', currentPublicKey.toString())
+      }
+      
+      // Fallback to wallet context
+      if (!currentPublicKey && walletContext?.publicKey) {
+        currentPublicKey = walletContext.publicKey
+        console.log('✅ Using publicKey from walletContext (close LVF):', currentPublicKey.toString())
+      }
+      
+      if (!currentPublicKey) {
+        // Log debug info before throwing
+        console.error('❌ Wallet not connected (close LVF). Debug info:', {
+          sessionContextExists: !!sessionContext,
+          sessionWalletPublicKey: sessionContext?.walletPublicKey,
+          sessionWalletPublicKeyType: typeof sessionContext?.walletPublicKey,
+          hookPublicKey: publicKey?.toString?.() || publicKey || 'null',
+          walletContextExists: !!walletContext,
+          walletContextPublicKey: walletContext?.publicKey?.toString?.() || walletContext?.publicKey || 'undefined'
+        })
+        throw new Error('Wallet not connected. Please connect your wallet first.')
+      }
+      
+      console.log('✅ Wallet connection verified (close LVF):', currentPublicKey.toBase58())
+
+      setLoading(true)
+      try {
+        // Try to find position in state first
+        let position = positions.find((p) => p.id === positionId && p.isOpen)
+        
+        // If not found in state, try loading from localStorage
+        if (!position) {
+          console.log('⚠️ Position not found in state, loading from localStorage...')
+          try {
+            const allStoredPositions = JSON.parse(localStorage.getItem('leveraged_positions') || '[]')
+            const storedPosition = allStoredPositions.find((p: LeveragedPosition) => 
+              p.id === positionId && 
+              p.isOpen && 
+              (p.owner === currentPublicKey.toBase58() || p.owner === currentPublicKey.toString())
+            )
+            if (storedPosition) {
+              position = storedPosition
+              console.log('✅ Found position in localStorage:', position.id)
+            }
+          } catch (e) {
+            console.warn('Failed to load position from localStorage:', e)
+          }
+        }
+        
+        if (!position || !position.isOpen) {
+          throw new Error('Position not found or already closed')
+        }
+
+        // Calculate base tokens to return (collateral value + APY earnings)
+        const baseTokenPriceForClose = baseTokenSymbol === 'FOGO' ? 0.5 : 0.002
+        const collateralValueUSDForClose = position.collateral * baseTokenPriceForClose
+        
+        // Calculate APY earnings based on EXCHANGE RATE ratio (correlated with borrowing interest)
+        // APY = ((exchange rate at sell / exchange rate at buy) - 1) * 100
+        const initialExchangeRate = 1.045 // Exchange rate at buy (when position was opened)
+        
+        // Calculate DYNAMIC exchange rate based on time elapsed since position was opened
+        // Use position timestamp to calculate actual exchange rate growth
+        const positionTimestamp = position.timestamp || Date.now()
+        const timeElapsedMs = Date.now() - positionTimestamp
+        const timeElapsedMinutes = Math.max(0, timeElapsedMs / (1000 * 60))
+        const timeElapsedMonths = timeElapsedMinutes // 1 minute = 1 month (for demo)
+        const yearsElapsed = timeElapsedMonths / 12
+        
+        // Get crucible APR for dynamic rate calculation
+        const crucibleData = crucibleHook?.getCrucible(crucibleAddress)
+        const crucibleAPR = crucibleData?.apr || 0.05 // Use crucible APR (e.g., 18% = 0.18)
+        
+        // Calculate accumulated exchange rate: initialRate * (1 + APR)^(years)
+        // This gives us the DYNAMIC exchange rate that grows over time
+        const currentExchangeRateDecimal = initialExchangeRate * Math.pow(1 + crucibleAPR, yearsElapsed)
+        
+        // Calculate APY percentage: ((exchange rate at sell / exchange rate at buy) - 1) * 100
+        const apyPercentage = ((currentExchangeRateDecimal / initialExchangeRate) - 1) * 100
+        
+        // Calculate exchange rate growth
+        const exchangeRateGrowth = currentExchangeRateDecimal - initialExchangeRate
+        const collateralValueAtCurrentRate = position.collateral * currentExchangeRateDecimal
+        const apyEarnedTokens = position.collateral * (exchangeRateGrowth / currentExchangeRateDecimal)
+        
+        // Total collateral value including APY earnings
+        const totalCollateralValueUSD = collateralValueAtCurrentRate * baseTokenPriceForClose
+        
+        // Calculate 1.5% protocol fee on withdrawal (applied to total value including APY)
+        const withdrawalFeePercent = 0.015 // 1.5%
+        const withdrawalFeeUSD = totalCollateralValueUSD * withdrawalFeePercent
+        const amountAfterFeeUSD = totalCollateralValueUSD - withdrawalFeeUSD
+        const baseAmountAfterFee = amountAfterFeeUSD / baseTokenPriceForClose
+
+        // Calculate borrowing interest (if any borrowed USDC)
+        // Borrowing interest rate = APY% × 5%
+        // borrowingInterest = borrowedUSDC × (APY% × 5% / 100)
+        let borrowingInterest = 0
+        let totalOwedUSDC = position.borrowedUSDC || 0
+        let borrowingInterestRatePercent = 0
+        
+        if (position.borrowedUSDC > 0) {
+          // Calculate borrowing interest rate: APY% × 5%
+          borrowingInterestRatePercent = apyPercentage * 0.05 // e.g., if APY is 2%, rate is 0.1%
+          
+          // Calculate borrowing interest: borrowedUSDC × (APY% × 5% / 100)
+          // This is the same as: borrowedUSDC × (borrowingInterestRatePercent / 100)
+          borrowingInterest = position.borrowedUSDC * (borrowingInterestRatePercent / 100)
+          totalOwedUSDC = position.borrowedUSDC + borrowingInterest
+        }
+
+        // Calculate deposited USDC (what user actually deposited, not borrowed)
+        const depositedUSDC = position.depositUSDC || 0
+        
+        // Net USDC returned = deposited USDC minus borrowing interest (if any)
+        // Note: If there's no deposited USDC (2x leverage), user only gets tokens back
+        // Borrowed USDC + interest is repaid from the position value
+        const netUSDCReturned = Math.max(0, depositedUSDC - borrowingInterest)
+
+        // Repay borrowed USDC + interest (this goes back to the lending pool)
+        // In production, this would be done via lending pool contract
+        if (totalOwedUSDC > 0) {
+          // TODO: In production, repay USDC to lending pool
+          // lendingPool.repay(totalOwedUSDC)
+          console.log('💰 Repaying borrowed USDC:', position.borrowedUSDC, '+ interest:', borrowingInterest, '= total:', totalOwedUSDC)
+        }
+
+        // TODO: In production, create and send close_leveraged_position instruction
+        // const transaction = new Transaction()
+        // transaction.add(closeLeveragedPositionInstruction(...))
+        // const signature = await sendTransaction(transaction, connection)
+        // await connection.confirmTransaction(signature)
+
+        // For now, simulate
+        await new Promise((resolve) => setTimeout(resolve, 1500))
+
+        // Update crucible TVL when closing position (decrease by deposit + borrow)
+        // Reuse baseTokenPriceForClose and collateralValueUSDForClose from above
+        const totalTVLDecreaseUSD = collateralValueUSDForClose + position.borrowedUSDC
+        
+        // Update via useCrucible hook (main system)
+        if (crucibleHook?.updateCrucibleTVL) {
+          crucibleHook.updateCrucibleTVL(crucibleAddress, -totalTVLDecreaseUSD)
+          console.log('📊 Updated crucible TVL (decreased) via hook:', crucibleAddress, 'decreased:', totalTVLDecreaseUSD)
+        }
+        
+        // Also try CrucibleContext (legacy)
+        if (crucibleContext?.updateCrucibleTVL) {
+          crucibleContext.updateCrucibleTVL(crucibleAddress, -totalTVLDecreaseUSD)
+        }
+        
+        // Remove position
+        setPositions((prev) => {
+          const updated = prev.filter((p) => p.id !== positionId)
+          // Update localStorage for ALL positions (from all crucibles)
+          try {
+            const allStoredPositions = JSON.parse(localStorage.getItem('leveraged_positions') || '[]')
+            const filteredAll = allStoredPositions.filter((p: LeveragedPosition) => p.id !== positionId)
+            localStorage.setItem('leveraged_positions', JSON.stringify(filteredAll))
+            console.log('✅ Removed leveraged position:', positionId)
+          } catch (e) {
+            console.warn('Failed to update positions:', e)
+          }
+          return updated
+        })
+        
+        // Refetch positions immediately to update portfolio
+        setTimeout(() => {
+          console.log('🔄 Refetching positions after closing...')
+          fetchPositions()
+        }, 100)
+
+        // Subtract LP tokens from wallet balance
+        // Calculate LP token value: collateral value + total USDC (deposit + borrow)
+        const lpTokenSymbol = baseTokenSymbol === 'FOGO' ? 'cFOGO/USDC LP' : 'cFORGE/USDC LP'
+        const depositedUSDCForLP = position.depositUSDC || 0
+        const borrowedUSDCForLP = position.borrowedUSDC || 0
+        const totalUSDCForLP = depositedUSDCForLP + borrowedUSDCForLP
+        const lpTokenValue = collateralValueUSDForClose + totalUSDCForLP
+        
+        // Subtract LP tokens from balance
+        if (balanceContext?.subtractFromBalance) {
+          balanceContext.subtractFromBalance(lpTokenSymbol, lpTokenValue)
+          console.log('💰 Subtracted LP tokens from wallet:', lpTokenSymbol, lpTokenValue)
+        }
+        
+        // Dispatch event to refresh portfolio and wallet balances
+        window.dispatchEvent(new CustomEvent('lvfPositionClosed', { 
+          detail: { 
+            positionId, 
+            crucibleAddress, 
+            baseTokenSymbol,
+            baseAmount: baseAmountAfterFee,
+            usdcAmount: netUSDCReturned,
+            repaidUSDC: totalOwedUSDC,
+            borrowingInterest: borrowingInterest
+          } 
+        }))
+
+        return { 
+          success: true,
+          baseAmount: baseAmountAfterFee, // Tokens with APY minus transaction fee
+          apyEarned: apyEarnedTokens, // APY earnings in base tokens
+          usdcAmount: netUSDCReturned, // Deposited USDC minus borrowing interest (if any)
+          fee: (totalCollateralValueUSD * withdrawalFeePercent) / baseTokenPriceForClose,
+          feePercent: withdrawalFeePercent * 100,
+          repaidUSDC: totalOwedUSDC, // Total borrowed USDC + interest that was repaid
+          borrowingInterest: borrowingInterest // Interest paid on borrowed USDC
+        }
+      } catch (error: any) {
+        console.error('Error closing position:', error)
+        throw error
+      } finally {
+        setLoading(false)
+      }
+    },
+    [publicKey, sessionContext, walletContext, positions, crucibleContext, crucibleHook, crucibleAddress, baseTokenSymbol, sendTransaction, connection, fetchPositions]
+  )
+
+  // Calculate health factor
+  const calculateHealth = useCallback(
+    (collateral: number, borrowed: number): number => {
+      if (borrowed === 0) return 999 // No borrow = safe
+      const baseTokenPrice = baseTokenSymbol === 'FOGO' ? 0.5 : 0.002
+      const collateralValue = collateral * baseTokenPrice
+      const health = (collateralValue / borrowed) * 100
+      return health
+    },
+    [baseTokenSymbol]
+  )
+
+  // Calculate effective APY with leverage
+  // Leveraged positions have 3x the APY of normal positions
+  const calculateEffectiveAPY = useCallback(
+    (baseAPY: number, leverageFactor: number): number => {
+      const borrowRate = 5 // 5% APR
+      // Leveraged positions earn 3x the base APY
+      const leveragedYield = baseAPY * 3 * leverageFactor
+      const borrowCost = borrowRate * (leverageFactor - 1)
+      return leveragedYield - borrowCost
+    },
+    []
+  )
+
+  // Store latest fetchPositions in ref
+  useEffect(() => {
+    fetchPositionsRef.current = fetchPositions
+  }, [fetchPositions])
+
+  useEffect(() => {
+    if (!publicKey || !crucibleAddress) {
+      setPositions([]) // Clear positions if no wallet/crucible
+      return
+    }
+    
+    // Initial fetch - use current ref value if available
+    const currentFetch = fetchPositionsRef.current || fetchPositions
+    currentFetch()
+    
+    // Listen for position opened/closed events to refetch immediately
+    const handlePositionOpened = (event: CustomEvent) => {
+      const detail = event.detail
+      // Only refetch if the event is for this crucible/token
+      if (detail?.crucibleAddress === crucibleAddress && detail?.baseTokenSymbol === baseTokenSymbol) {
+        console.log('🔄 Position opened event received, refetching positions...', detail)
+        setTimeout(() => {
+          fetchPositionsRef.current?.()
+        }, 100)
+      }
+    }
+    
+    const handlePositionClosed = (event: CustomEvent) => {
+      const detail = event.detail
+      // Only refetch if the event is for this crucible/token
+      if (detail?.crucibleAddress === crucibleAddress && detail?.baseTokenSymbol === baseTokenSymbol) {
+        console.log('🔄 Position closed event received, refetching positions...', detail)
+        setTimeout(() => {
+          fetchPositionsRef.current?.()
+        }, 100)
+      }
+    }
+    
+    window.addEventListener('lvfPositionOpened', handlePositionOpened as EventListener)
+    window.addEventListener('lvfPositionClosed', handlePositionClosed as EventListener)
+    
+    // Only refresh periodically, don't refetch on every render
+    const interval = setInterval(() => {
+      fetchPositionsRef.current?.()
+    }, 30000) // Refresh every 30s
+    
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('lvfPositionOpened', handlePositionOpened as EventListener)
+      window.removeEventListener('lvfPositionClosed', handlePositionClosed as EventListener)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [publicKey?.toBase58(), crucibleAddress, baseTokenSymbol])
+
+  return {
+    positions,
+    loading,
+    openPosition,
+    closePosition,
+    calculateHealth,
+    calculateEffectiveAPY,
+    refetch: fetchPositions,
+  }
+}
+

@@ -188,13 +188,12 @@ export const FogoWithdrawModal: React.FC<FogoWithdrawModalProps> = ({ isOpen, on
             <div className="text-xs text-purple-200 space-y-1">
               <div>• Unwrap your {crucible?.ptokenSymbol} tokens to receive {crucible?.baseToken} + yield</div>
               <div>• {crucible?.baseToken} price: <span className="text-white font-semibold">${crucible?.baseToken === 'FOGO' ? '0.50' : '0.002'} USD</span></div>
-              <div>• {crucible?.ptokenSymbol} current price: <span className="text-purple-300 font-semibold">${(() => {
+              <div>• {crucible?.ptokenSymbol} current price: <span className="text-purple-300 font-semibold">{(() => {
                 const hasDeposits = (crucible?.totalWrapped || BigInt(0)) > BigInt(0);
                 const exchangeRate = hasDeposits ? (crucible?.exchangeRate || RATE_SCALE) : RATE_SCALE;
-                const baseTokenPrice = crucible?.baseToken === 'FOGO' ? 0.5 : 0.002;
-                const currentPrice = getCTokenPrice(baseTokenPrice, exchangeRate);
-                return currentPrice.toFixed(4);
-              })()} USD</span> {(() => {
+                const exchangeRateDecimal = Number(exchangeRate) / Number(RATE_SCALE);
+                return `${exchangeRateDecimal.toFixed(4)} ${crucible?.baseToken}`;
+              })()}</span> {(() => {
                 const hasDeposits = (crucible?.totalWrapped || BigInt(0)) > BigInt(0);
                 return hasDeposits ? '(includes accumulated yield)' : '(1:1 with ' + crucible?.baseToken + ')';
               })()}</div>

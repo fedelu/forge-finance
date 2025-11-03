@@ -13,6 +13,8 @@ interface Transaction {
   totalWithdrawal?: number; // Total amount including APY rewards
   usdValue?: number; // USD value of the transaction
   pfogoAmount?: number; // pFOGO amount for unwrap transactions
+  borrowedAmount?: number; // USDC amount borrowed (for leveraged deposits)
+  leverage?: number; // Leverage multiplier used
 }
 
 interface AnalyticsData {

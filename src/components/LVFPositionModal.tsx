@@ -1,0 +1,325 @@
+import React, { useState } from 'react'
+import { XMarkIcon, BoltIcon } from '@heroicons/react/24/outline'
+import { useLVFPosition } from '../hooks/useLVFPosition'
+import { useSession } from './FogoSessions'
+import { lendingPool } from '../contracts/lendingPool'
+import { useBalance } from '../contexts/BalanceContext'
+import { useAnalytics } from '../contexts/AnalyticsContext'
+import { useCrucible } from '../hooks/useCrucible'
+
+interface LVFPositionModalProps {
+  isOpen: boolean
+  onClose: () => void
+  crucibleAddress: string
+  baseTokenSymbol: 'FOGO' | 'FORGE'
+  baseAPY: number
+}
+
+export default function LVFPositionModal({
+  isOpen,
+  onClose,
+  crucibleAddress,
+  baseTokenSymbol,
+  baseAPY,
+}: LVFPositionModalProps) {
+  const [amount, setAmount] = useState('')
+  const [leverage, setLeverage] = useState(2.0)
+  const { openPosition, loading, calculateHealth, calculateEffectiveAPY } = useLVFPosition({
+    crucibleAddress,
+    baseTokenSymbol,
+  })
+  const { isEstablished, walletPublicKey } = useSession()
+  const { subtractFromBalance, addToBalance, getBalance } = useBalance()
+  const { addTransaction } = useAnalytics()
+  const { getCrucible } = useCrucible()
+
+  const handleOpenPosition = async () => {
+    // Check wallet connection first
+    if (!isEstablished || !walletPublicKey) {
+      alert('⚠️ Wallet not connected!\n\nPlease connect your wallet first using "Sign in with FOGO".')
+      return
+    }
+
+    if (!amount || parseFloat(amount) <= 0) {
+      alert('Please enter a valid amount')
+      return
+    }
+
+    try {
+      const collateralAmount = parseFloat(amount)
+      const baseTokenPrice = baseTokenSymbol === 'FOGO' ? 0.5 : 0.002
+      const collateralValue = collateralAmount * baseTokenPrice
+      const borrowedUSDC = collateralValue * (leverage - 1)
+
+      // Check base token balance
+      const baseTokenBalance = getBalance(baseTokenSymbol)
+      if (collateralAmount > baseTokenBalance) {
+        alert(`Insufficient ${baseTokenSymbol} balance. You need ${collateralAmount.toFixed(2)} ${baseTokenSymbol} but only have ${baseTokenBalance.toFixed(2)} ${baseTokenSymbol}.`)
+        return
+      }
+
+      // Check lending pool liquidity
+      const availableLiquidity = lendingPool.getAvailableLiquidity()
+      if (borrowedUSDC > availableLiquidity) {
+        alert(`Insufficient liquidity. Available: ${availableLiquidity.toFixed(2)} USDC`)
+        return
+      }
+
+      // Borrow USDC from lending pool
+      const borrowResult = lendingPool.borrow(borrowedUSDC)
+      if (!borrowResult.success) {
+        alert(`Borrowing failed: ${borrowResult.error || 'Insufficient liquidity'}`)
+        return
+      }
+
+      // Subtract base tokens from wallet
+      subtractFromBalance(baseTokenSymbol, collateralAmount)
+
+      // Open leveraged position
+      await openPosition(collateralAmount, leverage)
+
+      // Add LP tokens to wallet (Inferno/leveraged positions create LP tokens)
+      const crucible = getCrucible(crucibleAddress)
+      const lpTokenSymbol = crucible ? `${crucible.ptokenSymbol}/USDC LP` : `${baseTokenSymbol}/USDC LP`
+      // Calculate LP token amount: sqrt(collateral_value * usdc_value)
+      // For leveraged positions: collateral becomes cToken, USDC is borrowed
+      const cTokenAmount = collateralAmount * 1.045 // Exchange rate to get cToken amount
+      const lpTokenAmount = Math.sqrt(cTokenAmount * borrowedUSDC) // Constant product formula
+      addToBalance(lpTokenSymbol, lpTokenAmount)
+
+      // Add transaction to analytics
+      addTransaction({
+        type: 'deposit',
+        amount: collateralAmount,
+        token: baseTokenSymbol,
+        crucibleId: crucibleAddress,
+        borrowedAmount: borrowedUSDC,
+        leverage: leverage,
+        usdValue: collateralValue + borrowedUSDC,
+      })
+
+      // Trigger window event to refresh portfolio
+      window.dispatchEvent(new CustomEvent('lvfPositionOpened', { 
+        detail: { crucibleAddress, baseTokenSymbol } 
+      }))
+
+      onClose()
+      setAmount('')
+      setLeverage(2.0)
+    } catch (error: any) {
+      console.error('Error opening LVF position:', error)
+      alert(error.message || 'Failed to open leveraged position')
+    }
+  }
+
+  const baseTokenPrice = baseTokenSymbol === 'FOGO' ? 0.5 : 0.002
+  const collateralValue = amount ? parseFloat(amount) * baseTokenPrice : 0
+  const borrowedUSDC = collateralValue * (leverage - 1)
+  const health = amount && borrowedUSDC > 0
+    ? calculateHealth(parseFloat(amount), borrowedUSDC)
+    : 999
+  const effectiveAPY = calculateEffectiveAPY(baseAPY, leverage)
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md animate-fade-in">
+      <div className="bg-gradient-to-br from-fogo-gray-900 via-fogo-gray-900 to-fogo-gray-800 rounded-3xl border border-fogo-gray-700/50 shadow-2xl w-full max-w-lg p-8 relative animate-scale-in">
+        <button
+          onClick={onClose}
+          className="absolute top-5 right-5 text-fogo-gray-400 hover:text-white transition-all duration-200 p-2 rounded-lg hover:bg-fogo-gray-800/50"
+          aria-label="Close modal"
+        >
+          <XMarkIcon className="w-5 h-5" />
+        </button>
+
+        {/* Header */}
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500/30 to-orange-500/10 flex items-center justify-center border border-orange-500/20">
+              <BoltIcon className="w-6 h-6 text-orange-400" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-inter-bold text-white">Leveraged LP</h2>
+              <p className="text-fogo-gray-400 text-sm">Amplified Yield</p>
+            </div>
+          </div>
+          <p className="text-fogo-gray-400 text-sm leading-relaxed">
+            Deposit {baseTokenSymbol} and borrow USDC to amplify your yield. Higher risk, higher reward. Maximum leverage: 2x.
+          </p>
+        </div>
+
+        {/* Amount Input - Enhanced */}
+        <div className="mb-5">
+          <label className="block text-sm font-semibold text-fogo-gray-300 mb-3 flex items-center gap-2">
+            <span>Collateral Amount</span>
+            <span className="px-2 py-1 bg-orange-500/20 text-orange-400 rounded-md text-xs font-medium">{baseTokenSymbol}</span>
+          </label>
+          <div className="flex space-x-3">
+            <div className="flex-1 relative">
+              <input
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="0.00"
+                className="w-full px-5 py-4 bg-fogo-gray-800/80 backdrop-blur-sm border-2 border-fogo-gray-700 rounded-xl text-white text-lg font-medium placeholder-fogo-gray-500 focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/20 transition-all duration-300"
+              />
+              {amount && (
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-fogo-gray-500 text-sm">
+                  ≈ ${(parseFloat(amount) * baseTokenPrice).toFixed(2)}
+                </div>
+              )}
+            </div>
+            <button
+              onClick={() => setAmount('1000')}
+              className="px-6 py-4 bg-fogo-gray-700/80 hover:bg-orange-500/20 border-2 border-fogo-gray-600 hover:border-orange-500 text-white rounded-xl font-semibold transition-all duration-300 hover:scale-105"
+            >
+              MAX
+            </button>
+          </div>
+        </div>
+
+        {/* Leverage Selection - Enhanced */}
+        <div className="mb-5">
+          <label className="block text-sm font-semibold text-fogo-gray-300 mb-3 flex items-center gap-2">
+            <span>Leverage Multiplier</span>
+            <span className="px-2 py-1 bg-orange-500/20 text-orange-400 rounded-md text-xs font-medium">Max 2x</span>
+          </label>
+          <div className="flex space-x-3">
+            <button
+              onClick={() => setLeverage(1.5)}
+              className={`flex-1 px-5 py-4 rounded-xl text-base font-semibold transition-all duration-300 transform hover:scale-105 ${
+                leverage === 1.5
+                  ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30 border-2 border-orange-400'
+                  : 'bg-fogo-gray-700/80 text-fogo-gray-300 hover:bg-fogo-gray-600 border-2 border-fogo-gray-600'
+              }`}
+            >
+              1.5x
+              <div className="text-xs mt-1 opacity-80">Moderate</div>
+            </button>
+            <button
+              onClick={() => setLeverage(2.0)}
+              className={`flex-1 px-5 py-4 rounded-xl text-base font-semibold transition-all duration-300 transform hover:scale-105 ${
+                leverage === 2.0
+                  ? 'bg-gradient-to-r from-orange-600 to-yellow-500 text-white shadow-lg shadow-orange-500/30 border-2 border-orange-400'
+                  : 'bg-fogo-gray-700/80 text-fogo-gray-300 hover:bg-fogo-gray-600 border-2 border-fogo-gray-600'
+              }`}
+            >
+              2x
+              <div className="text-xs mt-1 opacity-80">Maximum</div>
+            </button>
+          </div>
+        </div>
+
+            {/* Position Preview - Enhanced */}
+            <div className="bg-gradient-to-br from-orange-500/10 via-orange-500/5 to-transparent backdrop-blur-sm rounded-2xl p-6 mb-6 border border-orange-500/20">
+              <h3 className="text-sm font-semibold text-fogo-gray-300 mb-4 flex items-center gap-2">
+                <svg className="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Position Preview
+              </h3>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center py-2.5 px-3 bg-fogo-gray-900/50 rounded-lg">
+                  <span className="text-fogo-gray-400 text-sm">Collateral</span>
+                  <span className="text-white font-bold text-lg">
+                    {amount ? parseFloat(amount).toFixed(4) : '0.0000'} {baseTokenSymbol}
+                  </span>
+                </div>
+                {amount && (
+                  <>
+                    <div className="flex justify-between items-center py-2 px-3 bg-red-500/10 rounded-lg border border-red-500/20">
+                      <span className="text-red-400 text-xs font-medium flex items-center gap-1">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Opening Fee (1.5%)
+                      </span>
+                      <span className="text-red-400 font-semibold">
+                        -{(parseFloat(amount) * 0.015).toFixed(2)} {baseTokenSymbol}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 px-3 bg-fogo-gray-900/50 rounded-lg">
+                      <span className="text-fogo-gray-400 text-xs">Collateral After Fee</span>
+                      <span className="text-fogo-gray-300 font-semibold">
+                        {(parseFloat(amount) * 0.985).toFixed(2)} {baseTokenSymbol}
+                      </span>
+                    </div>
+                  </>
+                )}
+            {leverage > 1.0 && (
+              <>
+                <div className="flex justify-between pt-2 border-t border-fogo-gray-700">
+                  <div className="flex items-center space-x-1">
+                    <span className="text-fogo-gray-400">Borrowing</span>
+                    <svg className="w-3 h-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <title>Borrowing Interest Rate: 5% APY - This is the annual cost of borrowing USDC from the lending pool</title>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <span className="text-orange-400 font-medium">
+                    {borrowedUSDC.toFixed(2)} USDC
+                  </span>
+                </div>
+                <div className="flex justify-between text-xs pt-1">
+                  <span className="text-fogo-gray-500">Interest Rate (5% APY)</span>
+                  <span className="text-fogo-gray-400">
+                    {(borrowedUSDC * 0.05).toFixed(2)} USDC/year
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-fogo-gray-400">Health</span>
+                  <span className={`font-medium ${
+                    health >= 200 ? 'text-green-400' :
+                    health >= 150 ? 'text-yellow-400' :
+                    health >= 120 ? 'text-orange-400' :
+                    'text-red-400'
+                  }`}>
+                    {(health / 100).toFixed(2)}x
+                  </span>
+                </div>
+              </>
+            )}
+            <div className="flex justify-between pt-2 border-t border-fogo-gray-700">
+              <span className="text-fogo-gray-400">LP Pair</span>
+              <span className="text-white font-medium">
+                {baseTokenSymbol}/USDC
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-fogo-gray-400">Effective APY</span>
+              <span className="text-fogo-primary font-bold">
+                {effectiveAPY.toFixed(2)}%
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Warning */}
+        {health < 120 && health < 999 && (
+          <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-xs text-red-400">
+            ⚠️ Health factor below 120%. Position is at risk.
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="flex space-x-3">
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-3 bg-fogo-gray-700 hover:bg-fogo-gray-600 text-white rounded-lg font-medium transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleOpenPosition}
+            disabled={!amount || loading || parseFloat(amount) <= 0 || borrowedUSDC > lendingPool.getAvailableLiquidity()}
+            className="flex-1 px-4 py-3 bg-fogo-primary hover:bg-fogo-secondary text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? 'Processing...' : 'Open Position'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+

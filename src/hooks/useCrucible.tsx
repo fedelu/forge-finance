@@ -1,4 +1,4 @@
-import React, { createContext, useContext, ReactNode, useState } from 'react';
+import React, { createContext, useContext, ReactNode, useState, useCallback, useMemo } from 'react';
 import { 
   computePMint, 
   computeFogoOut, 
@@ -41,17 +41,20 @@ interface CrucibleHookReturn {
   loading: boolean;
   error: string | null;
   wrapTokens: (crucibleId: string, amount: string) => Promise<void>;
-  unwrapTokens: (crucibleId: string, amount: string) => Promise<void>;
+  unwrapTokens: (crucibleId: string, amount: string) => Promise<{ baseAmount: number; apyEarned: number; feeAmount: number } | null>;
   unwrapTokensToUSDC: (crucibleId: string, amount: string) => Promise<void>;
   refreshCrucibleData: (crucibleId: string) => Promise<void>;
   getCrucible: (crucibleId: string) => CrucibleData | undefined;
   calculateWrapPreview: (crucibleId: string, baseAmount: string) => { ptokenAmount: string; estimatedValue: string };
   calculateUnwrapPreview: (crucibleId: string, ptokenAmount: string) => { baseAmount: string; estimatedValue: string };
+  trackLeveragedPosition: (crucibleId: string, baseAmount: number) => void; // Track leveraged/LP position for exchange rate growth
+  updateCrucibleTVL: (crucibleId: string, amountUSD: number) => void; // Update crucible TVL directly
   userBalances: Record<string, {
     ptokenBalance: bigint;
     baseDeposited: number;
     estimatedBaseValue: bigint;
     apyEarnedUSD: number;
+    depositTimestamp?: number; // Timestamp when position was opened
   }>;
 }
 
@@ -74,7 +77,7 @@ const forgeMetrics = calculateVolatilityFarmingMetrics(CRUCIBLE_CONFIGS[1], DEFA
       userShares: 0,
       icon: '/fogo-logo.png',
       ptokenMint: 'mockPfogoMint1',
-      exchangeRate: RATE_SCALE, // 1:1 ratio at deposit (cFOGO starts at $0.50, same as FOGO). Yield comes from value growth to $0.5224
+      exchangeRate: BigInt(Math.floor(Number(RATE_SCALE) * 1.045)), // Initial exchange rate: 1 cFOGO = 1.045 FOGO (4.5% initial yield)
       totalWrapped: BigInt(6450000000000), // 6,450,000 cFOGO emitted
       userPtokenBalance: BigInt(0),
       estimatedBaseValue: BigInt(0),
@@ -115,12 +118,14 @@ const CrucibleContext = createContext<CrucibleHookReturn>({
   loading: false,
   error: null,
   wrapTokens: async () => {},
-  unwrapTokens: async () => {},
+  unwrapTokens: async () => null,
   unwrapTokensToUSDC: async () => {},
   refreshCrucibleData: async () => {},
   getCrucible: () => undefined,
   calculateWrapPreview: () => ({ ptokenAmount: '0', estimatedValue: '0' }),
   calculateUnwrapPreview: () => ({ baseAmount: '0', estimatedValue: '0' }),
+  trackLeveragedPosition: () => {},
+  updateCrucibleTVL: () => {},
   userBalances: {}
 });
 
@@ -136,20 +141,27 @@ export const CrucibleProvider: React.FC<CrucibleProviderProps> = ({ children }) 
     baseDeposited: number;
     estimatedBaseValue: bigint;
     apyEarnedUSD: number; // Track APY earned in USD per user
+    depositTimestamp?: number; // Timestamp when position was opened
   }>>({});
   
   // State to trigger re-renders when crucible data changes
   const [crucibleUpdateTrigger, setCrucibleUpdateTrigger] = useState(0);
+  
+  // Trigger periodic updates to simulate exchange rate growth (every 5 seconds)
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setCrucibleUpdateTrigger(prev => prev + 1);
+    }, 5000); // Update every 5 seconds
+    
+    return () => clearInterval(interval);
+  }, []);
 
-  // Simulate exchange rate growth over time
+  // Simulate exchange rate growth over time (1 minute = 1 month)
   const getUpdatedCrucibles = (): CrucibleData[] => {
     // Use the trigger to ensure re-renders when user balances change
     crucibleUpdateTrigger; // This ensures the function re-runs when trigger changes
     
     return mockCrucibles.map(crucible => {
-      // Start with 1:1 exchange rate, only increase when fees are actually collected
-      const newExchangeRate = crucible.exchangeRate || RATE_SCALE;
-      
       const userBalance = userBalances[crucible.id] || {
         ptokenBalance: BigInt(0),
         baseDeposited: 0,
@@ -157,9 +169,26 @@ export const CrucibleProvider: React.FC<CrucibleProviderProps> = ({ children }) 
         apyEarnedUSD: 0
       };
       
+      // Calculate dynamic exchange rate based on time position was open
+      let dynamicExchangeRate = crucible.exchangeRate || RATE_SCALE;
+      if (userBalance.depositTimestamp) {
+        const now = Date.now();
+        const timeOpenMs = now - userBalance.depositTimestamp;
+        const timeOpenMinutes = timeOpenMs / (1000 * 60); // Convert to minutes
+        const timeOpenMonths = timeOpenMinutes; // 1 minute = 1 month
+        
+        // Calculate accumulated yield: P(t) = P(0) * (1 + APY)^(t/12)
+        // Start with 1.045 (4.5% initial yield)
+        const initialRate = 1.045;
+        const apy = crucible.apr; // e.g., 0.18 for 18%
+        const yearsElapsed = timeOpenMonths / 12;
+        const accumulatedRate = initialRate * Math.pow(1 + apy, yearsElapsed);
+        dynamicExchangeRate = BigInt(Math.floor(Number(RATE_SCALE) * accumulatedRate));
+      }
+      
       return {
         ...crucible,
-        exchangeRate: newExchangeRate,
+        exchangeRate: dynamicExchangeRate,
         currentAPY: crucible.apr * 100, // Use the static APR as APY (18% and 32%)
         userPtokenBalance: userBalance.ptokenBalance,
         userDeposit: userBalance.baseDeposited,
@@ -169,9 +198,8 @@ export const CrucibleProvider: React.FC<CrucibleProviderProps> = ({ children }) 
     });
   };
 
-  const wrapTokens = async (crucibleId: string, amount: string) => {
-    
-    const crucible = getCrucible(crucibleId);
+  const wrapTokens = useCallback(async (crucibleId: string, amount: string) => {
+    const crucible = getUpdatedCrucibles().find(c => c.id === crucibleId);
     if (crucible && crucible.exchangeRate) {
       const baseDeposited = parseFloat(amount);
       
@@ -182,30 +210,15 @@ export const CrucibleProvider: React.FC<CrucibleProviderProps> = ({ children }) 
       // Calculate cTokens based on net amount (after fee deduction)
       const netAmountBigInt = parseAmount(netAmount.toString());
       const ptokenAmount = computePMint(netAmountBigInt, crucible.exchangeRate);
-      
-      // Calculate APY earnings in USD (base amount)
-      const currentCrucible = getCrucible(crucibleId);
-      const apyEarnedUSD = (currentCrucible?.apyEarnedByUsers || 0) + (feeAmount * 0.33); // APY increases by 1/3 of fees
-      const totalFees = apyEarnedUSD * 3; // Total fees = 3x APY earned
-      const totalBurnedUSD = apyEarnedUSD / 10; // Total burned = 1/10 of APY earned
 
-      // Calculate new exchange rate: apply accumulated yield only if not already applied
-      // Target: RATE_SCALE * (0.5224/0.50) = 1.0448 * RATE_SCALE
-      const currentExchangeRate = crucible.exchangeRate || RATE_SCALE;
-      const targetExchangeRate = BigInt(Math.floor(Number(RATE_SCALE) * 1.0448)); // 4.48% yield
-      // Only increase if current rate is still at 1:1
-      const newExchangeRate = currentExchangeRate < targetExchangeRate ? targetExchangeRate : currentExchangeRate;
-      
-      // Update crucible stats with fee collection and cToken creation
+      // Update crucible stats with fee collection
       const crucibleIndex = mockCrucibles.findIndex(c => c.id === crucibleId);
       if (crucibleIndex !== -1) {
         mockCrucibles[crucibleIndex] = {
           ...mockCrucibles[crucibleIndex],
-          exchangeRate: newExchangeRate,
-          totalFeesCollected: totalFees,
-          totalWrapped: (mockCrucibles[crucibleIndex].totalWrapped || BigInt(0)) + ptokenAmount, // Create new cTokens
-          tvl: mockCrucibles[crucibleIndex].tvl + baseDeposited, // Increase TVL by the full deposit amount
-          apyEarnedByUsers: apyEarnedUSD,
+          // Don't update exchangeRate here - it's calculated dynamically in getUpdatedCrucibles
+          totalWrapped: (mockCrucibles[crucibleIndex].totalWrapped || BigInt(0)) + ptokenAmount,
+          tvl: mockCrucibles[crucibleIndex].tvl + baseDeposited, // TVL includes fees
         };
       }
       
@@ -215,19 +228,21 @@ export const CrucibleProvider: React.FC<CrucibleProviderProps> = ({ children }) 
           ptokenBalance: BigInt(0),
           baseDeposited: 0,
           estimatedBaseValue: BigInt(0),
-          apyEarnedUSD: 0
+          apyEarnedUSD: 0,
+          depositTimestamp: undefined
         };
         
-        // Calculate user's APY earnings from this transaction (1/3 of fees)
-        const userApyEarned = feeAmount * 0.33;
+        // Set deposit timestamp if this is the first deposit
+        const depositTimestamp = current.depositTimestamp || Date.now();
         
         return {
           ...prev,
           [crucibleId]: {
             ptokenBalance: current.ptokenBalance + ptokenAmount,
-            baseDeposited: current.baseDeposited + netAmount,
+            baseDeposited: current.baseDeposited + netAmount, // Track net deposited amount
             estimatedBaseValue: current.estimatedBaseValue + BigInt(Math.floor(netAmount * 1e9)),
-            apyEarnedUSD: current.apyEarnedUSD + userApyEarned
+            apyEarnedUSD: current.apyEarnedUSD,
+            depositTimestamp
           }
         };
       });
@@ -237,10 +252,10 @@ export const CrucibleProvider: React.FC<CrucibleProviderProps> = ({ children }) 
       
       
     }
-  };
+  }, []);
 
-  const unwrapTokensToUSDC = async (crucibleId: string, amount: string) => {
-    const crucible = getCrucible(crucibleId);
+  const unwrapTokensToUSDC = useCallback(async (crucibleId: string, amount: string) => {
+    const crucible = getUpdatedCrucibles().find(c => c.id === crucibleId);
     if (crucible && crucible.exchangeRate) {
       const ptokenAmount = parseAmount(amount);
       const baseAmount = computeFogoOut(ptokenAmount, crucible.exchangeRate);
@@ -254,8 +269,7 @@ export const CrucibleProvider: React.FC<CrucibleProviderProps> = ({ children }) 
       const usdcAmount = netAmount;
       
       // Calculate APY earnings in USD (base amount)
-      const currentCrucible = getCrucible(crucibleId);
-      const apyEarnedUSD = (currentCrucible?.apyEarnedByUsers || 0) + (feeAmount * 0.33);
+      const apyEarnedUSD = (crucible.apyEarnedByUsers || 0) + (feeAmount * 0.33);
       const totalFees = apyEarnedUSD * 3;
       const totalBurnedUSD = apyEarnedUSD / 10;
 
@@ -298,11 +312,10 @@ export const CrucibleProvider: React.FC<CrucibleProviderProps> = ({ children }) 
       
       console.log(`Withdrew ${usdcAmount.toFixed(2)} USDC from ${crucibleId} (1.5% fee: ${feeAmount.toFixed(2)})`);
     }
-  };
+  }, []);
 
-  const unwrapTokens = async (crucibleId: string, amount: string) => {
-    
-    const crucible = getCrucible(crucibleId);
+  const unwrapTokens = useCallback(async (crucibleId: string, amount: string) => {
+    const crucible = getUpdatedCrucibles().find(c => c.id === crucibleId);
     if (crucible && crucible.exchangeRate) {
       const ptokenAmount = parseAmount(amount);
       const baseAmount = computeFogoOut(ptokenAmount, crucible.exchangeRate);
@@ -311,25 +324,26 @@ export const CrucibleProvider: React.FC<CrucibleProviderProps> = ({ children }) 
       // Calculate unwrap fee (1.5%)
       const feeAmount = baseToWithdraw * 0.015;
       const netAmount = baseToWithdraw - feeAmount;
-      
-      // Calculate APY earnings in USD (base amount)
-      const currentCrucible = getCrucible(crucibleId);
-      const apyEarnedUSD = (currentCrucible?.apyEarnedByUsers || 0) + (feeAmount * 0.33); // APY increases by 1/3 of fees
-      const totalFees = apyEarnedUSD * 3; // Total fees = 3x APY earned
-      const totalBurnedUSD = apyEarnedUSD / 10; // Total burned = 1/10 of APY earned
 
-      // Update crucible stats with fee collection and burned tokens
+      // Update crucible stats - burn tokens
       const crucibleIndex = mockCrucibles.findIndex(c => c.id === crucibleId);
       if (crucibleIndex !== -1) {
         mockCrucibles[crucibleIndex] = {
           ...mockCrucibles[crucibleIndex],
-          totalFeesCollected: totalFees,
- // Add to burned tokens
           totalWrapped: (mockCrucibles[crucibleIndex].totalWrapped || BigInt(0)) - ptokenAmount, // Burn the cTokens
           tvl: mockCrucibles[crucibleIndex].tvl - baseToWithdraw, // Decrease TVL by the full amount withdrawn
-          apyEarnedByUsers: apyEarnedUSD
         };
       }
+      
+      // Calculate APY earnings based on exchange rate growth
+      // The difference between current exchange rate and initial rate (1.045) is the APY earned
+      const initialExchangeRate = 1.045 // Initial rate when position was opened
+      const currentExchangeRate = Number(crucible.exchangeRate) / Number(RATE_SCALE)
+      const exchangeRateGrowth = currentExchangeRate - initialExchangeRate
+      const apyEarnedTokens = baseToWithdraw * (exchangeRateGrowth / currentExchangeRate) // APY earned in base tokens
+      
+      // Total amount to return = net amount (after fee) + APY earnings
+      const totalAmountToReturn = netAmount + apyEarnedTokens
       
       // Update user balances - kill pTokens and return base tokens
       setUserBalances(prev => {
@@ -337,11 +351,9 @@ export const CrucibleProvider: React.FC<CrucibleProviderProps> = ({ children }) 
           ptokenBalance: BigInt(0),
           baseDeposited: 0,
           estimatedBaseValue: BigInt(0),
-          apyEarnedUSD: 0
+          apyEarnedUSD: 0,
+          depositTimestamp: undefined
         };
-        
-        // Calculate user's APY earnings from this transaction (1/3 of fees)
-        const userApyEarned = feeAmount * 0.33;
         
         return {
           ...prev,
@@ -349,7 +361,8 @@ export const CrucibleProvider: React.FC<CrucibleProviderProps> = ({ children }) 
             ptokenBalance: BigInt(0), // Kill all pTokens
             baseDeposited: 0, // Reset deposited amount
             estimatedBaseValue: BigInt(0), // Reset estimated value
-            apyEarnedUSD: current.apyEarnedUSD + userApyEarned // Keep accumulated APY earnings
+            apyEarnedUSD: current.apyEarnedUSD + (apyEarnedTokens * (crucible.baseToken === 'FOGO' ? 0.5 : 0.002)), // Track APY earnings in USD
+            depositTimestamp: undefined // Clear timestamp to restart exchange rate growth on next deposit
           }
         };
       });
@@ -357,19 +370,26 @@ export const CrucibleProvider: React.FC<CrucibleProviderProps> = ({ children }) 
       // Trigger re-render
       setCrucibleUpdateTrigger(prev => prev + 1);
       
+      // Return the total amount including APY earnings
+      return {
+        baseAmount: totalAmountToReturn,
+        apyEarned: apyEarnedTokens,
+        feeAmount: feeAmount
+      }
     }
-  };
+    return null
+  }, []);
 
 
-  const refreshCrucibleData = async (crucibleId: string) => {
+  const refreshCrucibleData = useCallback(async (crucibleId: string) => {
     // In a real implementation, this would fetch fresh data
-  };
+  }, []);
 
-  const getCrucible = (crucibleId: string): CrucibleData | undefined => {
+  const getCrucible = useCallback((crucibleId: string): CrucibleData | undefined => {
     return getUpdatedCrucibles().find(c => c.id === crucibleId);
-  };
+  }, []);
 
-  const calculateWrapPreview = (crucibleId: string, baseAmount: string) => {
+  const calculateWrapPreview = useCallback((crucibleId: string, baseAmount: string) => {
     const crucible = getCrucible(crucibleId);
     if (!crucible || !crucible.exchangeRate) {
       return { ptokenAmount: '0', estimatedValue: '0' };
@@ -390,9 +410,9 @@ export const CrucibleProvider: React.FC<CrucibleProviderProps> = ({ children }) 
       ptokenAmount: formatAmount(ptokenAmount),
       estimatedValue: formatAmount(estimatedValue)
     };
-  };
+  }, []);
 
-  const calculateUnwrapPreview = (crucibleId: string, ptokenAmount: string) => {
+  const calculateUnwrapPreview = useCallback((crucibleId: string, ptokenAmount: string) => {
     const crucible = getCrucible(crucibleId);
     if (!crucible || !crucible.exchangeRate) {
       return { baseAmount: '0', estimatedValue: '0' };
@@ -410,10 +430,81 @@ export const CrucibleProvider: React.FC<CrucibleProviderProps> = ({ children }) 
       baseAmount: netAmount.toFixed(2),
       estimatedValue: netAmount.toFixed(2)
     };
-  };
+  }, []);
 
-  const value: CrucibleHookReturn = {
-    crucibles: getUpdatedCrucibles(),
+  // Update crucible TVL directly (for leveraged positions)
+  const updateCrucibleTVL = useCallback((crucibleId: string, amountUSD: number) => {
+    const crucibleIndex = mockCrucibles.findIndex(c => c.id === crucibleId);
+    if (crucibleIndex >= 0) {
+      mockCrucibles[crucibleIndex] = {
+        ...mockCrucibles[crucibleIndex],
+        tvl: Math.max(0, mockCrucibles[crucibleIndex].tvl + amountUSD)
+      };
+      // Trigger re-render
+      setCrucibleUpdateTrigger(prev => prev + 1);
+      console.log(`✅ Updated crucible TVL for ${crucibleId}: ${mockCrucibles[crucibleIndex].tvl}`);
+    }
+  }, []);
+
+  // Track leveraged/LP position for exchange rate growth (like normal wrap)
+  const trackLeveragedPosition = useCallback((crucibleId: string, baseAmount: number) => {
+    const crucible = getUpdatedCrucibles().find(c => c.id === crucibleId);
+    if (!crucible || !crucible.exchangeRate) return;
+
+    // Calculate fee (1.5%)
+    const feeAmount = baseAmount * 0.015;
+    const netAmount = baseAmount - feeAmount;
+
+    // Calculate cTokens (same as wrapTokens)
+    const netAmountBigInt = parseAmount(netAmount.toString());
+    const ptokenAmount = computePMint(netAmountBigInt, crucible.exchangeRate);
+
+    // Update user balances (same as wrapTokens does)
+    setUserBalances(prev => {
+      const current = prev[crucibleId] || {
+        ptokenBalance: BigInt(0),
+        baseDeposited: 0,
+        estimatedBaseValue: BigInt(0),
+        apyEarnedUSD: 0,
+        depositTimestamp: undefined
+      };
+      
+      // Set deposit timestamp if this is the first deposit for this crucible
+      const depositTimestamp = current.depositTimestamp || Date.now();
+      
+      return {
+        ...prev,
+        [crucibleId]: {
+          // CRITICAL: Do NOT add to ptokenBalance for leveraged positions
+          // The cTOKENS are locked in the LP pair, not available as separate tokens
+          // If we add to ptokenBalance, it will show up in "cTOKENS" section instead of "cTOKENS/USDC"
+          ptokenBalance: current.ptokenBalance, // Keep existing balance unchanged
+          baseDeposited: current.baseDeposited + netAmount, // Track for exchange rate growth
+          estimatedBaseValue: current.estimatedBaseValue + BigInt(Math.floor(netAmount * 1e9)),
+          apyEarnedUSD: current.apyEarnedUSD,
+          depositTimestamp
+        }
+      };
+    });
+
+    // Update crucible stats (same as wrapTokens)
+    const crucibleIndex = mockCrucibles.findIndex(c => c.id === crucibleId);
+    if (crucibleIndex >= 0) {
+      mockCrucibles[crucibleIndex] = {
+        ...mockCrucibles[crucibleIndex],
+        totalWrapped: (mockCrucibles[crucibleIndex].totalWrapped || BigInt(0)) + ptokenAmount,
+        tvl: mockCrucibles[crucibleIndex].tvl + baseAmount,
+      };
+    }
+
+    // Trigger re-render
+    setCrucibleUpdateTrigger(prev => prev + 1);
+  }, []);
+
+  const crucibles = useMemo(() => getUpdatedCrucibles(), [crucibleUpdateTrigger, userBalances])
+
+  const value: CrucibleHookReturn = useMemo(() => ({
+    crucibles,
     loading: false,
     error: null,
     wrapTokens,
@@ -423,8 +514,10 @@ export const CrucibleProvider: React.FC<CrucibleProviderProps> = ({ children }) 
     getCrucible,
     calculateWrapPreview,
     calculateUnwrapPreview,
+    trackLeveragedPosition,
+    updateCrucibleTVL,
     userBalances
-  };
+  }), [crucibles, wrapTokens, unwrapTokens, unwrapTokensToUSDC, refreshCrucibleData, getCrucible, calculateWrapPreview, calculateUnwrapPreview, trackLeveragedPosition, updateCrucibleTVL, userBalances])
 
   return (
     <CrucibleContext.Provider value={value}>

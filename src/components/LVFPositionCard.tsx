@@ -1,0 +1,205 @@
+import React from 'react'
+import { useLVFPosition } from '../hooks/useLVFPosition'
+import { useBalance } from '../contexts/BalanceContext'
+import { useCrucible } from '../hooks/useCrucible'
+
+interface LVFPositionCardProps {
+  position: {
+    id: string
+    token: string
+    collateral: number
+    borrowedUSDC: number
+    leverageFactor: number
+    currentValue: number
+    yieldEarned: number
+    health: number
+    isOpen: boolean
+  }
+  crucibleAddress: string
+  baseTokenSymbol: 'FOGO' | 'FORGE'
+  baseAPY: number
+  onClose: () => void
+}
+
+export default function LVFPositionCard({
+  position,
+  crucibleAddress,
+  baseTokenSymbol,
+  baseAPY,
+  onClose,
+}: LVFPositionCardProps) {
+  const { closePosition, loading, calculateEffectiveAPY } = useLVFPosition({
+    crucibleAddress,
+    baseTokenSymbol,
+  })
+  const { addToBalance, subtractFromBalance, getBalance } = useBalance()
+  const { getCrucible } = useCrucible()
+
+  const effectiveAPY = calculateEffectiveAPY(baseAPY, position.leverageFactor)
+  const healthColor =
+    position.health >= 200 ? 'text-green-400' :
+    position.health >= 150 ? 'text-yellow-400' :
+    position.health >= 120 ? 'text-orange-400' :
+    'text-red-400'
+
+  const handleClosePosition = async () => {
+    // Calculate closing fee for confirmation
+    const baseTokenPrice = baseTokenSymbol === 'FOGO' ? 0.5 : 0.002
+    const collateralValueUSD = position.collateral * baseTokenPrice
+    const closingFee = collateralValueUSD * 0.015 // 1.5% fee
+    const baseAmountAfterFee = position.collateral * (1 - 0.015)
+    
+    const feeMessage = `Closing fee: ${closingFee.toFixed(2)} USD (1.5%)\nYou'll receive: ${baseAmountAfterFee.toFixed(2)} ${baseTokenSymbol}`
+    
+    if (!confirm(`Are you sure you want to close this leveraged position?\n\n${feeMessage}`)) {
+      return
+    }
+
+    try {
+      const result = await closePosition(position.id)
+      
+      if (result && result.success) {
+        // Update wallet balances
+        // When closing a leveraged position:
+        // 1. Redeem cTOKENS → base tokens (unwrap) + APY earnings
+        // 2. Repay borrowed USDC (if any)
+        // Total received = baseAmount (includes APY earned)
+        addToBalance(baseTokenSymbol, result.baseAmount)
+        
+        // Repay borrowed USDC (if any) - subtract from USDC balance
+        if (result.repaidUSDC > 0) {
+          subtractFromBalance('USDC', result.repaidUSDC)
+        }
+        
+        // Remove LP tokens from wallet (if they were added when opening)
+        const crucible = getCrucible(crucibleAddress)
+        const lpTokenSymbol = crucible ? `${crucible.ptokenSymbol}/USDC LP` : `${baseTokenSymbol}/USDC LP`
+        
+        // Calculate LP token amount that was added when opening
+        const baseTokenPrice = baseTokenSymbol === 'FOGO' ? 0.5 : 0.002
+        const collateralValue = position.collateral * baseTokenPrice
+        const cTokenAmount = position.collateral * 1.045 // Exchange rate to get cToken amount
+        
+        // Calculate total USDC used in the LP position
+        let totalUSDC = position.borrowedUSDC
+        if (position.leverageFactor === 1.5) {
+          totalUSDC = collateralValue // Total USDC = collateral value for 1.5x
+        } else if (position.leverageFactor === 2.0) {
+          totalUSDC = position.borrowedUSDC // Total USDC = borrowed amount for 2x
+        }
+        
+        const lpTokenAmount = Math.sqrt(cTokenAmount * totalUSDC) // Constant product formula
+        subtractFromBalance(lpTokenSymbol, lpTokenAmount)
+        
+        // Show closing information with APY earnings
+        const apyMessage = result.apyEarned ? `\nAPY Earned: ${result.apyEarned.toFixed(4)} ${baseTokenSymbol}` : ''
+        const usdcMessage = result.repaidUSDC > 0 ? `\nRepaid: ${result.repaidUSDC.toFixed(2)} USDC` : ''
+        alert(`✅ Leveraged Position closed successfully!\n\nReceived: ${result.baseAmount.toFixed(4)} ${baseTokenSymbol}${apyMessage}${usdcMessage}`)
+      }
+      
+      onClose()
+    } catch (error: any) {
+      console.error('Error closing position:', error)
+      alert(error.message || 'Failed to close position')
+    }
+  }
+
+  return (
+    <div className="bg-gradient-to-br from-fogo-gray-800/80 to-fogo-gray-900/80 backdrop-blur-sm rounded-xl p-5 border border-orange-500/20 hover:border-orange-500/40 transition-all duration-300 hover:shadow-lg group">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-orange-500/20 flex items-center justify-center">
+            <svg className="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <div>
+            <h3 className="text-lg font-inter-bold text-white">{position.token}/USDC</h3>
+            <p className="text-xs text-fogo-gray-400">Leveraged Position</p>
+          </div>
+        </div>
+        <div className="text-right">
+          <span className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${
+            position.leverageFactor === 2.0 ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
+            'bg-orange-500/20 text-orange-400 border-orange-500/30'
+          }`}>
+            {position.leverageFactor}x
+          </span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="bg-fogo-gray-900/60 backdrop-blur-sm rounded-lg p-3 border border-fogo-gray-700/50">
+          <div className="text-xs text-fogo-gray-400 mb-1">Collateral</div>
+          <div className="text-white font-bold text-base">
+            {position.collateral.toFixed(2)} {position.token}
+          </div>
+        </div>
+        <div className="bg-fogo-gray-900/60 backdrop-blur-sm rounded-lg p-3 border border-orange-500/20">
+          <div className="text-xs text-fogo-gray-400 mb-1">Borrowed</div>
+          <div className="text-orange-400 font-bold text-base">
+            {position.borrowedUSDC.toFixed(2)} USDC
+          </div>
+        </div>
+        <div className={`bg-fogo-gray-900/60 backdrop-blur-sm rounded-lg p-3 border ${
+          position.health >= 200 ? 'border-green-500/30' :
+          position.health >= 150 ? 'border-yellow-500/30' :
+          position.health >= 120 ? 'border-orange-500/30' :
+          'border-red-500/30'
+        }`}>
+          <div className="text-xs text-fogo-gray-400 mb-1">Health Factor</div>
+          <div className={`font-bold text-base ${healthColor}`}>
+            {(position.health / 100).toFixed(2)}x
+          </div>
+          {position.health < 120 && (
+            <div className="text-xs text-red-400 mt-1 flex items-center gap-1">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              At risk
+            </div>
+          )}
+        </div>
+        <div className="bg-fogo-gray-900/60 backdrop-blur-sm rounded-lg p-3 border border-fogo-gray-700/50">
+          <div className="text-xs text-fogo-gray-400 mb-1">Current Value</div>
+          <div className="text-white font-bold text-base">
+            ${position.currentValue.toFixed(2)}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between mb-4 p-4 bg-gradient-to-r from-orange-500/10 to-orange-500/5 rounded-lg border border-orange-500/20">
+        <div>
+          <div className="text-xs text-fogo-gray-400 mb-1">Effective APY</div>
+          <div className="text-orange-400 font-bold text-xl">
+            {effectiveAPY.toFixed(2)}%
+          </div>
+        </div>
+        <div className="text-right">
+          <div className="text-xs text-fogo-gray-400 mb-1">Yield Earned</div>
+          <div className="text-green-400 font-bold text-base">
+            +{position.yieldEarned.toFixed(4)} {position.token}
+          </div>
+        </div>
+      </div>
+
+      <button
+        onClick={handleClosePosition}
+        disabled={loading}
+        className="w-full px-5 py-3 bg-gradient-to-r from-fogo-primary to-fogo-primary-light hover:from-fogo-primary-dark hover:to-fogo-primary text-white rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-fogo-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none relative overflow-hidden group"
+      >
+        {loading && (
+          <span className="absolute inset-0 flex items-center justify-center">
+            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </span>
+        )}
+        <span className={loading ? 'opacity-0' : 'opacity-100'}>
+          {loading ? 'Closing...' : 'Close Position'}
+        </span>
+      </button>
+    </div>
+  )
+}

@@ -14,6 +14,8 @@ forge_heat = "Bg3eqdWPYdjYGzVSuFFLcYBYfcY1KJgHSPaHs8qfxmb7"
 forge_reactors = "HurGQkPBHqc68txHvHwpxKhEpjHNR3ChNALAw9RMmsSc"
 forge_firewall = "6CtfUiqzkUJub4dZzMmbtwBgcfHgNjTHKesdX39SZaTS"
 forge_engineers = "99hNfvzEBChK3XHYxMKWoUXmLXABmLYjZEu1P3wSaH68"
+ lending = "LenD1ng111111111111111111111111111111111111"
+ lvf = "LvF1111111111111111111111111111111111111111"
 
 [registry]
 url = "https://api.apr.dev"

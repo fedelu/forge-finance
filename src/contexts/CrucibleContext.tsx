@@ -16,6 +16,7 @@ interface CrucibleContextType {
   crucibles: Crucible[];
   updateCrucibleDeposit: (crucibleId: string, amount: number) => void;
   updateCrucibleWithdraw: (crucibleId: string, amount: number) => void;
+  updateCrucibleTVL: (crucibleId: string, amountUSD: number) => void;
   getCrucible: (crucibleId: string) => Crucible | undefined;
   addCrucible: (crucible: Crucible) => void;
 }
@@ -137,6 +138,23 @@ export const CrucibleProvider: React.FC<CrucibleProviderProps> = ({ children }) 
     });
   }, []);
 
+  const updateCrucibleTVL = useCallback((crucibleId: string, amountUSD: number) => {
+    console.log(`CrucibleContext: Updating TVL for ${crucibleId} by ${amountUSD} USD`);
+    setCrucibles(prev => {
+      return prev.map(crucible => {
+        if (crucible.id === crucibleId) {
+          const newTVL = Math.max(0, crucible.tvl + amountUSD); // amountUSD is already in USD
+          console.log(`CrucibleContext: Updated ${crucibleId} TVL from ${crucible.tvl} to ${newTVL}`);
+          return {
+            ...crucible,
+            tvl: newTVL
+          };
+        }
+        return crucible;
+      });
+    });
+  }, []);
+
   const getCrucible = useCallback((crucibleId: string) => {
     return crucibles.find(c => c.id === crucibleId);
   }, [crucibles]);
@@ -156,6 +174,7 @@ export const CrucibleProvider: React.FC<CrucibleProviderProps> = ({ children }) 
     crucibles,
     updateCrucibleDeposit,
     updateCrucibleWithdraw,
+    updateCrucibleTVL,
     getCrucible,
     addCrucible,
   };

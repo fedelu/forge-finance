@@ -491,7 +491,359 @@ export function useSession() {
 // FOGO Sessions Button with Pyron/Brasa Finance style
 export function FogoSessionsButton() {
   const { isEstablished, connect, endSession, walletPublicKey, sessionData, fogoBalance, liveAPYEarnings, refreshBalance, error } = useSession();
-  const { balances } = useBalance();
+  const { balances, updateBalance } = useBalance();
+  
+  // Calculate LP balances from leveraged positions
+  React.useEffect(() => {
+    console.log('🔍 LP Balance Calculation Effect Triggered')
+    console.log('   isEstablished:', isEstablished)
+    console.log('   walletPublicKey:', walletPublicKey?.toBase58())
+    
+    // DON'T reset LP balances here - they might have been just added by deposit modals
+    // We'll only update them if we calculate a different value
+    console.log('🔄 Starting LP balance calculation (preserving existing balances)...')
+    
+    if (!isEstablished || !walletPublicKey) {
+      // Wallet not connected - don't reset balances, just return
+      console.log('🚫 Wallet not connected, skipping LP balance calculation')
+      return
+    }
+
+    const calculateLPBalances = async () => {
+      try {
+        // Double-check: Reset balances first to ensure we start fresh
+        updateBalance('cFOGO/USDC LP', 0)
+        updateBalance('cFORGE/USDC LP', 0)
+        
+        if (!walletPublicKey) {
+          return
+        }
+
+        // Get current wallet address in base58 format (same format used when storing positions)
+        const currentWalletAddress = walletPublicKey.toBase58()
+        
+        // Fetch leveraged positions from all crucibles
+        // Note: In a real implementation, this would be done in a component with proper hooks
+        // For now, we calculate based on stored positions
+        let cFOGO_USDC_LP = 0
+        let cFORGE_USDC_LP = 0
+
+        // Calculate LP tokens from both standard LP positions and leveraged positions
+        // LP token formula: sqrt(cToken_amount * USDC_amount) for constant product
+        
+        // 1. Get standard LP positions from localStorage
+        const standardLPPositions = JSON.parse(localStorage.getItem('lp_positions') || '[]')
+        console.log('📊 Checking standard LP positions:', standardLPPositions.length, 'Current wallet:', currentWalletAddress)
+        
+        // Filter positions strictly by owner - must match exactly AND be open AND have valid data
+        const myStandardPositions = standardLPPositions.filter((position: any) => {
+          const ownerMatch = position.owner === currentWalletAddress || 
+                            position.owner === walletPublicKey.toString()
+          const isActuallyOpen = position.isOpen === true // Strict check
+          const hasValidAmounts = typeof position.baseAmount === 'number' && position.baseAmount > 0 && 
+                                 typeof position.usdcAmount === 'number' && position.usdcAmount > 0
+          
+          // Log each position for debugging
+          if (ownerMatch) {
+            console.log('  Position:', position.id, 'isOpen:', position.isOpen, 'hasValidAmounts:', hasValidAmounts, 'baseAmount:', position.baseAmount, 'usdcAmount:', position.usdcAmount)
+          }
+          
+          return ownerMatch && isActuallyOpen && hasValidAmounts
+        })
+        console.log('📊 My standard LP positions (after filtering):', myStandardPositions.length)
+        
+        myStandardPositions.forEach((position: any) => {
+          // Validate position has required fields
+          if (typeof position.baseAmount === 'number' && position.baseAmount > 0 && 
+              typeof position.usdcAmount === 'number' && position.usdcAmount > 0) {
+            if (position.baseToken === 'FOGO') {
+              // For standard LP: baseAmount becomes cToken via exchange rate, USDC is deposited
+              // Convert base amount to cToken amount
+              const cTokenAmount = position.baseAmount * 1.045 // Exchange rate
+              const baseTokenPrice = 0.5 // FOGO price
+              const cTokenValueUSD = cTokenAmount * baseTokenPrice
+              const usdcAmount = position.usdcAmount
+              // LP tokens = sqrt(cTokenValueUSD * USDCAmount) - both in USD value terms
+              const lpAmount = Math.sqrt(cTokenValueUSD * usdcAmount) || 0
+              cFOGO_USDC_LP += lpAmount
+              console.log('➕ Adding cFOGO/USDC LP:', lpAmount, 'from position:', position.id, 'cTokenValueUSD:', cTokenValueUSD, 'usdcAmount:', usdcAmount)
+            } else if (position.baseToken === 'FORGE') {
+              const cTokenAmount = position.baseAmount * 1.045
+              const baseTokenPrice = 0.002 // FORGE price
+              const cTokenValueUSD = cTokenAmount * baseTokenPrice
+              const usdcAmount = position.usdcAmount
+              const lpAmount = Math.sqrt(cTokenValueUSD * usdcAmount) || 0
+              cFORGE_USDC_LP += lpAmount
+              console.log('➕ Adding cFORGE/USDC LP:', lpAmount, 'from position:', position.id, 'cTokenValueUSD:', cTokenValueUSD, 'usdcAmount:', usdcAmount)
+            }
+          }
+        })
+        
+        // 2. Get leveraged positions from localStorage
+        const leveragedPositions = JSON.parse(localStorage.getItem('leveraged_positions') || '[]')
+        console.log('📊 Checking leveraged positions:', leveragedPositions.length)
+        
+        // Filter positions strictly by owner - must match exactly AND be open AND have valid data
+        const myLeveragedPositions = leveragedPositions.filter((position: any) => {
+          const ownerMatch = position.owner === currentWalletAddress || 
+                            position.owner === walletPublicKey.toString() ||
+                            position.owner === walletPublicKey.toBase58() // Try all formats
+          const isActuallyOpen = position.isOpen === true // Strict check
+          const hasValidAmounts = typeof position.collateral === 'number' && position.collateral > 0 && 
+                                 typeof position.borrowedUSDC === 'number' && position.borrowedUSDC >= 0 // Allow 0 for 2x leverage
+          
+          // Log each position for debugging
+          console.log('  Checking leveraged position:', {
+            id: position.id,
+            positionOwner: position.owner,
+            currentWallet: currentWalletAddress,
+            ownerMatch,
+            isOpen: position.isOpen,
+            isActuallyOpen,
+            hasValidAmounts,
+            collateral: position.collateral,
+            borrowedUSDC: position.borrowedUSDC,
+            leverageFactor: position.leverageFactor,
+            matches: ownerMatch && isActuallyOpen && hasValidAmounts
+          })
+          
+          return ownerMatch && isActuallyOpen && hasValidAmounts
+        })
+        console.log('📊 My leveraged positions (after filtering):', myLeveragedPositions.length, myLeveragedPositions)
+        
+        myLeveragedPositions.forEach((position: any) => {
+          // Validate position has required fields
+          if (typeof position.collateral === 'number' && position.collateral > 0 && 
+              typeof position.borrowedUSDC === 'number' && position.borrowedUSDC >= 0) {
+            console.log('✅ Processing leveraged position:', position.id, position.token, position.collateral, position.borrowedUSDC, 'depositUSDC:', position.depositUSDC)
+            // For leveraged positions: calculate total USDC from leverage factor
+            // For 1.5x: borrowedUSDC = 50%, depositUSDC = 50% (equal amounts)
+            // For 2x: borrowedUSDC = 100%, depositUSDC = 0%
+            const leverageFactor = position.leverageFactor || 2.0
+            const baseTokenPrice = position.token === 'FOGO' ? 0.5 : 0.002
+            const collateralValueUSD = position.collateral * baseTokenPrice
+            
+            // Calculate total USDC needed for the LP position
+            // For leveraged positions: totalUSDC = deposited USDC + borrowed USDC
+            // This represents the actual USDC in the LP pool
+            
+            // Calculate total USDC correctly based on leverage factor
+            // For leveraged positions: we need to reconstruct the original collateral value from borrowedUSDC
+            // borrowedUSDC = originalCollateralValue * (leverageFactor - 1)
+            // So: originalCollateralValue = borrowedUSDC / (leverageFactor - 1)
+            // For 1.5x: borrowedUSDC = 0.5 * originalCollateralValue, so originalCollateralValue = borrowedUSDC / 0.5 = borrowedUSDC * 2
+            // For 2x: borrowedUSDC = 1.0 * originalCollateralValue, so originalCollateralValue = borrowedUSDC
+            
+            let originalCollateralValue: number
+            if (leverageFactor === 1.5) {
+              originalCollateralValue = position.borrowedUSDC / 0.5 // borrowedUSDC = 0.5 * originalCollateralValue
+            } else if (leverageFactor === 2.0) {
+              originalCollateralValue = position.borrowedUSDC // borrowedUSDC = 1.0 * originalCollateralValue
+            } else {
+              originalCollateralValue = collateralValueUSD // Fallback
+            }
+            
+            // Get deposited USDC from position or calculate it
+            // For 1.5x: depositUSDC = 0.5 * originalCollateralValue (equal to borrowedUSDC)
+            // For 2x: depositUSDC = 0
+            let depositUSDC = position.depositUSDC
+            if (depositUSDC === undefined || depositUSDC === null) {
+              if (leverageFactor === 1.5) {
+                depositUSDC = originalCollateralValue * 0.5 // 50% deposited, 50% borrowed
+              } else {
+                depositUSDC = 0 // 2x: all borrowed, nothing deposited
+              }
+            }
+            
+            // Calculate total USDC: deposited + borrowed
+            const totalUSDC = depositUSDC + position.borrowedUSDC
+            
+            // collateralValueUSD is already defined above (line 624)
+            // It represents the collateral value AFTER fee (without exchange rate)
+            
+            // Calculate cToken value (with exchange rate) - for LP token calculation
+            const cTokenAmount = position.collateral * 1.045 // Exchange rate
+            const cTokenValueUSD = cTokenAmount * baseTokenPrice
+            
+            // Calculate LP token amount using constant product formula: LP = sqrt(valueA * valueB)
+            // For LP pools, LP tokens represent a share of the pool
+            // The LP token amount is calculated using the constant product formula
+            const lpTokenAmount = Math.sqrt(cTokenValueUSD * totalUSDC) || 0
+            
+            // Calculate total position value: deposit + borrow - transaction fee
+            // Total = collateral value (after fee) + deposited USDC + borrowed USDC
+            // This represents: What I deposit + what I borrow - transaction fee
+            const totalPositionValue = collateralValueUSD + totalUSDC
+            
+            // The LP token value should represent the total position value
+            // LP tokens represent a share of the total liquidity in the pool
+            // So the value of LP tokens = total liquidity = cTokenValueUSD + totalUSDC
+            // But we want to show deposit + borrow - fee, so use collateralValueUSD (without exchange rate) + totalUSDC
+            const lpTokenValue = totalPositionValue
+            
+            if (position.token === 'FOGO') {
+              // Store LP token value (total position value) as LP balance
+              // This is what the user sees in their wallet: deposit + borrow - fee
+              cFOGO_USDC_LP += lpTokenValue
+              console.log('➕ Adding leveraged cFOGO/USDC LP value:', lpTokenValue, 'from position:', position.id, 'collateral:', position.collateral, 'depositUSDC:', depositUSDC, 'borrowedUSDC:', position.borrowedUSDC, 'totalUSDC:', totalUSDC, 'collateralValueUSD:', collateralValueUSD, 'cTokenValueUSD:', cTokenValueUSD, 'totalPositionValue:', totalPositionValue, 'lpTokenAmount:', lpTokenAmount, 'lpTokenValue:', lpTokenValue, 'leverage:', leverageFactor)
+            } else if (position.token === 'FORGE') {
+              // collateralValueUSD is already defined above (same calculation for both tokens)
+              // Calculate LP token value (total position value)
+              const totalPositionValueForge = collateralValueUSD + totalUSDC
+              const lpTokenAmountForge = Math.sqrt(cTokenValueUSD * totalUSDC) || 0
+              const lpTokenValueForge = totalPositionValueForge
+              cFORGE_USDC_LP += lpTokenValueForge
+              console.log('➕ Adding leveraged cFORGE/USDC LP value:', lpTokenValueForge, 'from position:', position.id, 'collateral:', position.collateral, 'depositUSDC:', depositUSDC, 'borrowedUSDC:', position.borrowedUSDC, 'totalUSDC:', totalUSDC, 'collateralValueUSD:', collateralValueUSD, 'cTokenValueUSD:', cTokenValueUSD, 'totalPositionValue:', totalPositionValueForge, 'lpTokenAmount:', lpTokenAmountForge, 'lpTokenValue:', lpTokenValueForge, 'leverage:', leverageFactor)
+            }
+          }
+        })
+        
+        console.log('💰 Final LP balances - cFOGO/USDC:', cFOGO_USDC_LP, 'cFORGE/USDC:', cFORGE_USDC_LP)
+        
+        // ALWAYS update balances with calculated values from positions
+        // This is the single source of truth for LP balances
+        console.log('💾 Updating BalanceContext with calculated positions: cFOGO/USDC LP =', cFOGO_USDC_LP, 'cFORGE/USDC LP =', cFORGE_USDC_LP)
+        updateBalance('cFOGO/USDC LP', cFOGO_USDC_LP)
+        updateBalance('cFORGE/USDC LP', cFORGE_USDC_LP)
+        console.log('✅ LP balances updated in BalanceContext')
+        
+        // DEVELOPMENT: Auto-cleanup stale positions (positions with invalid data or zero amounts)
+        // This helps remove test positions or corrupted data
+        let cleanedStandard = false
+        let cleanedLeveraged = false
+        
+        if (myStandardPositions.length > 0) {
+          const invalidStandard = standardLPPositions.filter((position: any) => {
+            const ownerMatch = position.owner === currentWalletAddress || 
+                              position.owner === walletPublicKey.toString()
+            if (!ownerMatch) return false
+            
+            // Mark as invalid if it's open but has zero or invalid amounts
+            const hasZeroAmounts = !position.baseAmount || position.baseAmount <= 0 || 
+                                  !position.usdcAmount || position.usdcAmount <= 0
+            return position.isOpen === true && hasZeroAmounts
+          })
+          
+          if (invalidStandard.length > 0) {
+            console.log('🧹 Cleaning up invalid standard LP positions:', invalidStandard.map((p: any) => p.id))
+            const validPositions = standardLPPositions.filter((position: any) => {
+              const isInvalid = invalidStandard.some((inv: any) => inv.id === position.id)
+              return !isInvalid
+            })
+            localStorage.setItem('lp_positions', JSON.stringify(validPositions))
+            cleanedStandard = true
+          }
+        }
+        
+        if (myLeveragedPositions.length > 0) {
+          const invalidLeveraged = leveragedPositions.filter((position: any) => {
+            const ownerMatch = position.owner === currentWalletAddress || 
+                              position.owner === walletPublicKey.toString()
+            if (!ownerMatch) return false
+            
+            // Mark as invalid if it's open but has zero or invalid amounts
+            const hasZeroAmounts = !position.collateral || position.collateral <= 0 || 
+                                  !position.borrowedUSDC || position.borrowedUSDC <= 0
+            return position.isOpen === true && hasZeroAmounts
+          })
+          
+          if (invalidLeveraged.length > 0) {
+            console.log('🧹 Cleaning up invalid leveraged positions:', invalidLeveraged.map((p: any) => p.id))
+            const validPositions = leveragedPositions.filter((position: any) => {
+              const isInvalid = invalidLeveraged.some((inv: any) => inv.id === position.id)
+              return !isInvalid
+            })
+            localStorage.setItem('leveraged_positions', JSON.stringify(validPositions))
+            cleanedLeveraged = true
+          }
+        }
+        
+        // If we cleaned up invalid positions, recalculate
+        if (cleanedStandard || cleanedLeveraged) {
+          console.log('🔄 Recalculating after cleanup...')
+          setTimeout(() => calculateLPBalances(), 200)
+          return // Exit early, recalculation will happen
+        }
+        
+        // DEVELOPMENT: Log positions for debugging
+        if (myStandardPositions.length > 0 || myLeveragedPositions.length > 0) {
+          console.warn('⚠️ Found open positions in localStorage. If these should be closed:')
+          console.warn('   1. Go to Portfolio page and close them through the UI')
+          console.warn('   2. Or run: localStorage.removeItem("lp_positions") and localStorage.removeItem("leveraged_positions") in console')
+          console.warn('   3. Or add a cleanup button (coming soon)')
+          console.warn('   Positions found:', {
+            standard: myStandardPositions.map((p: any) => ({ id: p.id, baseAmount: p.baseAmount, usdcAmount: p.usdcAmount })),
+            leveraged: myLeveragedPositions.map((p: any) => ({ id: p.id, collateral: p.collateral, borrowedUSDC: p.borrowedUSDC }))
+          })
+        }
+      } catch (error) {
+        console.error('❌ Error calculating LP balances:', error)
+        // On error, ALWAYS reset to 0
+        updateBalance('cFOGO/USDC LP', 0)
+        updateBalance('cFORGE/USDC LP', 0)
+      }
+    }
+    
+    // Run calculation immediately - don't wait
+    calculateLPBalances()
+    
+    // Also run after multiple delays to catch any async updates
+    const timeoutId1 = setTimeout(() => {
+      console.log('🔄 Recalculating LP balances after 100ms...')
+      calculateLPBalances()
+    }, 100)
+    
+    const timeoutId2 = setTimeout(() => {
+      console.log('🔄 Recalculating LP balances after 500ms...')
+      calculateLPBalances()
+    }, 500)
+    
+    const timeoutId3 = setTimeout(() => {
+      console.log('🔄 Recalculating LP balances after 1000ms...')
+      calculateLPBalances()
+    }, 1000)
+    
+    // Listen for leveraged position changes - calculate after a short delay
+    // This ensures localStorage is fully updated before we read it
+    const handleLVFChange = () => {
+      console.log('🔄 Position changed, recalculating LP balances...')
+      // Delay slightly to ensure localStorage is fully written
+      setTimeout(() => {
+        calculateLPBalances()
+      }, 100)
+    }
+    
+    window.addEventListener('lvfPositionOpened', handleLVFChange)
+    window.addEventListener('lvfPositionClosed', handleLVFChange)
+    window.addEventListener('lpPositionOpened', handleLVFChange)
+    window.addEventListener('lpPositionClosed', handleLVFChange)
+    
+    // Also listen for storage changes (in case localStorage is updated elsewhere)
+    const handleStorageChange = (e: StorageEvent | Event) => {
+      const key = (e as StorageEvent).key
+      if (key === 'lp_positions' || key === 'leveraged_positions' || (e as CustomEvent).type === 'forceRecalculateLP') {
+        console.log('🔄 Storage changed, recalculating LP balances...')
+        // Delay slightly to ensure localStorage is fully written
+        setTimeout(() => {
+          calculateLPBalances()
+        }, 100)
+      }
+    }
+    window.addEventListener('storage', handleStorageChange)
+    window.addEventListener('forceRecalculateLP', handleStorageChange)
+    
+    return () => {
+      clearTimeout(timeoutId1)
+      clearTimeout(timeoutId2)
+      clearTimeout(timeoutId3)
+      window.removeEventListener('lvfPositionOpened', handleLVFChange)
+      window.removeEventListener('lvfPositionClosed', handleLVFChange)
+      window.removeEventListener('lpPositionOpened', handleLVFChange)
+      window.removeEventListener('lpPositionClosed', handleLVFChange)
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('forceRecalculateLP', handleStorageChange)
+    }
+  }, [isEstablished, walletPublicKey, updateBalance])
   const [isConnecting, setIsConnecting] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
@@ -499,6 +851,101 @@ export function FogoSessionsButton() {
   const [recipientAddress, setRecipientAddress] = useState('');
   const [sendAmount, setSendAmount] = useState('');
   const walletPopupRef = useRef<HTMLDivElement>(null);
+  
+  // Force recalculate LP balances when wallet popup opens
+  useEffect(() => {
+    if (isOpen && isEstablished && walletPublicKey) {
+      console.log('📱 Wallet popup opened - forcing LP balance recalculation...')
+      // Force update to 0 first, then recalculate
+      updateBalance('cFOGO/USDC LP', 0)
+      updateBalance('cFORGE/USDC LP', 0)
+      
+      // Recalculate after a short delay
+      setTimeout(() => {
+        const currentWalletAddress = walletPublicKey.toBase58()
+        let cFOGO_USDC_LP = 0
+        let cFORGE_USDC_LP = 0
+        
+        // Check standard LP positions
+        const standardLPPositions = JSON.parse(localStorage.getItem('lp_positions') || '[]')
+        const myStandardPositions = standardLPPositions.filter((position: any) => {
+          const ownerMatch = position.owner === currentWalletAddress || 
+                            position.owner === walletPublicKey.toString()
+          return ownerMatch && position.isOpen === true
+        })
+        
+        myStandardPositions.forEach((position: any) => {
+          if (typeof position.baseAmount === 'number' && position.baseAmount > 0 && 
+              typeof position.usdcAmount === 'number' && position.usdcAmount > 0) {
+            const baseTokenPrice = position.baseToken === 'FOGO' ? 0.5 : 0.002
+            const tokenCollateralValue = position.baseAmount * baseTokenPrice
+            const usdcAmount = position.usdcAmount
+            
+            // For standard LP positions, total position value = token collateral + USDC
+            const totalPositionValue = tokenCollateralValue + usdcAmount
+            
+            if (position.baseToken === 'FOGO') {
+              cFOGO_USDC_LP += totalPositionValue
+            } else if (position.baseToken === 'FORGE') {
+              cFORGE_USDC_LP += totalPositionValue
+            }
+          }
+        })
+        
+        // Check leveraged positions
+        const leveragedPositions = JSON.parse(localStorage.getItem('leveraged_positions') || '[]')
+        const myLeveragedPositions = leveragedPositions.filter((position: any) => {
+          const ownerMatch = position.owner === currentWalletAddress || 
+                            position.owner === walletPublicKey.toString()
+          return ownerMatch && position.isOpen === true
+        })
+        
+        myLeveragedPositions.forEach((position: any) => {
+          if (typeof position.collateral === 'number' && position.collateral > 0) {
+            const leverageFactor = position.leverageFactor || 2.0
+            const baseTokenPrice = position.token === 'FOGO' ? 0.5 : 0.002
+            const collateralValueUSD = position.collateral * baseTokenPrice
+            
+            // Reconstruct original collateral value from borrowedUSDC
+            let originalCollateralValue: number
+            if (leverageFactor === 1.5) {
+              originalCollateralValue = (position.borrowedUSDC || 0) / 0.5
+            } else if (leverageFactor === 2.0) {
+              originalCollateralValue = position.borrowedUSDC || 0
+            } else {
+              originalCollateralValue = collateralValueUSD
+            }
+            
+            // Calculate deposited USDC
+            let depositUSDC = position.depositUSDC
+            if (depositUSDC === undefined || depositUSDC === null) {
+              if (leverageFactor === 1.5) {
+                depositUSDC = originalCollateralValue * 0.5
+              } else {
+                depositUSDC = 0
+              }
+            }
+            
+            const borrowedUSDC = position.borrowedUSDC || 0
+            const totalUSDC = depositUSDC + borrowedUSDC
+            
+            // Calculate total position value: deposit + borrow - transaction fee
+            const totalPositionValue = collateralValueUSD + totalUSDC
+            
+            if (position.token === 'FOGO') {
+              cFOGO_USDC_LP += totalPositionValue
+            } else if (position.token === 'FORGE') {
+              cFORGE_USDC_LP += totalPositionValue
+            }
+          }
+        })
+        
+        console.log('📱 Wallet popup - Recalculated LP balances:', cFOGO_USDC_LP, cFORGE_USDC_LP)
+        updateBalance('cFOGO/USDC LP', cFOGO_USDC_LP)
+        updateBalance('cFORGE/USDC LP', cFORGE_USDC_LP)
+      }, 100)
+    }
+  }, [isOpen, isEstablished, walletPublicKey, updateBalance])
 
   // Listen for balance updates from crucible operations
   useEffect(() => {
@@ -551,6 +998,52 @@ export function FogoSessionsButton() {
       console.error('Error during disconnect:', e);
     } finally {
       setIsDisconnecting(false);
+    }
+  };
+
+  const handleClearAllPositions = () => {
+    if (!walletPublicKey) return
+    
+    const currentWalletAddress = walletPublicKey.toBase58()
+    
+    // Confirm action
+    if (!window.confirm('⚠️ Clear ALL LP and leveraged positions from localStorage?\n\nThis will remove all positions for this wallet. This action cannot be undone.')) {
+      return
+    }
+    
+    try {
+      // Clear standard LP positions for this wallet
+      const standardLPPositions = JSON.parse(localStorage.getItem('lp_positions') || '[]')
+      const filteredStandard = standardLPPositions.filter((position: any) => {
+        const ownerMatch = position.owner === currentWalletAddress || 
+                          position.owner === walletPublicKey.toString()
+        return !ownerMatch // Keep positions that DON'T match this wallet
+      })
+      localStorage.setItem('lp_positions', JSON.stringify(filteredStandard))
+      
+      // Clear leveraged positions for this wallet
+      const leveragedPositions = JSON.parse(localStorage.getItem('leveraged_positions') || '[]')
+      const filteredLeveraged = leveragedPositions.filter((position: any) => {
+        const ownerMatch = position.owner === currentWalletAddress || 
+                          position.owner === walletPublicKey.toString()
+        return !ownerMatch // Keep positions that DON'T match this wallet
+      })
+      localStorage.setItem('leveraged_positions', JSON.stringify(filteredLeveraged))
+      
+      console.log('🧹 Cleared all positions for wallet:', currentWalletAddress)
+      
+      // Reset LP balances to 0
+      updateBalance('cFOGO/USDC LP', 0)
+      updateBalance('cFORGE/USDC LP', 0)
+      
+      // Trigger recalculation
+      window.dispatchEvent(new CustomEvent('lpPositionClosed'))
+      window.dispatchEvent(new CustomEvent('lvfPositionClosed'))
+      
+      alert('✅ All positions cleared! LP balances reset to 0.')
+    } catch (error) {
+      console.error('❌ Error clearing positions:', error)
+      alert('❌ Error clearing positions. Check console for details.')
     }
   };
 
@@ -612,24 +1105,25 @@ export function FogoSessionsButton() {
                      className="wallet-popup-content bg-gradient-to-br from-fogo-gray-900 via-fogo-gray-800 to-fogo-gray-900 rounded-3xl shadow-2xl border border-fogo-primary/30 w-80 max-h-[90vh] overflow-hidden backdrop-blur-xl flex flex-col"
                    >
             {/* Header */}
-            <div className="bg-gradient-to-r from-fogo-primary via-fogo-accent to-fogo-secondary p-6">
-              <div className="flex items-center justify-between">
+            <div className="relative bg-gradient-to-r from-fogo-primary via-fogo-primary to-fogo-secondary p-6 overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse"></div>
+              <div className="relative flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                    <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
+                  <div className="relative w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm ring-2 ring-white/10 hover:ring-white/20 transition-all duration-300">
+                    <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M14.724 0h-8.36L5.166 4.804h-3.61L.038 10.898a1.28 1.28 0 0 0 1.238 1.591h3.056L1.465 24l9.744-10.309c.771-.816.195-2.162-.925-2.162h-4.66l1.435-5.765h7.863l1.038-4.172A1.28 1.28 0 0 0 14.723 0ZM26.09 18.052h-2.896V5.58h9.086v2.525h-6.19v2.401h5.636v2.525H26.09v5.02Zm13.543.185c-1.283 0-2.404-.264-3.365-.793a5.603 5.603 0 0 1-2.24-2.233c-.533-.96-.8-2.09-.8-3.394 0-1.304.267-2.451.8-3.41a5.55 5.55 0 0 1 2.24-2.225c.96-.523 2.08-.785 3.365-.785 1.285 0 2.42.259 3.381.777a5.474 5.474 0 0 1 2.233 2.218c.528.96.793 2.1.793 3.425 0 1.324-.268 2.437-.801 3.403a5.56 5.56 0 0 1-2.24 2.233c-.961.523-2.081.785-3.366.785v-.001Zm.016-2.525c1.118 0 1.98-.353 2.586-1.062.606-.708.91-1.652.91-2.833 0-1.182-.304-2.137-.91-2.84-.605-.704-1.473-1.055-2.602-1.055-1.128 0-1.984.351-2.595 1.054-.61.704-.916 1.645-.916 2.825 0 1.18.306 2.14.916 2.85.61.708 1.48 1.061 2.61 1.061Zm13.703 2.525c-1.211 0-2.28-.27-3.203-.808a5.647 5.647 0 0 1-2.163-2.256c-.517-.964-.776-2.079-.776-3.34 0-1.263.267-2.423.8-3.388a5.635 5.635 0 0 1 2.256-2.249c.97-.533 2.096-.801 3.38-.801 1.057 0 1.992.182 2.803.547a5.017 5.017 0 0 1 1.986 1.563c.513.677.837 1.489.971 2.432H56.39c-.103-.626-.394-1.113-.878-1.463-.482-.348-1.103-.523-1.863-.523-.718 0-1.344.16-1.878.476-.533.32-.945.77-1.231 1.356-.288.584-.43 1.277-.43 2.078 0 .801.148 1.515.445 2.11a3.27 3.27 0 0 0 1.262 1.379c.544.322 1.186.485 1.925.485.544 0 1.03-.084 1.454-.253.426-.17.762-.4 1.009-.693a1.5 1.5 0 0 0 .37-.993v-.37H53.51V11.31h3.865c.677 0 1.185.161 1.525.485.337.323.507.808.507 1.455v4.804h-2.648V16.73h-.077c-.299.503-.724.88-1.278 1.132-.554.252-1.237.377-2.048.377l-.003-.001Zm13.911 0c-1.283 0-2.405-.264-3.366-.793a5.603 5.603 0 0 1-2.24-2.233c-.533-.96-.8-2.09-.8-3.394 0-1.304.267-2.451.8-3.41a5.55 5.55 0 0 1 2.24-2.225c.961-.523 2.081-.785 3.366-.785 1.284 0 2.42.259 3.38.777a5.474 5.474 0 0 1 2.234 2.218c.528.96.792 2.1.792 3.425 0 1.324-.268 2.437-.801 3.403a5.56 5.56 0 0 1-2.24 2.233c-.96.523-2.08.785-3.365.785v-.001Zm.015-2.525c1.118 0 1.981-.353 2.587-1.062.605-.708.909-1.652.909-2.833 0-1.182-.304-2.137-.91-2.84-.605-.704-1.473-1.055-2.601-1.055-1.129 0-1.985.351-2.595 1.054-.611.704-.916 1.645-.916 2.825 0 1.18.305 2.14.916 2.85.61.708 1.48 1.061 2.61 1.061Z" />
                     </svg>
                   </div>
                   <div>
-                    <div className="font-inter-bold text-lg text-white">FOGO Wallet</div>
-                    <div className="text-sm text-white/80 font-mono">{shortAddress}</div>
+                    <div className="font-inter-bold text-xl text-white">FOGO Wallet</div>
+                    <div className="text-sm text-white/90 font-mono font-medium">{shortAddress}</div>
                   </div>
                 </div>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="p-2 hover:bg-white/20 rounded-xl transition-all duration-200 group"
+                  className="p-2 hover:bg-white/20 rounded-xl transition-all duration-200 group hover:scale-110"
                 >
-                  <svg className="w-5 h-5 text-white group-hover:rotate-90 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-white group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
@@ -638,58 +1132,70 @@ export function FogoSessionsButton() {
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-6 bg-fogo-gray-900">
-              {/* Token Balances */}
-              <div className="space-y-3 mb-4">
-                {balances.filter(balance => ['FOGO', 'USDC', 'FORGE', 'cFOGO', 'cFORGE'].includes(balance.symbol)).map((balance) => (
-                  <div key={balance.symbol} className="bg-gradient-to-br from-fogo-gray-800 to-fogo-gray-900 rounded-2xl p-4 border border-fogo-primary/30">
-                    <div className="flex items-center justify-between mb-2">
+            {/* Token Balances */}
+            <div className="space-y-4 mb-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-inter-bold text-white">Assets</h3>
+                <div className="w-2 h-2 bg-fogo-success rounded-full animate-pulse" title="Live"></div>
+              </div>
+              {balances.filter(balance => ['FOGO', 'USDC', 'FORGE', 'cFOGO', 'cFORGE', 'cFOGO/USDC LP', 'cFORGE/USDC LP'].includes(balance.symbol)).map((balance) => (
+                  <div 
+                    key={balance.symbol} 
+                    className="group bg-gradient-to-br from-fogo-gray-800/80 via-fogo-gray-800 to-fogo-gray-900/80 rounded-2xl p-5 border border-fogo-gray-700/50 hover:border-fogo-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-fogo-primary/10 hover:-translate-y-0.5 backdrop-blur-sm"
+                  >
+                    <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
+                        <div className="relative w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden bg-gradient-to-br from-fogo-gray-700 to-fogo-gray-800 ring-2 ring-fogo-gray-600/50 group-hover:ring-fogo-primary/30 transition-all duration-300">
                           {balance.symbol === 'FOGO' ? (
                             <img 
                               src="/fogo-logo.png" 
                               alt="FOGO" 
-                              className="w-8 h-8 object-contain"
+                              className="w-full h-full object-contain p-1 group-hover:scale-110 transition-transform duration-300"
                             />
                           ) : balance.symbol === 'FORGE' ? (
                             <img 
                               src="/forgo logo straight.png" 
                               alt="FORGE" 
-                              className="w-8 h-8 object-contain"
+                              className="w-full h-full object-contain p-1 group-hover:scale-110 transition-transform duration-300"
                             />
                           ) : balance.symbol === 'cFOGO' ? (
                             <img 
                               src="/fogo-logo.png" 
                               alt="cFOGO" 
-                              className="w-8 h-8 object-contain"
+                              className="w-full h-full object-contain p-1 group-hover:scale-110 transition-transform duration-300"
                             />
                           ) : balance.symbol === 'cFORGE' ? (
                             <img 
                               src="/forgo logo straight.png" 
                               alt="cFORGE" 
-                              className="w-8 h-8 object-contain"
+                              className="w-full h-full object-contain p-1 group-hover:scale-110 transition-transform duration-300"
                             />
                           ) : balance.symbol === 'USDC' ? (
                             <img 
                               src="/usd-coin-usdc-logo-last.png" 
                               alt="USDC" 
-                              className="w-8 h-8 object-contain"
+                              className="w-full h-full object-contain p-1 group-hover:scale-110 transition-transform duration-300"
                             />
                           ) : (
-                            <div className="w-8 h-8 bg-gradient-to-r from-fogo-primary to-fogo-secondary rounded-lg flex items-center justify-center">
-                              <span className="text-white font-bold text-sm">{balance.symbol.charAt(0)}</span>
+                            <div className="w-full h-full bg-gradient-to-br from-fogo-primary/20 to-fogo-secondary/20 rounded-xl flex items-center justify-center group-hover:from-fogo-primary/30 group-hover:to-fogo-secondary/30 transition-all duration-300">
+                              <span className="text-fogo-primary font-bold text-xs">{balance.symbol.charAt(0)}</span>
                             </div>
                           )}
                         </div>
-                        <div className="text-sm font-medium text-fogo-gray-400">{balance.symbol}</div>
+                        <div>
+                          <div className="text-sm font-semibold text-fogo-gray-300 group-hover:text-white transition-colors duration-200">
+                            {balance.symbol}
+                          </div>
+                        </div>
                       </div>
-                      <div className="w-2 h-2 bg-fogo-primary rounded-full animate-pulse"></div>
                     </div>
-                    <div className="text-xl font-inter-bold text-fogo-gray-50 mb-1">
-                      {balance.amount.toFixed(2)}
-                    </div>
-                    <div className="text-sm font-inter-light text-fogo-gray-400">
-                      ≈ ${balance.usdValue.toFixed(2)} USD
+                    <div className="space-y-1">
+                      <div className="text-2xl font-inter-bold text-white group-hover:text-fogo-primary-light transition-colors duration-200">
+                        {balance.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </div>
+                      <div className="text-sm font-inter-light text-fogo-gray-400">
+                        ≈ ${balance.usdValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -698,23 +1204,38 @@ export function FogoSessionsButton() {
             </div>
 
               {/* Action Buttons - Fixed at bottom */}
-              <div className="p-6 border-t border-fogo-gray-700 bg-fogo-gray-900 space-y-3">
+              <div className="p-6 border-t border-fogo-gray-700/50 bg-gradient-to-t from-fogo-gray-900 via-fogo-gray-900 to-transparent space-y-3 backdrop-blur-sm">
                 {/* Get Tokens Button */}
                 <button
                   onClick={openFaucet}
-                  className="w-full flex items-center justify-center space-x-3 p-4 bg-gradient-to-r from-fogo-primary to-fogo-secondary hover:from-fogo-primary-dark hover:to-fogo-secondary-dark text-white rounded-2xl transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                  className="group relative w-full flex items-center justify-center space-x-3 p-4 bg-gradient-to-r from-fogo-primary via-fogo-primary to-fogo-secondary hover:from-fogo-primary-dark hover:via-fogo-primary hover:to-fogo-secondary-dark text-white rounded-2xl transition-all duration-300 font-semibold shadow-lg hover:shadow-xl hover:shadow-fogo-primary/20 transform hover:-translate-y-1 border border-fogo-primary/20 hover:border-fogo-primary/40 overflow-hidden"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 -translate-x-full group-hover:translate-x-full"></div>
+                  <svg className="w-5 h-5 relative z-10 transform group-hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
-                  <span className="font-inter">Get FOGO Tokens</span>
+                  <span className="font-inter relative z-10">Get FOGO Tokens</span>
+                </button>
+
+                {/* Clear All Positions Button */}
+                <button
+                  onClick={handleClearAllPositions}
+                  className="w-full flex items-center justify-center space-x-2 p-4 bg-gradient-to-r from-fogo-warning/10 via-fogo-warning/5 to-fogo-warning/10 hover:from-fogo-warning/20 hover:via-fogo-warning/10 hover:to-fogo-warning/20 text-fogo-warning hover:text-fogo-warning-light rounded-2xl transition-all duration-300 font-medium border border-fogo-warning/20 hover:border-fogo-warning/40 transform hover:-translate-y-0.5"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  <span className="font-inter">Clear All Positions</span>
                 </button>
 
                 {/* Disconnect Button */}
                 <button
                   onClick={handleDisconnect}
-                  className="w-full p-4 bg-fogo-gray-800 hover:bg-fogo-gray-700 text-fogo-gray-300 hover:text-white rounded-2xl transition-all duration-200 font-medium border border-fogo-gray-600 hover:border-fogo-gray-500"
+                  className="w-full flex items-center justify-center space-x-2 p-4 bg-gradient-to-r from-fogo-gray-800/80 to-fogo-gray-800/60 hover:from-fogo-gray-700 hover:to-fogo-gray-700 text-fogo-gray-300 hover:text-white rounded-2xl transition-all duration-300 font-medium border border-fogo-gray-600/50 hover:border-fogo-gray-500 transform hover:-translate-y-0.5"
                 >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
                   <span className="font-inter">Disconnect Wallet</span>
                 </button>
               </div>

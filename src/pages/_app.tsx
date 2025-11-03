@@ -1,8 +1,9 @@
 import '../styles/globals.css'
 import type { AppProps } from 'next/app'
 import { useEffect, useState } from 'react'
-import { createFogoSessionClient } from '../lib/fogoSession'
-import { FogoSessionsProvider } from '../components/FogoSessions'
+// Defer importing Fogo session client to the browser to avoid SSR module incompatibilities
+import dynamic from 'next/dynamic'
+const FogoSessionsProvider = dynamic(() => import('../components/FogoSessions').then(m => m.FogoSessionsProvider), { ssr: false })
 // Removed simulation mode and demo config
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -15,9 +16,12 @@ export default function App({ Component, pageProps }: AppProps) {
     // Initialize Fogo Sessions client client-side only
     console.log('🔥 Initializing Fogo Sessions client...');
     
-    const sessionClient = createFogoSessionClient();
-    setFogoClient(sessionClient);
-    console.log("✅ Fogo session client initialized", sessionClient);
+    (async () => {
+      const { createFogoSessionClient } = await import('../lib/fogoSession')
+      const sessionClient = createFogoSessionClient();
+      setFogoClient(sessionClient);
+      console.log("✅ Fogo session client initialized", sessionClient);
+    })();
     
     setMounted(true)
   }, [])

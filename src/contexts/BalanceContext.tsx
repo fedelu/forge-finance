@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useCallback, useMemo } from 'react';
 
 interface TokenBalance {
   symbol: string;
@@ -38,14 +38,34 @@ export const BalanceProvider: React.FC<BalanceProviderProps> = ({ children }) =>
     { symbol: 'cFOGO', amount: 0, usdValue: 0 }, // Start with 0 cFOGO (worth $0.5224 each)
     { symbol: 'cFORGE', amount: 0, usdValue: 0 }, // Start with 0 cFORGE (worth $0.0025 each)
     { symbol: 'SOL', amount: 0, usdValue: 0 }, // Start with 0 SOL
-    { symbol: 'USDC', amount: 0, usdValue: 0 }, // Start with 0 USDC
+    { symbol: 'USDC', amount: 10000, usdValue: 10000 }, // Start with 10,000 USDC
     { symbol: 'ETH', amount: 0, usdValue: 0 }, // Start with 0 ETH
     { symbol: 'BTC', amount: 0, usdValue: 0 }, // Start with 0 BTC
+    { symbol: 'cFOGO/USDC LP', amount: 0, usdValue: 0 }, // Initialize LP tokens to 0
+    { symbol: 'cFORGE/USDC LP', amount: 0, usdValue: 0 }, // Initialize LP tokens to 0
   ]);
   
   const [wrappedFogo, setWrappedFogo] = useState<number>(0);
 
-  const updateBalance = (symbol: string, amount: number) => {
+  const getTokenPrice = useCallback((symbol: string): number => {
+    const prices: { [key: string]: number } = {
+      'FOGO': 0.5,
+      'FORGE': 0.002,
+      'cFOGO': 0.5224,  // cFOGO is worth more than FOGO due to accumulated value
+      'cFORGE': 0.0025, // cFORGE is worth more than FORGE due to accumulated value
+      'SOL': 200,
+      'USDC': 1,
+      'ETH': 4000,
+      'BTC': 110000,
+      'SPARK': 0.1,
+      'HEAT': 0.05,
+      'cFOGO/USDC LP': 1.0, // LP token price (calculated from underlying assets)
+      'cFORGE/USDC LP': 1.0, // LP token price (calculated from underlying assets)
+    };
+    return prices[symbol] || 0;
+  }, []);
+
+  const updateBalance = useCallback((symbol: string, amount: number) => {
     setBalances(prev => {
       const existingIndex = prev.findIndex(b => b.symbol === symbol);
       if (existingIndex >= 0) {
@@ -60,9 +80,9 @@ export const BalanceProvider: React.FC<BalanceProviderProps> = ({ children }) =>
         return [...prev, { symbol, amount, usdValue: amount * getTokenPrice(symbol) }];
       }
     });
-  };
+  }, [getTokenPrice]);
 
-  const addToBalance = (symbol: string, amount: number) => {
+  const addToBalance = useCallback((symbol: string, amount: number) => {
     console.log(`BalanceContext: Adding ${amount} ${symbol}`);
     setBalances(prev => {
       const existingIndex = prev.findIndex(b => b.symbol === symbol);
@@ -81,9 +101,9 @@ export const BalanceProvider: React.FC<BalanceProviderProps> = ({ children }) =>
         return [...prev, { symbol, amount, usdValue: amount * getTokenPrice(symbol) }];
       }
     });
-  };
+  }, [getTokenPrice]);
 
-  const subtractFromBalance = (symbol: string, amount: number) => {
+  const subtractFromBalance = useCallback((symbol: string, amount: number) => {
     console.log(`BalanceContext: Subtracting ${amount} ${symbol}`);
     setBalances(prev => {
       const existingIndex = prev.findIndex(b => b.symbol === symbol);
@@ -101,50 +121,33 @@ export const BalanceProvider: React.FC<BalanceProviderProps> = ({ children }) =>
       console.log(`BalanceContext: Token ${symbol} not found for subtraction`);
       return prev;
     });
-  };
+  }, [getTokenPrice]);
 
-  const getBalance = (symbol: string): number => {
-    const balance = balances.find(b => b.symbol === symbol);
-    return balance ? balance.amount : 0;
-  };
+  const getBalance = useCallback((symbol: string): number => {
+    return balances.find(b => b.symbol === symbol)?.amount || 0;
+  }, [balances]);
 
-  const addWrappedFogo = (amount: number) => {
+  const addWrappedFogo = useCallback((amount: number) => {
     setWrappedFogo(prev => prev + amount);
-  };
+  }, []);
 
-  const subtractWrappedFogo = (amount: number) => {
+  const subtractWrappedFogo = useCallback((amount: number) => {
     setWrappedFogo(prev => Math.max(0, prev - amount));
-  };
+  }, []);
 
-  const getTokenPrice = (symbol: string): number => {
-    const prices: { [key: string]: number } = {
-      'FOGO': 0.5,
-      'FORGE': 0.002,
-      'cFOGO': 0.5224,  // cFOGO is worth more than FOGO due to accumulated value
-      'cFORGE': 0.0025, // cFORGE is worth more than FORGE due to accumulated value
-      'SOL': 200,
-      'USDC': 1,
-      'ETH': 4000,
-      'BTC': 110000,
-      'SPARK': 0.1,
-      'HEAT': 0.05,
-    };
-    return prices[symbol] || 0;
-  };
+  const contextValue = useMemo(() => ({
+    balances,
+    updateBalance,
+    addToBalance,
+    subtractFromBalance,
+    getBalance,
+    wrappedFogo,
+    addWrappedFogo,
+    subtractWrappedFogo,
+  }), [balances, updateBalance, addToBalance, subtractFromBalance, wrappedFogo, addWrappedFogo, subtractWrappedFogo]);
 
   return (
-    <BalanceContext.Provider
-      value={{
-        balances,
-        updateBalance,
-        addToBalance,
-        subtractFromBalance,
-        getBalance,
-        wrappedFogo,
-        addWrappedFogo,
-        subtractWrappedFogo,
-      }}
-    >
+    <BalanceContext.Provider value={contextValue}>
       {children}
     </BalanceContext.Provider>
   );

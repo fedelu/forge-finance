@@ -142,13 +142,12 @@ export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onCl
               <div>• Wrap your {crucible?.baseToken} tokens to earn yield-bearing {crucible?.ptokenSymbol}</div>
               <div>• Exchange rate: <span className="text-fogo-primary font-semibold">1 {crucible?.baseToken} = 1 {crucible?.ptokenSymbol}</span> (at deposit)</div>
               <div>• {crucible?.baseToken} price: <span className="text-white font-semibold">${crucible?.baseToken === 'FOGO' ? '0.50' : '0.002'} USD</span></div>
-              <div>• {crucible?.ptokenSymbol} price: <span className="text-fogo-accent font-semibold">${(() => {
+              <div>• {crucible?.ptokenSymbol} price: <span className="text-fogo-accent font-semibold">{(() => {
                 const hasDeposits = (crucible?.totalWrapped || BigInt(0)) > BigInt(0);
                 const exchangeRate = hasDeposits ? (crucible?.exchangeRate || RATE_SCALE) : RATE_SCALE;
-                const baseTokenPrice = crucible?.baseToken === 'FOGO' ? 0.5 : 0.002;
-                const currentPrice = getCTokenPrice(baseTokenPrice, exchangeRate);
-                return currentPrice.toFixed(4);
-              })()} USD</span> {(() => {
+                const exchangeRateDecimal = Number(exchangeRate) / Number(RATE_SCALE);
+                return `${exchangeRateDecimal.toFixed(4)} ${crucible?.baseToken}`;
+              })()}</span> {(() => {
                 const hasDeposits = (crucible?.totalWrapped || BigInt(0)) > BigInt(0);
                 return hasDeposits ? '(includes accumulated yield)' : '(1:1 with ' + crucible?.baseToken + ')';
               })()}</div>
@@ -212,14 +211,13 @@ export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onCl
                   <span className="text-white font-medium">${formatNumberWithCommas(parseFloat(amount) * 0.985 * 0.5)} USD</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Est. {crucible?.ptokenSymbol} value:</span>
-                  <span className="text-fogo-accent font-medium">${formatNumberWithCommas(parseFloat(calculateWrapPreview(crucibleId, amount).ptokenAmount) * (() => {
+                  <span>Est. exchange rate:</span>
+                  <span className="text-fogo-accent font-medium">{(() => {
                     const hasDeposits = (crucible?.totalWrapped || BigInt(0)) > BigInt(0);
                     const exchangeRate = hasDeposits ? (crucible?.exchangeRate || RATE_SCALE) : RATE_SCALE;
-                    const baseTokenPrice = crucible?.baseToken === 'FOGO' ? 0.5 : 0.002;
-                    const currentPrice = getCTokenPrice(baseTokenPrice, exchangeRate);
-                    return currentPrice;
-                  })())} USD</span>
+                    const exchangeRateDecimal = Number(exchangeRate) / Number(RATE_SCALE);
+                    return `1 ${crucible?.ptokenSymbol} = ${exchangeRateDecimal.toFixed(4)} ${crucible?.baseToken}`;
+                  })()}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Current APY:</span>
