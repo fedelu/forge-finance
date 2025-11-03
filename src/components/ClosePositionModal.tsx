@@ -572,7 +572,7 @@ export default function ClosePositionModal({
                         <div className="flex justify-between text-sm">
                           <span className="text-fogo-gray-400">Borrowing Interest:</span>
                           <span className="text-orange-400 font-medium">
-                            -{formatNumberWithCommas(Math.max(0, lpTokenUnwrapPreview.proportionalBorrowingInterest).toFixed(2))} USDC
+                            -{formatNumberWithCommas(Math.max(0, lpTokenUnwrapPreview.proportionalBorrowingInterest))} USDC
                           </span>
                         </div>
                       </>
