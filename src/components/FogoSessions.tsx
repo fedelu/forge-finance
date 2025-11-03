@@ -1105,25 +1105,25 @@ export function FogoSessionsButton() {
                      className="wallet-popup-content bg-gradient-to-br from-fogo-gray-900 via-fogo-gray-800 to-fogo-gray-900 rounded-3xl shadow-2xl border border-fogo-primary/30 w-80 max-h-[90vh] overflow-hidden backdrop-blur-xl flex flex-col"
                    >
             {/* Header */}
-            <div className="relative bg-gradient-to-r from-fogo-primary via-fogo-primary to-fogo-secondary p-6 overflow-hidden">
+            <div className="relative bg-gradient-to-r from-fogo-primary via-fogo-primary to-fogo-secondary p-4 overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse"></div>
               <div className="relative flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="relative w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm ring-2 ring-white/10 hover:ring-white/20 transition-all duration-300">
-                    <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
+                <div className="flex items-center space-x-2">
+                  <div className="relative w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm ring-1 ring-white/10 hover:ring-white/20 transition-all duration-300">
+                    <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M14.724 0h-8.36L5.166 4.804h-3.61L.038 10.898a1.28 1.28 0 0 0 1.238 1.591h3.056L1.465 24l9.744-10.309c.771-.816.195-2.162-.925-2.162h-4.66l1.435-5.765h7.863l1.038-4.172A1.28 1.28 0 0 0 14.723 0ZM26.09 18.052h-2.896V5.58h9.086v2.525h-6.19v2.401h5.636v2.525H26.09v5.02Zm13.543.185c-1.283 0-2.404-.264-3.365-.793a5.603 5.603 0 0 1-2.24-2.233c-.533-.96-.8-2.09-.8-3.394 0-1.304.267-2.451.8-3.41a5.55 5.55 0 0 1 2.24-2.225c.96-.523 2.08-.785 3.365-.785 1.285 0 2.42.259 3.381.777a5.474 5.474 0 0 1 2.233 2.218c.528.96.793 2.1.793 3.425 0 1.324-.268 2.437-.801 3.403a5.56 5.56 0 0 1-2.24 2.233c-.961.523-2.081.785-3.366.785v-.001Zm.016-2.525c1.118 0 1.98-.353 2.586-1.062.606-.708.91-1.652.91-2.833 0-1.182-.304-2.137-.91-2.84-.605-.704-1.473-1.055-2.602-1.055-1.128 0-1.984.351-2.595 1.054-.61.704-.916 1.645-.916 2.825 0 1.18.306 2.14.916 2.85.61.708 1.48 1.061 2.61 1.061Zm13.703 2.525c-1.211 0-2.28-.27-3.203-.808a5.647 5.647 0 0 1-2.163-2.256c-.517-.964-.776-2.079-.776-3.34 0-1.263.267-2.423.8-3.388a5.635 5.635 0 0 1 2.256-2.249c.97-.533 2.096-.801 3.38-.801 1.057 0 1.992.182 2.803.547a5.017 5.017 0 0 1 1.986 1.563c.513.677.837 1.489.971 2.432H56.39c-.103-.626-.394-1.113-.878-1.463-.482-.348-1.103-.523-1.863-.523-.718 0-1.344.16-1.878.476-.533.32-.945.77-1.231 1.356-.288.584-.43 1.277-.43 2.078 0 .801.148 1.515.445 2.11a3.27 3.27 0 0 0 1.262 1.379c.544.322 1.186.485 1.925.485.544 0 1.03-.084 1.454-.253.426-.17.762-.4 1.009-.693a1.5 1.5 0 0 0 .37-.993v-.37H53.51V11.31h3.865c.677 0 1.185.161 1.525.485.337.323.507.808.507 1.455v4.804h-2.648V16.73h-.077c-.299.503-.724.88-1.278 1.132-.554.252-1.237.377-2.048.377l-.003-.001Zm13.911 0c-1.283 0-2.405-.264-3.366-.793a5.603 5.603 0 0 1-2.24-2.233c-.533-.96-.8-2.09-.8-3.394 0-1.304.267-2.451.8-3.41a5.55 5.55 0 0 1 2.24-2.225c.961-.523 2.081-.785 3.366-.785 1.284 0 2.42.259 3.38.777a5.474 5.474 0 0 1 2.234 2.218c.528.96.792 2.1.792 3.425 0 1.324-.268 2.437-.801 3.403a5.56 5.56 0 0 1-2.24 2.233c-.96.523-2.08.785-3.365.785v-.001Zm.015-2.525c1.118 0 1.981-.353 2.587-1.062.605-.708.909-1.652.909-2.833 0-1.182-.304-2.137-.91-2.84-.605-.704-1.473-1.055-2.601-1.055-1.129 0-1.985.351-2.595 1.054-.611.704-.916 1.645-.916 2.825 0 1.18.305 2.14.916 2.85.61.708 1.48 1.061 2.61 1.061Z" />
                     </svg>
                   </div>
                   <div>
-                    <div className="font-inter-bold text-xl text-white">FOGO Wallet</div>
-                    <div className="text-sm text-white/90 font-mono font-medium">{shortAddress}</div>
+                    <div className="font-inter-bold text-base text-white">FOGO Wallet</div>
+                    <div className="text-xs text-white/90 font-mono font-medium">{shortAddress}</div>
                   </div>
                 </div>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="p-2 hover:bg-white/20 rounded-xl transition-all duration-200 group hover:scale-110"
+                  className="p-1.5 hover:bg-white/20 rounded-lg transition-all duration-200 group hover:scale-110"
                 >
-                  <svg className="w-5 h-5 text-white group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-white group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
@@ -1131,69 +1131,69 @@ export function FogoSessionsButton() {
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6 bg-fogo-gray-900">
+            <div className="flex-1 overflow-y-auto p-4 bg-fogo-gray-900">
             {/* Token Balances */}
-            <div className="space-y-4 mb-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-inter-bold text-white">Assets</h3>
-                <div className="w-2 h-2 bg-fogo-success rounded-full animate-pulse" title="Live"></div>
+            <div className="space-y-2 mb-3">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-inter-bold text-white">Assets</h3>
+                <div className="w-1.5 h-1.5 bg-fogo-success rounded-full animate-pulse" title="Live"></div>
               </div>
               {balances.filter(balance => ['FOGO', 'USDC', 'FORGE', 'cFOGO', 'cFORGE', 'cFOGO/USDC LP', 'cFORGE/USDC LP'].includes(balance.symbol)).map((balance) => (
                   <div 
                     key={balance.symbol} 
-                    className="group bg-gradient-to-br from-fogo-gray-800/80 via-fogo-gray-800 to-fogo-gray-900/80 rounded-2xl p-5 border border-fogo-gray-700/50 hover:border-fogo-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-fogo-primary/10 hover:-translate-y-0.5 backdrop-blur-sm"
+                    className="group bg-gradient-to-br from-fogo-gray-800/80 via-fogo-gray-800 to-fogo-gray-900/80 rounded-xl p-3 border border-fogo-gray-700/50 hover:border-fogo-primary/50 transition-all duration-300 hover:shadow-md hover:shadow-fogo-primary/10 backdrop-blur-sm"
                   >
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center space-x-3">
-                        <div className="relative w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden bg-gradient-to-br from-fogo-gray-700 to-fogo-gray-800 ring-2 ring-fogo-gray-600/50 group-hover:ring-fogo-primary/30 transition-all duration-300">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center space-x-2">
+                        <div className="relative w-6 h-6 rounded-lg flex items-center justify-center overflow-hidden bg-gradient-to-br from-fogo-gray-700 to-fogo-gray-800 ring-1 ring-fogo-gray-600/50 group-hover:ring-fogo-primary/30 transition-all duration-300">
                           {balance.symbol === 'FOGO' ? (
                             <img 
                               src="/fogo-logo.png" 
                               alt="FOGO" 
-                              className="w-full h-full object-contain p-1 group-hover:scale-110 transition-transform duration-300"
+                              className="w-full h-full object-contain p-0.5 group-hover:scale-110 transition-transform duration-300"
                             />
                           ) : balance.symbol === 'FORGE' ? (
                             <img 
                               src="/forgo logo straight.png" 
                               alt="FORGE" 
-                              className="w-full h-full object-contain p-1 group-hover:scale-110 transition-transform duration-300"
+                              className="w-full h-full object-contain p-0.5 group-hover:scale-110 transition-transform duration-300"
                             />
                           ) : balance.symbol === 'cFOGO' ? (
                             <img 
                               src="/fogo-logo.png" 
                               alt="cFOGO" 
-                              className="w-full h-full object-contain p-1 group-hover:scale-110 transition-transform duration-300"
+                              className="w-full h-full object-contain p-0.5 group-hover:scale-110 transition-transform duration-300"
                             />
                           ) : balance.symbol === 'cFORGE' ? (
                             <img 
                               src="/forgo logo straight.png" 
                               alt="cFORGE" 
-                              className="w-full h-full object-contain p-1 group-hover:scale-110 transition-transform duration-300"
+                              className="w-full h-full object-contain p-0.5 group-hover:scale-110 transition-transform duration-300"
                             />
                           ) : balance.symbol === 'USDC' ? (
                             <img 
                               src="/usd-coin-usdc-logo-last.png" 
                               alt="USDC" 
-                              className="w-full h-full object-contain p-1 group-hover:scale-110 transition-transform duration-300"
+                              className="w-full h-full object-contain p-0.5 group-hover:scale-110 transition-transform duration-300"
                             />
                           ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-fogo-primary/20 to-fogo-secondary/20 rounded-xl flex items-center justify-center group-hover:from-fogo-primary/30 group-hover:to-fogo-secondary/30 transition-all duration-300">
-                              <span className="text-fogo-primary font-bold text-xs">{balance.symbol.charAt(0)}</span>
+                            <div className="w-full h-full bg-gradient-to-br from-fogo-primary/20 to-fogo-secondary/20 rounded-lg flex items-center justify-center group-hover:from-fogo-primary/30 group-hover:to-fogo-secondary/30 transition-all duration-300">
+                              <span className="text-fogo-primary font-bold text-[8px]">{balance.symbol.charAt(0)}</span>
                             </div>
                           )}
                         </div>
                         <div>
-                          <div className="text-sm font-semibold text-fogo-gray-300 group-hover:text-white transition-colors duration-200">
+                          <div className="text-xs font-semibold text-fogo-gray-300 group-hover:text-white transition-colors duration-200">
                             {balance.symbol}
                           </div>
                         </div>
                       </div>
                     </div>
-                    <div className="space-y-1">
-                      <div className="text-2xl font-inter-bold text-white group-hover:text-fogo-primary-light transition-colors duration-200">
+                    <div className="space-y-0.5">
+                      <div className="text-base font-inter-bold text-white group-hover:text-fogo-primary-light transition-colors duration-200">
                         {balance.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </div>
-                      <div className="text-sm font-inter-light text-fogo-gray-400">
+                      <div className="text-xs font-inter-light text-fogo-gray-400">
                         ≈ ${balance.usdValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
                       </div>
                     </div>
@@ -1204,39 +1204,39 @@ export function FogoSessionsButton() {
             </div>
 
               {/* Action Buttons - Fixed at bottom */}
-              <div className="p-6 border-t border-fogo-gray-700/50 bg-gradient-to-t from-fogo-gray-900 via-fogo-gray-900 to-transparent space-y-3 backdrop-blur-sm">
+              <div className="p-3 border-t border-fogo-gray-700/50 bg-gradient-to-t from-fogo-gray-900 via-fogo-gray-900 to-transparent space-y-2 backdrop-blur-sm">
                 {/* Get Tokens Button */}
                 <button
                   onClick={openFaucet}
-                  className="group relative w-full flex items-center justify-center space-x-3 p-4 bg-gradient-to-r from-fogo-primary via-fogo-primary to-fogo-secondary hover:from-fogo-primary-dark hover:via-fogo-primary hover:to-fogo-secondary-dark text-white rounded-2xl transition-all duration-300 font-semibold shadow-lg hover:shadow-xl hover:shadow-fogo-primary/20 transform hover:-translate-y-1 border border-fogo-primary/20 hover:border-fogo-primary/40 overflow-hidden"
+                  className="group relative w-full flex items-center justify-center space-x-2 p-2.5 bg-gradient-to-r from-fogo-primary via-fogo-primary to-fogo-secondary hover:from-fogo-primary-dark hover:via-fogo-primary hover:to-fogo-secondary-dark text-white rounded-xl transition-all duration-300 font-medium text-sm shadow-md hover:shadow-lg hover:shadow-fogo-primary/20 transform hover:-translate-y-0.5 border border-fogo-primary/20 hover:border-fogo-primary/40 overflow-hidden"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 -translate-x-full group-hover:translate-x-full"></div>
-                  <svg className="w-5 h-5 relative z-10 transform group-hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 relative z-10 transform group-hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
-                  <span className="font-inter relative z-10">Get FOGO Tokens</span>
+                  <span className="font-inter relative z-10 text-sm">Get FOGO Tokens</span>
                 </button>
 
                 {/* Clear All Positions Button */}
                 <button
                   onClick={handleClearAllPositions}
-                  className="w-full flex items-center justify-center space-x-2 p-4 bg-gradient-to-r from-fogo-warning/10 via-fogo-warning/5 to-fogo-warning/10 hover:from-fogo-warning/20 hover:via-fogo-warning/10 hover:to-fogo-warning/20 text-fogo-warning hover:text-fogo-warning-light rounded-2xl transition-all duration-300 font-medium border border-fogo-warning/20 hover:border-fogo-warning/40 transform hover:-translate-y-0.5"
+                  className="w-full flex items-center justify-center space-x-1.5 p-2.5 bg-gradient-to-r from-fogo-warning/10 via-fogo-warning/5 to-fogo-warning/10 hover:from-fogo-warning/20 hover:via-fogo-warning/10 hover:to-fogo-warning/20 text-fogo-warning hover:text-fogo-warning-light rounded-xl transition-all duration-300 font-medium text-sm border border-fogo-warning/20 hover:border-fogo-warning/40 transform hover:-translate-y-0.5"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
-                  <span className="font-inter">Clear All Positions</span>
+                  <span className="font-inter text-sm">Clear All Positions</span>
                 </button>
 
                 {/* Disconnect Button */}
                 <button
                   onClick={handleDisconnect}
-                  className="w-full flex items-center justify-center space-x-2 p-4 bg-gradient-to-r from-fogo-gray-800/80 to-fogo-gray-800/60 hover:from-fogo-gray-700 hover:to-fogo-gray-700 text-fogo-gray-300 hover:text-white rounded-2xl transition-all duration-300 font-medium border border-fogo-gray-600/50 hover:border-fogo-gray-500 transform hover:-translate-y-0.5"
+                  className="w-full flex items-center justify-center space-x-1.5 p-2.5 bg-gradient-to-r from-fogo-gray-800/80 to-fogo-gray-800/60 hover:from-fogo-gray-700 hover:to-fogo-gray-700 text-fogo-gray-300 hover:text-white rounded-xl transition-all duration-300 font-medium text-sm border border-fogo-gray-600/50 hover:border-fogo-gray-500 transform hover:-translate-y-0.5"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                   </svg>
-                  <span className="font-inter">Disconnect Wallet</span>
+                  <span className="font-inter text-sm">Disconnect Wallet</span>
                 </button>
               </div>
           </div>

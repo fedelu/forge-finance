@@ -18,12 +18,6 @@ pub mod forge_core {
         forge_protocol.authority = ctx.accounts.authority.key();
         forge_protocol.treasury = ctx.accounts.treasury.key();
         forge_protocol.crucibles_program = protocol_config.crucibles_program;
-        forge_protocol.sparks_program = protocol_config.sparks_program;
-        forge_protocol.smelters_program = protocol_config.smelters_program;
-        forge_protocol.heat_program = protocol_config.heat_program;
-        forge_protocol.reactors_program = protocol_config.reactors_program;
-        forge_protocol.firewall_program = protocol_config.firewall_program;
-        forge_protocol.engineers_program = protocol_config.engineers_program;
         forge_protocol.protocol_fee_rate = protocol_config.protocol_fee_rate;
         forge_protocol.max_crucibles = protocol_config.max_crucibles;
         forge_protocol.is_active = true;
@@ -112,7 +106,7 @@ pub struct InitializeProtocol<'info> {
     #[account(
         init,
         payer = authority,
-        space = 8 + 32 * 8 + 8 * 2 + 1 + 8 + 1,
+        space = 8 + 32 * 3 + 8 * 3 + 1 + 8 + 1,
         seeds = [b"forge_protocol"],
         bump
     )]
@@ -176,12 +170,6 @@ pub struct ForgeProtocol {
     pub authority: Pubkey,
     pub treasury: Pubkey,
     pub crucibles_program: Pubkey,
-    pub sparks_program: Pubkey,
-    pub smelters_program: Pubkey,
-    pub heat_program: Pubkey,
-    pub reactors_program: Pubkey,
-    pub firewall_program: Pubkey,
-    pub engineers_program: Pubkey,
     pub protocol_fee_rate: u64, // basis points
     pub max_crucibles: u64,
     pub crucible_count: u64,
@@ -203,12 +191,6 @@ pub struct CrucibleRegistry {
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub struct ProtocolConfig {
     pub crucibles_program: Pubkey,
-    pub sparks_program: Pubkey,
-    pub smelters_program: Pubkey,
-    pub heat_program: Pubkey,
-    pub reactors_program: Pubkey,
-    pub firewall_program: Pubkey,
-    pub engineers_program: Pubkey,
     pub protocol_fee_rate: u64,
     pub max_crucibles: u64,
 }
