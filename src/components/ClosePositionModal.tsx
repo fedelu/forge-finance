@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { XMarkIcon } from '@heroicons/react/24/outline'
+import { XMarkIcon, ArrowDownIcon } from '@heroicons/react/24/outline'
 import { useCrucible } from '../hooks/useCrucible'
 import { useBalance } from '../contexts/BalanceContext'
 import { useLVFPosition } from '../hooks/useLVFPosition'
