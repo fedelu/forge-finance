@@ -7,3 +7,20 @@ export function compileTransaction() {
 }
 export const TRANSACTION_MESSAGE_VERSION = 0;
 
+// Additional exports for @fogo/sessions-sdk
+export function createTransactionMessage() {
+  return {};
+}
+export function setTransactionMessageFeePayer() {
+  return {};
+}
+export function setTransactionMessageLifetimeUsingBlockhash() {
+  return {};
+}
+export function appendTransactionMessageInstructions() {
+  return {};
+}
+export function compressTransactionMessageUsingAddressLookupTables() {
+  return {};
+}
+

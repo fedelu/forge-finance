@@ -92,9 +92,11 @@ export default function LeverageControl({
             <div className="flex-1">
               <div className="flex items-center space-x-1 mb-1">
                 <span className="text-xs text-fogo-gray-400">Interest Rate:</span>
-                <svg className="w-3 h-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" title="Borrowing Interest Rate: 5% APY (Annual Percentage Yield). This is the annual cost you pay for borrowing USDC from the lending pool. The rate compounds daily.">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <div title="Borrowing Interest Rate: 5% APY (Annual Percentage Yield). This is the annual cost you pay for borrowing USDC from the lending pool. The rate compounds daily.">
+                  <svg className="w-3 h-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
               </div>
               <div className="text-xs font-medium text-orange-400">
                 5% APY
