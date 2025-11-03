@@ -321,20 +321,13 @@ export default function ClosePositionModal({
       const result = await closeLVFPosition(availableLeveragedPosition.id)
       
       if (result && result.success) {
-        // Update wallet balances
+        // Update wallet balances - add base tokens and USDC received
+        // Note: closeLVFPosition already subtracts LP tokens internally,
+        // so we only need to update the wallet's base token and USDC balances
         addToBalance(baseTokenSymbol, result.baseAmount)
         if (result.usdcAmount && result.usdcAmount > 0) {
           addToBalance('USDC', result.usdcAmount)
         }
-        
-        // Remove LP tokens from wallet
-        const lpTokenSymbol = `${ctokenSymbol}/USDC LP`
-        const collateralValueUSD = availableLeveragedPosition.collateral * baseTokenPrice
-        const depositedUSDC = availableLeveragedPosition.depositUSDC || 0
-        const borrowedUSDC = availableLeveragedPosition.borrowedUSDC || 0
-        const totalUSDC = depositedUSDC + borrowedUSDC
-        const totalPositionValue = collateralValueUSD + totalUSDC
-        subtractFromBalance(lpTokenSymbol, totalPositionValue)
         
         // Build success message
         let successMessage = `✅ Leveraged position closed successfully!\n\n`

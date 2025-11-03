@@ -511,10 +511,6 @@ export function FogoSessionsButton() {
 
     const calculateLPBalances = async () => {
       try {
-        // Double-check: Reset balances first to ensure we start fresh
-        updateBalance('cFOGO/USDC LP', 0)
-        updateBalance('cFORGE/USDC LP', 0)
-        
         if (!walletPublicKey) {
           return
         }
@@ -852,101 +848,6 @@ export function FogoSessionsButton() {
   const [sendAmount, setSendAmount] = useState('');
   const walletPopupRef = useRef<HTMLDivElement>(null);
   
-  // Force recalculate LP balances when wallet popup opens
-  useEffect(() => {
-    if (isOpen && isEstablished && walletPublicKey) {
-      console.log('📱 Wallet popup opened - forcing LP balance recalculation...')
-      // Force update to 0 first, then recalculate
-      updateBalance('cFOGO/USDC LP', 0)
-      updateBalance('cFORGE/USDC LP', 0)
-      
-      // Recalculate after a short delay
-      setTimeout(() => {
-        const currentWalletAddress = walletPublicKey.toBase58()
-        let cFOGO_USDC_LP = 0
-        let cFORGE_USDC_LP = 0
-        
-        // Check standard LP positions
-        const standardLPPositions = JSON.parse(localStorage.getItem('lp_positions') || '[]')
-        const myStandardPositions = standardLPPositions.filter((position: any) => {
-          const ownerMatch = position.owner === currentWalletAddress || 
-                            position.owner === walletPublicKey.toString()
-          return ownerMatch && position.isOpen === true
-        })
-        
-        myStandardPositions.forEach((position: any) => {
-          if (typeof position.baseAmount === 'number' && position.baseAmount > 0 && 
-              typeof position.usdcAmount === 'number' && position.usdcAmount > 0) {
-            const baseTokenPrice = position.baseToken === 'FOGO' ? 0.5 : 0.002
-            const tokenCollateralValue = position.baseAmount * baseTokenPrice
-            const usdcAmount = position.usdcAmount
-            
-            // For standard LP positions, total position value = token collateral + USDC
-            const totalPositionValue = tokenCollateralValue + usdcAmount
-            
-            if (position.baseToken === 'FOGO') {
-              cFOGO_USDC_LP += totalPositionValue
-            } else if (position.baseToken === 'FORGE') {
-              cFORGE_USDC_LP += totalPositionValue
-            }
-          }
-        })
-        
-        // Check leveraged positions
-        const leveragedPositions = JSON.parse(localStorage.getItem('leveraged_positions') || '[]')
-        const myLeveragedPositions = leveragedPositions.filter((position: any) => {
-          const ownerMatch = position.owner === currentWalletAddress || 
-                            position.owner === walletPublicKey.toString()
-          return ownerMatch && position.isOpen === true
-        })
-        
-        myLeveragedPositions.forEach((position: any) => {
-          if (typeof position.collateral === 'number' && position.collateral > 0) {
-            const leverageFactor = position.leverageFactor || 2.0
-            const baseTokenPrice = position.token === 'FOGO' ? 0.5 : 0.002
-            const collateralValueUSD = position.collateral * baseTokenPrice
-            
-            // Reconstruct original collateral value from borrowedUSDC
-            let originalCollateralValue: number
-            if (leverageFactor === 1.5) {
-              originalCollateralValue = (position.borrowedUSDC || 0) / 0.5
-            } else if (leverageFactor === 2.0) {
-              originalCollateralValue = position.borrowedUSDC || 0
-            } else {
-              originalCollateralValue = collateralValueUSD
-            }
-            
-            // Calculate deposited USDC
-            let depositUSDC = position.depositUSDC
-            if (depositUSDC === undefined || depositUSDC === null) {
-              if (leverageFactor === 1.5) {
-                depositUSDC = originalCollateralValue * 0.5
-              } else {
-                depositUSDC = 0
-              }
-            }
-            
-            const borrowedUSDC = position.borrowedUSDC || 0
-            const totalUSDC = depositUSDC + borrowedUSDC
-            
-            // Calculate total position value: deposit + borrow - transaction fee
-            const totalPositionValue = collateralValueUSD + totalUSDC
-            
-            if (position.token === 'FOGO') {
-              cFOGO_USDC_LP += totalPositionValue
-            } else if (position.token === 'FORGE') {
-              cFORGE_USDC_LP += totalPositionValue
-            }
-          }
-        })
-        
-        console.log('📱 Wallet popup - Recalculated LP balances:', cFOGO_USDC_LP, cFORGE_USDC_LP)
-        updateBalance('cFOGO/USDC LP', cFOGO_USDC_LP)
-        updateBalance('cFORGE/USDC LP', cFORGE_USDC_LP)
-      }, 100)
-    }
-  }, [isOpen, isEstablished, walletPublicKey, updateBalance])
-
   // Listen for balance updates from crucible operations
   useEffect(() => {
     const handleBalanceUpdate = (event: CustomEvent) => {

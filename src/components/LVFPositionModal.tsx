@@ -78,14 +78,8 @@ export default function LVFPositionModal({
       // Open leveraged position
       await openPosition(collateralAmount, leverage)
 
-      // Add LP tokens to wallet (Inferno/leveraged positions create LP tokens)
-      const crucible = getCrucible(crucibleAddress)
-      const lpTokenSymbol = crucible ? `${crucible.ptokenSymbol}/USDC LP` : `${baseTokenSymbol}/USDC LP`
-      // Calculate LP token amount: sqrt(collateral_value * usdc_value)
-      // For leveraged positions: collateral becomes cToken, USDC is borrowed
-      const cTokenAmount = collateralAmount * 1.045 // Exchange rate to get cToken amount
-      const lpTokenAmount = Math.sqrt(cTokenAmount * borrowedUSDC) // Constant product formula
-      addToBalance(lpTokenSymbol, lpTokenAmount)
+      // Note: LP tokens are automatically added to wallet by the LP balance calculation effect
+      // which listens for 'lvfPositionOpened' events and recalculates balances from localStorage
 
       // Add transaction to analytics
       addTransaction({

@@ -97,13 +97,8 @@ export default function LPPositionModal({
       subtractFromBalance(baseTokenSymbol, baseAmt)
       subtractFromBalance('USDC', usdcAmt)
 
-      // Add LP tokens to wallet
-      const crucible = getCrucible(crucibleAddress)
-      const lpTokenSymbol = crucible ? `${crucible.ptokenSymbol}/USDC LP` : `${baseTokenSymbol}/USDC LP`
-      // Calculate LP tokens: baseAmount becomes cToken via exchange rate, then sqrt(cToken * USDC)
-      const cTokenAmount = baseAmt * 1.045 // Exchange rate to get cToken amount
-      const lpTokenAmount = Math.sqrt(cTokenAmount * usdcAmt) // Constant product formula
-      addToBalance(lpTokenSymbol, lpTokenAmount)
+      // Note: LP tokens are automatically added to wallet by the LP balance calculation effect
+      // which listens for 'lpPositionOpened' events and recalculates balances from localStorage
 
       // Add transaction to analytics
       addTransaction({

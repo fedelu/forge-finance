@@ -71,17 +71,6 @@ export function useLVFPosition({ crucibleAddress, baseTokenSymbol }: UseLVFPosit
     crucibleHook = null
   }
   
-  // Get balance context to subtract LP tokens when closing positions
-  // Note: Must be called unconditionally per React rules
-  let balanceContext: any = null
-  try {
-    balanceContext = useBalance()
-  } catch (e: any) {
-    // BalanceContext might not be available - this is fine, we can still work without it
-    // React will log the error if hook is called outside provider
-    balanceContext = null
-  }
-
   // Determine which wallet context to use
   // Prioritize Fogo Sessions, fallback to WalletContext
   let publicKey: PublicKey | null = null
@@ -625,22 +614,10 @@ export function useLVFPosition({ crucibleAddress, baseTokenSymbol }: UseLVFPosit
           console.log('🔄 Refetching positions after closing...')
           fetchPositions()
         }, 100)
-
-        // Subtract LP tokens from wallet balance
-        // Calculate LP token value: collateral value + total USDC (deposit + borrow)
-        const lpTokenSymbol = baseTokenSymbol === 'FOGO' ? 'cFOGO/USDC LP' : 'cFORGE/USDC LP'
-        const depositedUSDCForLP = position.depositUSDC || 0
-        const borrowedUSDCForLP = position.borrowedUSDC || 0
-        const totalUSDCForLP = depositedUSDCForLP + borrowedUSDCForLP
-        const lpTokenValue = collateralValueUSDForClose + totalUSDCForLP
-        
-        // Subtract LP tokens from balance
-        if (balanceContext?.subtractFromBalance) {
-          balanceContext.subtractFromBalance(lpTokenSymbol, lpTokenValue)
-          console.log('💰 Subtracted LP tokens from wallet:', lpTokenSymbol, lpTokenValue)
-        }
         
         // Dispatch event to refresh portfolio and wallet balances
+        // Note: LP tokens are automatically removed from wallet by the LP balance calculation effect
+        // which listens for 'lvfPositionClosed' events and recalculates balances from localStorage
         window.dispatchEvent(new CustomEvent('lvfPositionClosed', { 
           detail: { 
             positionId, 
