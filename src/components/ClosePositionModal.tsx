@@ -66,7 +66,7 @@ export default function ClosePositionModal({
     }
   }, [isOpen, crucibleAddress, refetchLVF])
   
-  // Listen for position opened events to refetch positions
+  // Listen for position opened/closed events to refetch positions
   React.useEffect(() => {
     const handlePositionOpened = (event: CustomEvent) => {
       const detail = event.detail
@@ -78,9 +78,21 @@ export default function ClosePositionModal({
       }
     }
     
+    const handlePositionClosed = (event: CustomEvent) => {
+      const detail = event.detail
+      if (detail?.crucibleAddress === crucibleAddress && detail?.baseTokenSymbol === baseTokenSymbol) {
+        // Refetch positions when one is closed
+        setTimeout(() => {
+          refetchLVF()
+        }, 100)
+      }
+    }
+    
     window.addEventListener('lvfPositionOpened', handlePositionOpened as EventListener)
+    window.addEventListener('lvfPositionClosed', handlePositionClosed as EventListener)
     return () => {
       window.removeEventListener('lvfPositionOpened', handlePositionOpened as EventListener)
+      window.removeEventListener('lvfPositionClosed', handlePositionClosed as EventListener)
     }
   }, [crucibleAddress, baseTokenSymbol, refetchLVF])
 

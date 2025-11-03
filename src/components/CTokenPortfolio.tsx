@@ -311,20 +311,16 @@ export default function CTokenPortfolio() {
     return baseAPY
   }, [positions])
 
-  // Filter positions: cTOKENS (simple wrap positions without LP/leverage)
+  // Filter positions: cTOKENS (simple wrap positions)
   const cTokenPositions = React.useMemo(() => {
     return positions.filter(pos => {
       const userBalance = userBalances[pos.crucibleAddress]
       const hasCTokenBalance = userBalance && userBalance.ptokenBalance > BigInt(0)
       
-      // Check if this position has any LP or leveraged positions
-      const hasLPPosition = allLPPositions.some(lp => lp.baseToken === pos.baseTokenSymbol)
-      const hasLVFPosition = allLVFPositions.some(lvf => lvf.token === pos.baseTokenSymbol)
-      
-      // Only show as cToken position if it has balance but no LP/LVF positions
-      return hasCTokenBalance && !hasLPPosition && !hasLVFPosition
+      // Show all cToken positions with balances (users can have both cTokens and LP positions)
+      return hasCTokenBalance
     })
-  }, [positions, userBalances, allLPPositions, allLVFPositions])
+  }, [positions, userBalances])
 
   return (
     <div className="space-y-8">
