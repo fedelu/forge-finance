@@ -283,9 +283,10 @@ export default function ClosePositionModal({
       const result = await unwrapTokens(crucibleAddress, ctokenAmount)
       
       if (result) {
-        // Update wallet balances - add base tokens received
+        // Update wallet balances - subtract cTokens and add base tokens received
         // Note: unwrapTokens already updates Crucible userBalances internally,
-        // so we only need to update the wallet's base token balance
+        // but we also need to update the wallet's BalanceContext cToken balance
+        subtractFromBalance(ctokenSymbol, parseFloat(ctokenAmount))
         addToBalance(baseTokenSymbol, result.baseAmount)
         
         const successMessage = `✅ ${ctokenSymbol} unwrapped successfully!\n\n` +
