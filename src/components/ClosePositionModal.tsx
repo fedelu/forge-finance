@@ -4,6 +4,7 @@ import { useCrucible } from '../hooks/useCrucible'
 import { useBalance } from '../contexts/BalanceContext'
 import { useLVFPosition } from '../hooks/useLVFPosition'
 import { useSession } from './FogoSessions'
+import { useAnalytics } from '../contexts/AnalyticsContext'
 import { formatNumberWithCommas, RATE_SCALE } from '../utils/math'
 
 interface ClosePositionModalProps {
@@ -46,6 +47,7 @@ export default function ClosePositionModal({
   const { unwrapTokens, getCrucible, calculateUnwrapPreview } = useCrucible()
   const { addToBalance, subtractFromBalance, balances } = useBalance()
   const { walletPublicKey } = useSession()
+  const { addTransaction } = useAnalytics()
   
   // Get leveraged positions with refetch capability
   const { positions: leveragedPositions, closePosition: closeLVFPosition, refetch: refetchLVF } = useLVFPosition({
@@ -289,6 +291,22 @@ export default function ClosePositionModal({
         subtractFromBalance(ctokenSymbol, parseFloat(ctokenAmount))
         addToBalance(baseTokenSymbol, result.baseAmount)
         
+        // Record transaction
+        const baseTokenPrice = baseTokenSymbol === 'FOGO' ? 0.5 : 0.002
+        addTransaction({
+          type: 'unwrap',
+          amount: result.baseAmount,
+          token: baseTokenSymbol,
+          crucibleId: crucibleAddress,
+          signature: `unwrap_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          apyRewards: result.apyEarned,
+          totalWithdrawal: result.baseAmount,
+          usdValue: result.baseAmount * baseTokenPrice
+        })
+        
+        // Trigger portfolio refresh to update cToken/USDC information
+        window.dispatchEvent(new CustomEvent('forceRecalculateLP'))
+        
         const successMessage = `✅ ${ctokenSymbol} unwrapped successfully!\n\n` +
           `Unwrapped: ${formatNumberWithCommas(parseFloat(ctokenAmount))} ${ctokenSymbol}\n` +
           `Received: ${formatNumberWithCommas(result.baseAmount)} ${baseTokenSymbol}\n` +
@@ -342,6 +360,22 @@ export default function ClosePositionModal({
           addToBalance('USDC', result.usdcAmount)
         }
         
+        // Record transaction
+        const baseTokenPrice = baseTokenSymbol === 'FOGO' ? 0.5 : 0.002
+        const totalValueUSD = (result.baseAmount * baseTokenPrice) + (result.usdcAmount || 0)
+        addTransaction({
+          type: 'withdraw',
+          amount: result.baseAmount,
+          token: baseTokenSymbol,
+          crucibleId: crucibleAddress,
+          signature: `close_lvf_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          apyRewards: result.apyEarned,
+          totalWithdrawal: result.baseAmount + (result.usdcAmount || 0),
+          usdValue: totalValueUSD,
+          borrowedAmount: availableLeveragedPosition.borrowedUSDC || 0,
+          leverage: availableLeveragedPosition.leverageFactor || 2.0
+        })
+        
         // Build success message
         let successMessage = `✅ Leveraged position closed successfully!\n\n`
         successMessage += `Received:\n`
@@ -361,6 +395,9 @@ export default function ClosePositionModal({
         if (result.repaidUSDC && result.repaidUSDC > 0) {
           successMessage += `\nRepaid to Lending Pool: ${result.repaidUSDC.toFixed(2)} USDC (borrowed + interest)`
         }
+        
+        // Trigger LP balance recalculation to update wallet
+        window.dispatchEvent(new CustomEvent('forceRecalculateLP'))
         
         alert(successMessage)
         setLpTokenAmount('')
