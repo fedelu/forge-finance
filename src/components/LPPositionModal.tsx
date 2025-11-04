@@ -101,12 +101,14 @@ export default function LPPositionModal({
       // which listens for 'lpPositionOpened' events and recalculates balances from localStorage
 
       // Add transaction to analytics
+      // Record both base token and USDC deposited separately
       addTransaction({
         type: 'deposit',
-        amount: baseAmt + usdcAmt,
+        amount: baseAmt, // Base token deposited
         token: baseTokenSymbol,
         crucibleId: crucibleAddress,
-        usdValue: (baseAmt * baseTokenPrice) + usdcAmt,
+        usdValue: (baseAmt * baseTokenPrice) + usdcAmt, // Total USD value
+        usdcDeposited: usdcAmt, // USDC deposited separately
       })
 
       // Trigger event to refresh portfolio

@@ -355,10 +355,14 @@ export default function ClosePositionModal({
         // Update wallet balances - add base tokens and USDC received
         // Note: closeLVFPosition already subtracts LP tokens internally,
         // so we only need to update the wallet's base token and USDC balances
+        // Ensure balances update synchronously before triggering recalculation
         addToBalance(baseTokenSymbol, result.baseAmount)
         if (result.usdcAmount && result.usdcAmount > 0) {
           addToBalance('USDC', result.usdcAmount)
         }
+        
+        // Small delay to ensure balance updates are processed before closing modal
+        await new Promise(resolve => setTimeout(resolve, 50))
         
         // Record transaction
         // Calculate the original position value that was closed (collateral + deposited USDC)

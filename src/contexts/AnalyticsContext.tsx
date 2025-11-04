@@ -16,6 +16,7 @@ interface Transaction {
   borrowedAmount?: number; // USDC amount borrowed (for leveraged deposits)
   leverage?: number; // Leverage multiplier used
   usdcReceived?: number; // USDC amount received when closing leveraged position
+  usdcDeposited?: number; // USDC amount deposited when opening LP position
 }
 
 interface AnalyticsData {
