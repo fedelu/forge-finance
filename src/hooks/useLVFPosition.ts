@@ -411,9 +411,9 @@ export function useLVFPosition({ crucibleAddress, baseTokenSymbol }: UseLVFPosit
     [publicKey, sessionContext, walletContext, crucibleContext, crucibleHook, crucibleAddress, baseTokenSymbol, sendTransaction, connection, fetchPositions]
   )
 
-  // Close a leveraged position
+  // Close a leveraged position (full or partial)
   const closePosition = useCallback(
-    async (positionId: string) => {
+    async (positionId: string, partialAmount?: number) => {
       // Check wallet connection - same logic as openPosition
       let currentPublicKey: PublicKey | null = null
       
@@ -496,9 +496,13 @@ export function useLVFPosition({ crucibleAddress, baseTokenSymbol }: UseLVFPosit
           throw new Error('Position not found or already closed')
         }
 
+        // Determine if this is a partial or full close
+        const isPartialClose = partialAmount !== undefined && partialAmount > 0 && partialAmount < position.collateral
+        const amountToClose = isPartialClose ? partialAmount : position.collateral
+        const proportion = isPartialClose ? amountToClose / position.collateral : 1.0
+
         // Calculate base tokens to return (collateral value + APY earnings)
         const baseTokenPriceForClose = baseTokenSymbol === 'FOGO' ? 0.5 : 0.002
-        const collateralValueUSDForClose = position.collateral * baseTokenPriceForClose
         
         // Calculate APY earnings based on EXCHANGE RATE ratio (correlated with borrowing interest)
         // APY = ((exchange rate at sell / exchange rate at buy) - 1) * 100
@@ -525,10 +529,13 @@ export function useLVFPosition({ crucibleAddress, baseTokenSymbol }: UseLVFPosit
         
         // Calculate exchange rate growth
         const exchangeRateGrowth = currentExchangeRateDecimal - initialExchangeRate
-        const collateralValueAtCurrentRate = position.collateral * currentExchangeRateDecimal
-        const apyEarnedTokens = position.collateral * (exchangeRateGrowth / currentExchangeRateDecimal)
         
-        // Total collateral value including APY earnings
+        // Calculate proportional amounts for partial close
+        const collateralToClose = amountToClose
+        const collateralValueAtCurrentRate = collateralToClose * currentExchangeRateDecimal
+        const apyEarnedTokens = collateralToClose * (exchangeRateGrowth / currentExchangeRateDecimal)
+        
+        // Total collateral value including APY earnings (for the portion being closed)
         const totalCollateralValueUSD = collateralValueAtCurrentRate * baseTokenPriceForClose
         
         // Calculate 1.5% protocol fee on withdrawal (applied to total value including APY)
@@ -537,30 +544,28 @@ export function useLVFPosition({ crucibleAddress, baseTokenSymbol }: UseLVFPosit
         const amountAfterFeeUSD = totalCollateralValueUSD - withdrawalFeeUSD
         const baseAmountAfterFee = amountAfterFeeUSD / baseTokenPriceForClose
 
-        // Calculate borrowing interest (if any borrowed USDC)
+        // Calculate borrowing interest (proportional for partial close)
         // Borrowing interest rate = APY% × 5%
-        // borrowingInterest = borrowedUSDC × (APY% × 5% / 100)
         let borrowingInterest = 0
-        let totalOwedUSDC = position.borrowedUSDC || 0
+        let totalOwedUSDC = 0
         let borrowingInterestRatePercent = 0
         
         if (position.borrowedUSDC > 0) {
           // Calculate borrowing interest rate: APY% × 5%
           borrowingInterestRatePercent = apyPercentage * 0.05 // e.g., if APY is 2%, rate is 0.1%
           
-          // Calculate borrowing interest: borrowedUSDC × (APY% × 5% / 100)
-          // This is the same as: borrowedUSDC × (borrowingInterestRatePercent / 100)
-          borrowingInterest = position.borrowedUSDC * (borrowingInterestRatePercent / 100)
-          totalOwedUSDC = position.borrowedUSDC + borrowingInterest
+          // Calculate proportional borrowed USDC and interest for the portion being closed
+          const proportionalBorrowedUSDC = position.borrowedUSDC * proportion
+          borrowingInterest = proportionalBorrowedUSDC * (borrowingInterestRatePercent / 100)
+          totalOwedUSDC = proportionalBorrowedUSDC + borrowingInterest
         }
 
-        // Calculate deposited USDC (what user actually deposited, not borrowed)
+        // Calculate deposited USDC (proportional for partial close)
         const depositedUSDC = position.depositUSDC || 0
+        const proportionalDepositedUSDC = depositedUSDC * proportion
         
-        // Net USDC returned = deposited USDC minus borrowing interest (if any)
-        // Note: If there's no deposited USDC (2x leverage), user only gets tokens back
-        // Borrowed USDC + interest is repaid from the position value
-        const netUSDCReturned = Math.max(0, depositedUSDC - borrowingInterest)
+        // Net USDC returned = proportional deposited USDC minus borrowing interest (if any)
+        const netUSDCReturned = Math.max(0, proportionalDepositedUSDC - borrowingInterest)
 
         // Repay borrowed USDC + interest (this goes back to the lending pool)
         // In production, this would be done via lending pool contract
@@ -579,9 +584,10 @@ export function useLVFPosition({ crucibleAddress, baseTokenSymbol }: UseLVFPosit
         // For now, simulate
         await new Promise((resolve) => setTimeout(resolve, 1500))
 
-        // Update crucible TVL when closing position (decrease by deposit + borrow)
-        // Reuse baseTokenPriceForClose and collateralValueUSDForClose from above
-        const totalTVLDecreaseUSD = collateralValueUSDForClose + position.borrowedUSDC
+        // Update crucible TVL when closing position (decrease by deposit + borrow, proportional for partial)
+        const collateralValueUSDForClose = collateralToClose * baseTokenPriceForClose
+        const proportionalBorrowedUSDC = (position.borrowedUSDC || 0) * proportion
+        const totalTVLDecreaseUSD = collateralValueUSDForClose + proportionalBorrowedUSDC
         
         // Update via useCrucible hook (main system)
         if (crucibleHook?.updateCrucibleTVL) {
@@ -594,19 +600,52 @@ export function useLVFPosition({ crucibleAddress, baseTokenSymbol }: UseLVFPosit
           crucibleContext.updateCrucibleTVL(crucibleAddress, -totalTVLDecreaseUSD)
         }
         
-        // Remove position
+        // Update or remove position based on partial/full close
         setPositions((prev) => {
-          const updated = prev.filter((p) => p.id !== positionId)
-          // Update localStorage for ALL positions (from all crucibles)
-          try {
-            const allStoredPositions = JSON.parse(localStorage.getItem('leveraged_positions') || '[]')
-            const filteredAll = allStoredPositions.filter((p: LeveragedPosition) => p.id !== positionId)
-            localStorage.setItem('leveraged_positions', JSON.stringify(filteredAll))
-            console.log('✅ Removed leveraged position:', positionId)
-          } catch (e) {
-            console.warn('Failed to update positions:', e)
+          if (isPartialClose) {
+            // Update position with remaining amounts
+            const remainingCollateral = position.collateral - collateralToClose
+            const remainingBorrowedUSDC = position.borrowedUSDC - proportionalBorrowedUSDC
+            const remainingDepositedUSDC = depositedUSDC - proportionalDepositedUSDC
+            
+            const updatedPosition: LeveragedPosition = {
+              ...position,
+              collateral: remainingCollateral,
+              borrowedUSDC: remainingBorrowedUSDC,
+              depositUSDC: remainingDepositedUSDC,
+              currentValue: remainingCollateral * baseTokenPriceForClose * position.leverageFactor,
+              health: position.health, // Health should remain similar
+            }
+            
+            const updated = prev.map((p) => p.id === positionId ? updatedPosition : p)
+            
+            // Update localStorage
+            try {
+              const allStoredPositions = JSON.parse(localStorage.getItem('leveraged_positions') || '[]')
+              const updatedAll = allStoredPositions.map((p: LeveragedPosition) => 
+                p.id === positionId ? updatedPosition : p
+              )
+              localStorage.setItem('leveraged_positions', JSON.stringify(updatedAll))
+              console.log('✅ Updated leveraged position (partial close):', positionId, 'Remaining collateral:', remainingCollateral)
+            } catch (e) {
+              console.warn('Failed to update positions:', e)
+            }
+            
+            return updated
+          } else {
+            // Remove position completely (full close)
+            const updated = prev.filter((p) => p.id !== positionId)
+            // Update localStorage for ALL positions (from all crucibles)
+            try {
+              const allStoredPositions = JSON.parse(localStorage.getItem('leveraged_positions') || '[]')
+              const filteredAll = allStoredPositions.filter((p: LeveragedPosition) => p.id !== positionId)
+              localStorage.setItem('leveraged_positions', JSON.stringify(filteredAll))
+              console.log('✅ Removed leveraged position (full close):', positionId)
+            } catch (e) {
+              console.warn('Failed to update positions:', e)
+            }
+            return updated
           }
-          return updated
         })
         
         // Refetch positions immediately to update portfolio

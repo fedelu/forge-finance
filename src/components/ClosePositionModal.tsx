@@ -344,12 +344,12 @@ export default function ClosePositionModal({
     setError(null)
 
     try {
-      // For partial unwrap, we need to calculate proportional amounts
-      // Close the full position for now (we'll add partial support later)
-      // TODO: Implement partial position closing
+      // For partial unwrap, calculate proportional amounts
+      // Check if this is a partial close (unwrapAmount < full collateral)
+      const isPartialClose = unwrapAmount < maxAmount
       
-      // For now, close the full position
-      const result = await closeLVFPosition(availableLeveragedPosition.id)
+      // Close position (partial or full)
+      const result = await closeLVFPosition(availableLeveragedPosition.id, isPartialClose ? unwrapAmount : undefined)
       
       if (result && result.success) {
         // Update wallet balances - add base tokens and USDC received
@@ -365,24 +365,27 @@ export default function ClosePositionModal({
         await new Promise(resolve => setTimeout(resolve, 50))
         
         // Record transaction
-        // Calculate the original position value that was closed (collateral + deposited USDC)
+        // Calculate the original position value that was closed (proportional for partial close)
         const baseTokenPrice = baseTokenSymbol === 'FOGO' ? 0.5 : 0.002
-        const collateralValueUSD = availableLeveragedPosition.collateral * baseTokenPrice
+        const collateralWithdrawn = isPartialClose ? unwrapAmount : availableLeveragedPosition.collateral
+        const collateralValueUSD = collateralWithdrawn * baseTokenPrice
         const depositedUSDC = availableLeveragedPosition.depositUSDC || 0
-        const originalPositionValueUSD = collateralValueUSD + depositedUSDC
+        const proportion = isPartialClose ? unwrapAmount / availableLeveragedPosition.collateral : 1.0
+        const proportionalDepositedUSDC = depositedUSDC * proportion
+        const originalPositionValueUSD = collateralValueUSD + proportionalDepositedUSDC
         const totalReceivedUSD = (result.baseAmount * baseTokenPrice) + (result.usdcAmount || 0)
         
-        // Record the withdrawal - show what was withdrawn from position, not what was received
+        // Record the withdrawal - show what was withdrawn from position (partial or full)
         addTransaction({
           type: 'withdraw',
-          amount: availableLeveragedPosition.collateral, // Original collateral withdrawn
+          amount: collateralWithdrawn, // Collateral withdrawn (partial or full)
           token: baseTokenSymbol,
           crucibleId: crucibleAddress,
           signature: `close_lvf_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           apyRewards: result.apyEarned,
           totalWithdrawal: originalPositionValueUSD, // Total value withdrawn from position
           usdValue: originalPositionValueUSD, // USD value of what was withdrawn
-          borrowedAmount: availableLeveragedPosition.borrowedUSDC || 0,
+          borrowedAmount: (availableLeveragedPosition.borrowedUSDC || 0) * proportion, // Proportional borrowed USDC
           leverage: availableLeveragedPosition.leverageFactor || 2.0,
           // Store USDC separately for display
           distToken: 'USDC',
@@ -391,7 +394,13 @@ export default function ClosePositionModal({
         })
         
         // Build success message
-        let successMessage = `✅ Leveraged position closed successfully!\n\n`
+        const closeType = isPartialClose ? 'partially' : 'fully'
+        let successMessage = `✅ Leveraged position ${closeType} closed successfully!\n\n`
+        if (isPartialClose) {
+          const remainingCollateral = availableLeveragedPosition.collateral - unwrapAmount
+          successMessage += `Closed: ${unwrapAmount.toFixed(4)} ${baseTokenSymbol}\n`
+          successMessage += `Remaining: ${remainingCollateral.toFixed(4)} ${baseTokenSymbol}\n\n`
+        }
         successMessage += `Received:\n`
         successMessage += `  • ${result.baseAmount.toFixed(4)} ${baseTokenSymbol} (with APY earned)\n`
         if (result.usdcAmount && result.usdcAmount > 0) {

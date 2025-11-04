@@ -82,14 +82,17 @@ export default function LVFPositionModal({
       // which listens for 'lvfPositionOpened' events and recalculates balances from localStorage
 
       // Add transaction to analytics
+      // Calculate deposited USDC (for 1.5x leverage positions)
+      const depositedUSDC = leverage === 1.5 ? collateralValue * 0.5 : 0
       addTransaction({
         type: 'deposit',
-        amount: collateralAmount,
+        amount: collateralAmount, // Collateral token deposited
         token: baseTokenSymbol,
         crucibleId: crucibleAddress,
         borrowedAmount: borrowedUSDC,
         leverage: leverage,
-        usdValue: collateralValue + borrowedUSDC,
+        usdValue: collateralValue + borrowedUSDC + depositedUSDC,
+        usdcDeposited: depositedUSDC, // USDC deposited (for 1.5x leverage)
       })
 
       // Trigger window event to refresh portfolio
