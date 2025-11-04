@@ -497,9 +497,36 @@ export function useLVFPosition({ crucibleAddress, baseTokenSymbol }: UseLVFPosit
         }
 
         // Determine if this is a partial or full close
-        const isPartialClose = partialAmount !== undefined && partialAmount > 0 && partialAmount < position.collateral
+        // Use a small tolerance (0.0001) for floating point comparison
+        const tolerance = 0.0001
+        
+        // Validate partialAmount if provided
+        if (partialAmount !== undefined) {
+          if (partialAmount <= 0) {
+            throw new Error('Partial amount must be greater than 0')
+          }
+          if (partialAmount > position.collateral + tolerance) {
+            throw new Error(`Partial amount (${partialAmount}) exceeds position collateral (${position.collateral})`)
+          }
+        }
+        
+        // Check if this is a partial close
+        // If partialAmount is within tolerance of full collateral, treat as full close
+        const isPartialClose = partialAmount !== undefined && partialAmount > 0 && partialAmount < (position.collateral - tolerance)
         const amountToClose = isPartialClose ? partialAmount : position.collateral
         const proportion = isPartialClose ? amountToClose / position.collateral : 1.0
+        
+        console.log('🔍 Position close calculation:', {
+          positionId,
+          partialAmount,
+          positionCollateral: position.collateral,
+          difference: position.collateral - (partialAmount || 0),
+          isPartialClose,
+          amountToClose,
+          proportion,
+          willClosePartial: isPartialClose,
+          willCloseFull: !isPartialClose
+        })
 
         // Calculate base tokens to return (collateral value + APY earnings)
         const baseTokenPriceForClose = baseTokenSymbol === 'FOGO' ? 0.5 : 0.002

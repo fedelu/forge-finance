@@ -346,7 +346,17 @@ export default function ClosePositionModal({
     try {
       // For partial unwrap, calculate proportional amounts
       // Check if this is a partial close (unwrapAmount < full collateral)
-      const isPartialClose = unwrapAmount < maxAmount
+      // Use a small tolerance (0.0001) for floating point comparison
+      const tolerance = 0.0001
+      const isPartialClose = unwrapAmount < (maxAmount - tolerance)
+      
+      console.log('🔍 Closing position:', {
+        unwrapAmount,
+        maxAmount,
+        difference: maxAmount - unwrapAmount,
+        isPartialClose,
+        willCloseFull: !isPartialClose
+      })
       
       // Close position (partial or full)
       const result = await closeLVFPosition(availableLeveragedPosition.id, isPartialClose ? unwrapAmount : undefined)
