@@ -361,19 +361,29 @@ export default function ClosePositionModal({
         }
         
         // Record transaction
+        // Calculate the original position value that was closed (collateral + deposited USDC)
         const baseTokenPrice = baseTokenSymbol === 'FOGO' ? 0.5 : 0.002
-        const totalValueUSD = (result.baseAmount * baseTokenPrice) + (result.usdcAmount || 0)
+        const collateralValueUSD = availableLeveragedPosition.collateral * baseTokenPrice
+        const depositedUSDC = availableLeveragedPosition.depositUSDC || 0
+        const originalPositionValueUSD = collateralValueUSD + depositedUSDC
+        const totalReceivedUSD = (result.baseAmount * baseTokenPrice) + (result.usdcAmount || 0)
+        
+        // Record the withdrawal - show what was withdrawn from position, not what was received
         addTransaction({
           type: 'withdraw',
-          amount: result.baseAmount,
+          amount: availableLeveragedPosition.collateral, // Original collateral withdrawn
           token: baseTokenSymbol,
           crucibleId: crucibleAddress,
           signature: `close_lvf_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           apyRewards: result.apyEarned,
-          totalWithdrawal: result.baseAmount + (result.usdcAmount || 0),
-          usdValue: totalValueUSD,
+          totalWithdrawal: originalPositionValueUSD, // Total value withdrawn from position
+          usdValue: originalPositionValueUSD, // USD value of what was withdrawn
           borrowedAmount: availableLeveragedPosition.borrowedUSDC || 0,
-          leverage: availableLeveragedPosition.leverageFactor || 2.0
+          leverage: availableLeveragedPosition.leverageFactor || 2.0,
+          // Store USDC separately for display
+          distToken: 'USDC',
+          // Custom field to show USDC received
+          usdcReceived: result.usdcAmount || 0
         })
         
         // Build success message
@@ -396,8 +406,14 @@ export default function ClosePositionModal({
           successMessage += `\nRepaid to Lending Pool: ${result.repaidUSDC.toFixed(2)} USDC (borrowed + interest)`
         }
         
-        // Trigger LP balance recalculation to update wallet
-        window.dispatchEvent(new CustomEvent('forceRecalculateLP'))
+        // Trigger LP balance recalculation to update wallet - immediately and with delay
+        // This ensures both wallet and portfolio update properly
+        const forceRecalcEvent = new CustomEvent('forceRecalculateLP')
+        window.dispatchEvent(forceRecalcEvent)
+        // Also trigger immediate recalculation
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('forceRecalculateLP'))
+        }, 50)
         
         alert(successMessage)
         setLpTokenAmount('')

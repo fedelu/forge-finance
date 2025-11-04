@@ -15,6 +15,7 @@ interface Transaction {
   pfogoAmount?: number; // pFOGO amount for unwrap transactions
   borrowedAmount?: number; // USDC amount borrowed (for leveraged deposits)
   leverage?: number; // Leverage multiplier used
+  usdcReceived?: number; // USDC amount received when closing leveraged position
 }
 
 interface AnalyticsData {

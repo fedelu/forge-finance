@@ -817,12 +817,18 @@ export function FogoSessionsButton() {
     // Also listen for storage changes (in case localStorage is updated elsewhere)
     const handleStorageChange = (e: StorageEvent | Event) => {
       const key = (e as StorageEvent).key
-      if (key === 'lp_positions' || key === 'leveraged_positions' || (e as CustomEvent).type === 'forceRecalculateLP') {
-        console.log('🔄 Storage changed, recalculating LP balances...')
-        // Delay slightly to ensure localStorage is fully written
-        setTimeout(() => {
+      const eventType = e.type
+      if (key === 'lp_positions' || key === 'leveraged_positions' || eventType === 'forceRecalculateLP') {
+        console.log('🔄 Storage changed or forceRecalculateLP triggered, recalculating LP balances...', { key, eventType })
+        // Calculate immediately for forceRecalculateLP, with delay for storage events
+        if (eventType === 'forceRecalculateLP') {
           calculateLPBalances()
-        }, 100)
+        } else {
+          // Delay slightly to ensure localStorage is fully written
+          setTimeout(() => {
+            calculateLPBalances()
+          }, 100)
+        }
       }
     }
     window.addEventListener('storage', handleStorageChange)
