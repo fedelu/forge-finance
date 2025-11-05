@@ -259,13 +259,13 @@ export const AnalyticsDashboard: React.FC = () => {
                 <div className="text-right">
                   <p className="text-white font-medium">
                     {tx.amount.toFixed(2)} {tx.token}
-                    {tx.usdcDeposited && tx.usdcDeposited > 0 && (
+                    {tx.usdcDeposited !== undefined && tx.usdcDeposited > 0 && (
                       <span className="text-fogo-primary ml-2">+ {tx.usdcDeposited.toFixed(2)} USDC</span>
                     )}
-                    {tx.usdcReceived && tx.usdcReceived > 0 && (
+                    {tx.usdcReceived !== undefined && tx.usdcReceived > 0 && (
                       <span className="text-fogo-primary ml-2">+ {tx.usdcReceived.toFixed(2)} USDC</span>
                     )}
-                    {tx.borrowedAmount && tx.borrowedAmount > 0 && (
+                    {tx.borrowedAmount !== undefined && tx.borrowedAmount > 0 && (
                       <span className="text-orange-400 ml-2">+ {tx.borrowedAmount.toFixed(2)} USDC (borrowed)</span>
                     )}
                   </p>

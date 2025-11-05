@@ -88,7 +88,8 @@ export default function LVFPositionModal({
       
       // Add transaction to analytics
       // Calculate deposited USDC (for 1.5x leverage positions)
-      const depositedUSDC = leverage === 1.5 ? collateralValue * 0.5 : 0
+      // Use Math.abs to handle floating point comparison
+      const depositedUSDC = Math.abs(leverage - 1.5) < 0.01 ? collateralValue * 0.5 : 0
       // Get cToken symbol (cFOGO or cFORGE)
       const cTokenSymbol = `c${baseTokenSymbol}`
       
