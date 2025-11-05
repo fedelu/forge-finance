@@ -307,10 +307,14 @@ export default function ClosePositionModal({
         // Trigger portfolio refresh to update cToken/USDC information
         window.dispatchEvent(new CustomEvent('forceRecalculateLP'))
         
+        // Calculate actual APY earned (received - unwrapped - fee)
+        const actualAPYEarned = result.baseAmount - parseFloat(ctokenAmount) - (result.feeAmount || 0)
+        const apyEarnedDisplay = actualAPYEarned > 0 ? actualAPYEarned : result.apyEarned || 0
+        
         const successMessage = `✅ ${ctokenSymbol} unwrapped successfully!\n\n` +
           `Unwrapped: ${formatNumberWithCommas(parseFloat(ctokenAmount))} ${ctokenSymbol}\n` +
           `Received: ${formatNumberWithCommas(result.baseAmount)} ${baseTokenSymbol}\n` +
-          `APY Earned: ${formatNumberWithCommas(result.apyEarned)} ${baseTokenSymbol}\n` +
+          (apyEarnedDisplay > 0 ? `APY Earned: +${formatNumberWithCommas(apyEarnedDisplay)} ${baseTokenSymbol}\n` : '') +
           `Transaction Fee: ${formatNumberWithCommas(result.feeAmount)} ${baseTokenSymbol}`
         
         alert(successMessage)
@@ -581,7 +585,7 @@ export default function ClosePositionModal({
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-fogo-gray-300 mb-2">
-                  Amount to Unwrap ({baseTokenSymbol})
+                  Amount to Unwrap (c{baseTokenSymbol})
                 </label>
                 <div className="relative">
                   <input
@@ -599,7 +603,7 @@ export default function ClosePositionModal({
                   </button>
                 </div>
                 <div className="mt-1 text-xs text-fogo-gray-400 space-y-1">
-                  <div>Available: {(availableLeveragedPosition.collateral || 0).toFixed(2)} {baseTokenSymbol}</div>
+                  <div>Available: {(availableLeveragedPosition.collateral || 0).toFixed(2)} c{baseTokenSymbol}</div>
                   <div>Available: {(availableLeveragedPosition.depositUSDC || 0).toFixed(2)} USDC</div>
                 </div>
               </div>

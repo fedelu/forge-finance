@@ -439,21 +439,12 @@ export default function CTokenPortfolio() {
                           {position.baseAPY.toFixed(2)}%
                         </span>
                       </td>
-                      <td className="text-right py-4 px-4">
-                        <button
-                          onClick={() => setSelectedPosition(position.crucibleAddress)}
-                          disabled={ctokenBalance === 0}
-                          className="px-3 py-1 bg-fogo-primary hover:bg-fogo-secondary disabled:bg-fogo-gray-700 disabled:text-fogo-gray-500 disabled:cursor-not-allowed text-white rounded text-sm font-medium transition-colors"
-                        >
-                          Manage
-                        </button>
-                      </td>
                     </tr>
                   )
                 })
               ) : (
                 <tr>
-                  <td colSpan={5} className="py-8 px-4 text-center">
+                  <td colSpan={4} className="py-8 px-4 text-center">
                     <div className="text-fogo-gray-400 text-sm">
                       No cToken positions yet. Wrap tokens to create a position.
                     </div>
