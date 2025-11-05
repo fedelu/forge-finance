@@ -91,7 +91,8 @@ export default function LVFPositionModal({
       const depositedUSDC = leverage === 1.5 ? collateralValue * 0.5 : 0
       // Get cToken symbol (cFOGO or cFORGE)
       const cTokenSymbol = `c${baseTokenSymbol}`
-      addTransaction({
+      
+      const transactionData = {
         type: 'deposit',
         amount: collateralAfterFee, // Collateral cToken deposited AFTER fee (what actually goes into position)
         token: cTokenSymbol, // Show cTOKEN (cFOGO or cFORGE) not TOKEN
@@ -101,7 +102,19 @@ export default function LVFPositionModal({
         usdValue: (collateralAfterFee * baseTokenPrice) + borrowedUSDC + depositedUSDC,
         usdcDeposited: depositedUSDC, // USDC deposited (for 1.5x leverage)
         fee: protocolFee, // Protocol fee (1.5%)
+      }
+      
+      console.log('📝 Recording leveraged position transaction:', {
+        collateralAmount,
+        protocolFee,
+        collateralAfterFee,
+        cTokenSymbol,
+        depositedUSDC,
+        borrowedUSDC,
+        transactionData
       })
+      
+      addTransaction(transactionData)
 
       // Trigger window event to refresh portfolio
       window.dispatchEvent(new CustomEvent('lvfPositionOpened', { 
