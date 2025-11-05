@@ -380,29 +380,29 @@ export default function CTokenPortfolio() {
       </div>
 
       {/* cTOKENS Section - Simple wrap positions */}
-      <div className="bg-gradient-to-br from-fogo-gray-900 via-fogo-gray-800 to-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700/50 shadow-xl">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
-            <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="bg-gradient-to-br from-fogo-gray-900/90 via-fogo-gray-800/80 to-fogo-gray-900/90 rounded-3xl p-8 border border-fogo-gray-700/50 shadow-2xl backdrop-blur-sm">
+        <div className="flex items-center gap-4 mb-8">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/30 to-blue-500/10 flex items-center justify-center ring-2 ring-blue-500/20">
+            <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
           <h3 className="text-2xl font-inter-bold text-white">cTOKENS</h3>
-          <span className="px-3 py-1 bg-blue-500/20 text-blue-400 text-xs font-bold rounded-full">{cTokenPositions.length}</span>
+          <span className="px-4 py-1.5 bg-gradient-to-r from-blue-500/20 to-blue-500/10 text-blue-400 text-xs font-bold rounded-full border border-blue-500/30">{cTokenPositions.length}</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="border-b border-fogo-gray-700">
-                <th className="text-left py-3 px-4 text-fogo-gray-400 font-medium text-sm">cToken</th>
-                <th className="text-right py-3 px-4 text-fogo-gray-400 font-medium text-sm">Balance</th>
-                <th className="text-right py-3 px-4 text-fogo-gray-400 font-medium text-sm">Value</th>
-                <th className="text-right py-3 px-4 text-fogo-gray-400 font-medium text-sm">APY</th>
+              <tr className="border-b border-fogo-gray-700/50">
+                <th className="text-left py-4 px-6 text-fogo-gray-400 font-semibold text-sm uppercase tracking-wider">cToken</th>
+                <th className="text-right py-4 px-6 text-fogo-gray-400 font-semibold text-sm uppercase tracking-wider">Balance</th>
+                <th className="text-right py-4 px-6 text-fogo-gray-400 font-semibold text-sm uppercase tracking-wider">Value</th>
+                <th className="text-right py-4 px-6 text-fogo-gray-400 font-semibold text-sm uppercase tracking-wider">APY</th>
               </tr>
             </thead>
             <tbody>
               {cTokenPositions.length > 0 ? (
-                cTokenPositions.map((position) => {
+                cTokenPositions.map((position, index) => {
                   const userBalance = userBalances[position.crucibleAddress]
                   const ctokenBalance = userBalance?.ptokenBalance ? Number(userBalance.ptokenBalance) / 1e9 : 0
                   const basePrice = position.baseTokenSymbol === 'FOGO' ? 0.5 : 0.002
@@ -410,32 +410,36 @@ export default function CTokenPortfolio() {
                   const valueUSD = ctokenBalance * exchangeRate * basePrice
                   
                   return (
-                    <tr key={position.crucibleAddress} className="border-b border-fogo-gray-800 hover:bg-fogo-gray-800/30 transition-colors">
-                      <td className="py-4 px-4">
+                    <tr 
+                      key={position.crucibleAddress} 
+                      className="group border-b border-fogo-gray-800/50 hover:bg-gradient-to-r hover:from-fogo-gray-800/40 hover:to-fogo-gray-800/20 transition-all duration-300"
+                      style={{ animationDelay: `${index * 50}ms` }}
+                    >
+                      <td className="py-5 px-6">
                         <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center">
-                            <span className="text-blue-400 font-bold text-sm">
+                          <div className="w-12 h-12 bg-gradient-to-br from-blue-500/30 to-blue-500/10 rounded-xl flex items-center justify-center ring-2 ring-blue-500/20 group-hover:ring-blue-500/40 transition-all duration-300 group-hover:scale-110">
+                            <span className="text-blue-400 font-bold text-base">
                               {position.ctokenSymbol.substring(1, 2).toUpperCase()}
                             </span>
                           </div>
                           <div>
-                            <div className="text-white font-medium">{position.ctokenSymbol}</div>
-                            <div className="text-fogo-gray-500 text-xs">{position.baseTokenSymbol}</div>
+                            <div className="text-white font-semibold text-base">{position.ctokenSymbol}</div>
+                            <div className="text-fogo-gray-500 text-xs font-medium mt-0.5">{position.baseTokenSymbol}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="text-right py-4 px-4">
-                        <div className="text-white font-medium">
+                      <td className="text-right py-5 px-6">
+                        <div className="text-white font-semibold text-base">
                           {ctokenBalance.toFixed(2)} {position.ctokenSymbol}
                         </div>
                       </td>
-                      <td className="text-right py-4 px-4">
-                        <div className="text-white font-medium">
+                      <td className="text-right py-5 px-6">
+                        <div className="text-white font-semibold text-base">
                           ${valueUSD.toFixed(2)} USD
                         </div>
                       </td>
-                      <td className="text-right py-4 px-4">
-                        <span className="text-blue-400 font-medium">
+                      <td className="text-right py-5 px-6">
+                        <span className="inline-flex items-center px-3 py-1 bg-blue-500/20 text-blue-400 font-semibold rounded-lg text-sm border border-blue-500/30">
                           {position.baseAPY.toFixed(2)}%
                         </span>
                       </td>
@@ -444,8 +448,8 @@ export default function CTokenPortfolio() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={4} className="py-8 px-4 text-center">
-                    <div className="text-fogo-gray-400 text-sm">
+                  <td colSpan={4} className="py-16 px-6 text-center">
+                    <div className="text-fogo-gray-400 text-sm font-medium">
                       No cToken positions yet. Wrap tokens to create a position.
                     </div>
                   </td>

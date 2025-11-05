@@ -1,36 +1,37 @@
-# 🔥 Forge Finance - Solana DeFi Protocol
+# 🔥 Forge Finance - FOGO DeFi Protocol
 
-A comprehensive DeFi protocol built on Solana, featuring crucible management, governance, analytics, and yield farming capabilities.
+A comprehensive DeFi protocol built on FOGO (Solana-compatible), featuring token wrapping (cTokens), leveraged positions, lending pools, and yield farming capabilities.
 
-## 🚀 Live Demo
+## 🚀 Features
 
-**🌐 [Try the Live Demo](https://forge-finance-xxx.vercel.app)**
+### 🏦 **Token Wrapping (cTokens)**
+- Wrap FOGO and FORGE tokens into yield-bearing cTokens (cFOGO, cFORGE)
+- Earn APY through exchange rate appreciation
+- Real-time balance tracking and portfolio management
+- Seamless wrap/unwrap operations
 
-## ✨ Features
+### 💰 **Leveraged Positions (LVF)**
+- Create leveraged liquidity positions up to 2x
+- Borrow USDC from lending pool to amplify positions
+- Health factor monitoring and risk management
+- Partial position closing support
 
-### 🏦 **Crucible Management**
-- Create and manage liquidity crucibles
-- Deposit SOL and earn yield
-- Real-time balance tracking
-- Multiple deposit options (Simple, Ultra Simple, Real SOL)
+### 🏛️ **Lending Pool**
+- Supply USDC to earn lending yields
+- Borrow USDC for leveraged positions
+- Dynamic interest rates (5% APY borrowing)
+- Real-time collateralization tracking
 
-### 🗳️ **Governance System**
-- Create and vote on proposals
-- Protocol parameter changes
-- Community-driven decisions
-- Real-time voting results
+### 📊 **Portfolio & Analytics**
+- Comprehensive portfolio dashboard
+- Transaction history with detailed analytics
+- Real-time APY earnings tracking
+- Performance metrics and insights
 
-### 📊 **Analytics Dashboard**
-- Portfolio overview with SPARK and HEAT tokens
-- Transaction history and statistics
-- Performance metrics
-- Real-time updates
-
-### 💰 **Token Economics**
-- **SPARK**: Governance token for voting
-- **HEAT**: Reward token for participation
-- Dynamic token generation based on deposits
-- Real-time balance updates
+### 🔥 **FOGO Sessions Integration**
+- Gasless transaction support (when paymaster enabled)
+- Session-based authentication
+- Seamless wallet integration with Phantom
 
 ## 🛠️ **Technology Stack**
 
@@ -42,20 +43,20 @@ A comprehensive DeFi protocol built on Solana, featuring crucible management, go
 - **Framer Motion** - Animations
 
 ### **Blockchain**
-- **Fogo Testnet** - Official Fogo test network
-- **Fogo Sessions SDK** - Gasless transactions
+- **FOGO Testnet** - Official FOGO test network
+- **FOGO Sessions SDK** - Gasless transactions (paymaster disabled - see [DEPLOYMENT_STATUS.md](docs/DEPLOYMENT_STATUS.md))
 - **Solana Web3.js** - Blockchain interaction
 - **Phantom Wallet** - Primary wallet support
 
 ### **Smart Contracts**
-- **Forge Core** - Main protocol logic
-- **Crucibles** - Liquidity management
-- **Sparks** - Governance tokens
-- **Heat** - Reward tokens
-- **Smelters** - Yield generation
-- **Reactors** - Advanced features
-- **Firewall** - Security layer
-- **Engineers** - Maintenance
+- **forge-core** - Main protocol registry
+- **forge-crucibles** - Token wrapping and LP position management
+  - cToken minting and burning
+  - LP position tracking
+  - Leveraged position management (LVF)
+- **lending** - Lending pool operations
+- **lending-pool** - USDC lending and borrowing
+- **lvf** - Leveraged Volatility Farming positions
 
 ## 🚀 **Quick Start**
 
@@ -73,12 +74,13 @@ git clone https://github.com/YOUR_USERNAME/forge-finance.git
 cd forge-finance
 
 # Install dependencies
-cd app
 npm install
 
 # Start development server
 npm run dev
 ```
+
+**Note**: The project structure uses `src/` directory instead of `app/` for the frontend.
 
 ### **Environment Setup**
 
@@ -88,8 +90,9 @@ Create `.env.local` in the root directory:
 NEXT_PUBLIC_SOLANA_NETWORK=fogo-testnet
 NEXT_PUBLIC_RPC_URL=https://testnet.fogo.io
 NEXT_PUBLIC_COMMITMENT=confirmed
-NEXT_PUBLIC_PAYMASTER_URL=https://testnet.fogo.io/paymaster
-NEXT_PUBLIC_APP_DOMAIN=http://localhost:3003
+# Paymaster is currently disabled - see DEPLOYMENT_STATUS.md
+NEXT_PUBLIC_PAYMASTER_URL=
+NEXT_PUBLIC_APP_DOMAIN=http://localhost:3000
 ```
 
 ## 🔧 **Development**
@@ -107,9 +110,10 @@ anchor deploy --provider.cluster fogo-testnet
 ### **Run Frontend**
 
 ```bash
-cd app
 npm run dev
 ```
+
+The development server will start on `http://localhost:3000`
 
 ### **Test**
 
@@ -128,64 +132,70 @@ npm test
 
 1. **Connect Wallet**
    - Install Phantom wallet
-   - Connect to Fogo testnet
-   - Get test FOGO tokens from [Fogo faucet](https://testnet.fogo.io/faucet)
+   - Connect to FOGO testnet
+   - Get test FOGO tokens from [FOGO faucet](https://testnet.fogo.io/faucet)
 
-2. **Deposit Tokens**
-   - Navigate to Crucibles tab
-   - Select a crucible
-   - Choose deposit option
-   - Confirm transaction
+2. **Wrap Tokens**
+   - Navigate to the main dashboard
+   - Select FOGO or FORGE token
+   - Enter amount to wrap
+   - Confirm transaction to receive cTokens
 
-3. **Earn Rewards**
-   - Earn SPARK tokens for governance
-   - Earn HEAT tokens for participation
-   - Track performance in Analytics
+3. **Create Leveraged Positions**
+   - Select a token pair (cFOGO/USDC or cFORGE/USDC)
+   - Choose leverage multiplier (1.5x or 2x)
+   - Deposit collateral and borrow USDC
+   - Monitor health factor
 
-4. **Governance**
-   - Create proposals
-   - Vote on community decisions
-   - Influence protocol direction
+4. **Supply to Lending Pool**
+   - Supply USDC to earn lending yields
+   - Borrow USDC for leveraged positions
+   - Track your lending position in portfolio
+
+5. **View Analytics**
+   - Track portfolio performance
+   - View transaction history
+   - Monitor APY earnings
 
 ### **For Developers**
 
 1. **Smart Contract Development**
    - Modify programs in `programs/`
-   - Update IDL files
-   - Deploy changes
+   - Update IDL files in `src/idl/`
+   - Deploy with `anchor deploy`
 
 2. **Frontend Development**
-   - Update components in `app/src/components/`
-   - Modify pages in `app/src/pages/`
-   - Add new features
+   - Update components in `src/components/`
+   - Modify pages in `src/pages/`
+   - Update contexts in `src/contexts/`
+   - Add new hooks in `src/hooks/`
 
 3. **Integration**
-   - Connect new wallets
-   - Add new token types
-   - Extend functionality
+   - Connect new wallets via `src/contexts/WalletContext.tsx`
+   - Add new token types in `src/config/fogo-testnet.ts`
+   - Extend functionality with custom hooks
 
 ## 🏗️ **Architecture**
 
 ```
 forge-finance/
-├── programs/           # Solana smart contracts
-│   ├── forge-core/     # Main protocol
-│   ├── forge-crucibles/# Crucible management
-│   ├── forge-sparks/   # Governance tokens
-│   ├── forge-heat/     # Reward tokens
-│   ├── forge-smelters/ # Yield generation
-│   ├── forge-reactors/ # Advanced features
-│   ├── forge-firewall/ # Security layer
-│   └── forge-engineers/# Maintenance
-├── app/               # Next.js frontend
-│   ├── src/
-│   │   ├── components/ # React components
-│   │   ├── contexts/   # State management
-│   │   ├── pages/      # Next.js pages
-│   │   └── utils/      # Utility functions
-│   └── public/         # Static assets
-├── sdk/               # TypeScript SDK
-└── scripts/           # Deployment scripts
+├── programs/              # Anchor smart contracts
+│   ├── forge-core/        # Main protocol registry
+│   ├── forge-crucibles/   # Token wrapping & LP positions
+│   ├── lending/           # Lending pool operations
+│   ├── lending-pool/      # USDC lending/borrowing
+│   └── lvf/               # Leveraged positions
+├── src/                   # Next.js frontend
+│   ├── components/        # React components
+│   ├── contexts/          # State management (Balance, Crucible, Analytics)
+│   ├── pages/             # Next.js pages
+│   ├── hooks/             # Custom React hooks
+│   ├── lib/               # FOGO Sessions integration
+│   ├── utils/             # Utility functions
+│   └── config/            # Configuration files
+├── sdk/                   # TypeScript SDK
+├── scripts/               # Deployment scripts
+└── docs/                  # Documentation
 ```
 
 ## 🔒 **Security**
@@ -231,12 +241,17 @@ forge-finance/
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
+## 📚 **Documentation**
+
+- **[Deployment Status](docs/DEPLOYMENT_STATUS.md)** - Current smart contract deployment status, FOGO Sessions status, and missing features
+- **[cToken-LVF Integration](docs/ctoken-lvf-integration.md)** - Technical documentation on cToken and leveraged position integration
+- **[Lending-LVF Architecture](docs/lending-lvf-architecture.md)** - Architecture documentation for lending and leveraged positions
+- **[MVP Documentation](docs/mvp-pfogo-pusdc.md)** - MVP feature documentation
+
 ## 🔗 **Links**
 
-- **Live Demo**: [forge-finance-xxx.vercel.app](https://forge-finance-xxx.vercel.app)
-- **Documentation**: [docs.forge-finance.com](https://docs.forge-finance.com)
-- **Discord**: [discord.gg/forge-finance](https://discord.gg/forge-finance)
-- **Twitter**: [@forge_finance](https://twitter.com/forge_finance)
+- **FOGO Testnet**: [testnet.fogo.io](https://testnet.fogo.io)
+- **FOGO Explorer**: [explorer.fogo.io](https://explorer.fogo.io)
 
 ## 🙏 **Acknowledgments**
 
