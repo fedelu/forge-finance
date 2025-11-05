@@ -93,7 +93,7 @@ export default function LVFPositionModal({
       const cTokenSymbol = `c${baseTokenSymbol}`
       
       const transactionData = {
-        type: 'deposit',
+        type: 'deposit' as const,
         amount: collateralAfterFee, // Collateral cToken deposited AFTER fee (what actually goes into position)
         token: cTokenSymbol, // Show cTOKEN (cFOGO or cFORGE) not TOKEN
         crucibleId: crucibleAddress,
