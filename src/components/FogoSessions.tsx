@@ -947,7 +947,8 @@ export function FogoSessionsButton() {
       window.dispatchEvent(new CustomEvent('lpPositionClosed'))
       window.dispatchEvent(new CustomEvent('lvfPositionClosed'))
       
-      alert('✅ All positions cleared! LP balances reset to 0.')
+      // Hard refresh to reset all state
+      window.location.reload()
     } catch (error) {
       console.error('❌ Error clearing positions:', error)
       alert('❌ Error clearing positions. Check console for details.')

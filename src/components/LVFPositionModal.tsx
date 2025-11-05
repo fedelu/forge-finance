@@ -84,10 +84,12 @@ export default function LVFPositionModal({
       // Add transaction to analytics
       // Calculate deposited USDC (for 1.5x leverage positions)
       const depositedUSDC = leverage === 1.5 ? collateralValue * 0.5 : 0
+      // Get cToken symbol (cFOGO or cFORGE)
+      const cTokenSymbol = `c${baseTokenSymbol}`
       addTransaction({
         type: 'deposit',
-        amount: collateralAmount, // Collateral token deposited
-        token: baseTokenSymbol,
+        amount: collateralAmount, // Collateral cToken deposited
+        token: cTokenSymbol, // Show cTOKEN (cFOGO or cFORGE) not TOKEN
         crucibleId: crucibleAddress,
         borrowedAmount: borrowedUSDC,
         leverage: leverage,

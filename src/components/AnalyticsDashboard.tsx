@@ -254,11 +254,6 @@ export const AnalyticsDashboard: React.FC = () => {
                     <p className="text-fogo-gray-400 text-sm">
                       {new Date(tx.timestamp).toLocaleString()}
                     </p>
-                    {tx.borrowedAmount && tx.borrowedAmount > 0 && (
-                      <p className="text-orange-400 text-xs font-medium mt-1">
-                        Borrowed: {tx.borrowedAmount.toFixed(2)} USDC ({tx.leverage}x leverage)
-                      </p>
-                    )}
                   </div>
                 </div>
                 <div className="text-right">
@@ -270,13 +265,16 @@ export const AnalyticsDashboard: React.FC = () => {
                     {tx.usdcReceived && tx.usdcReceived > 0 && (
                       <span className="text-fogo-primary ml-2">+ {tx.usdcReceived.toFixed(2)} USDC</span>
                     )}
+                    {tx.borrowedAmount && tx.borrowedAmount > 0 && (
+                      <span className="text-orange-400 ml-2">+ {tx.borrowedAmount.toFixed(2)} USDC (borrowed)</span>
+                    )}
                   </p>
                   <p className="text-fogo-gray-400 text-sm">
-                    {formatCurrency(tx.usdValue || tx.amount * (tx.token === 'FOGO' ? 0.5 : tx.token === 'FORGE' ? 0.002 : tx.token === 'SOL' ? 200 : tx.token === 'USDC' ? 1 : tx.token === 'ETH' ? 4000 : 110000))}
+                    {formatCurrency(tx.usdValue || tx.amount * (tx.token === 'FOGO' ? 0.5 : tx.token === 'FORGE' ? 0.002 : tx.token === 'cFOGO' ? 0.5224 : tx.token === 'cFORGE' ? 0.0025 : tx.token === 'SOL' ? 200 : tx.token === 'USDC' ? 1 : tx.token === 'ETH' ? 4000 : 110000))}
                   </p>
-                  {tx.borrowedAmount && tx.borrowedAmount > 0 && (
+                  {tx.leverage && tx.leverage > 1 && (
                     <p className="text-orange-400 text-xs font-medium mt-1">
-                      + {formatCurrency(tx.borrowedAmount)} borrowed
+                      {tx.leverage}x leverage
                     </p>
                   )}
                   {tx.signature && (
