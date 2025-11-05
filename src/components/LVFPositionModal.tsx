@@ -76,11 +76,16 @@ export default function LVFPositionModal({
       subtractFromBalance(baseTokenSymbol, collateralAmount)
 
       // Open leveraged position
-      await openPosition(collateralAmount, leverage)
+      const position = await openPosition(collateralAmount, leverage)
 
       // Note: LP tokens are automatically added to wallet by the LP balance calculation effect
       // which listens for 'lvfPositionOpened' events and recalculates balances from localStorage
 
+      // Calculate protocol fee (1.5%)
+      const protocolFeePercent = 0.015 // 1.5%
+      const protocolFee = collateralAmount * protocolFeePercent
+      const collateralAfterFee = collateralAmount - protocolFee
+      
       // Add transaction to analytics
       // Calculate deposited USDC (for 1.5x leverage positions)
       const depositedUSDC = leverage === 1.5 ? collateralValue * 0.5 : 0
@@ -88,13 +93,14 @@ export default function LVFPositionModal({
       const cTokenSymbol = `c${baseTokenSymbol}`
       addTransaction({
         type: 'deposit',
-        amount: collateralAmount, // Collateral cToken deposited
+        amount: collateralAfterFee, // Collateral cToken deposited AFTER fee (what actually goes into position)
         token: cTokenSymbol, // Show cTOKEN (cFOGO or cFORGE) not TOKEN
         crucibleId: crucibleAddress,
         borrowedAmount: borrowedUSDC,
         leverage: leverage,
-        usdValue: collateralValue + borrowedUSDC + depositedUSDC,
+        usdValue: (collateralAfterFee * baseTokenPrice) + borrowedUSDC + depositedUSDC,
         usdcDeposited: depositedUSDC, // USDC deposited (for 1.5x leverage)
+        fee: protocolFee, // Protocol fee (1.5%)
       })
 
       // Trigger window event to refresh portfolio

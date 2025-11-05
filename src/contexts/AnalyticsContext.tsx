@@ -17,6 +17,7 @@ interface Transaction {
   leverage?: number; // Leverage multiplier used
   usdcReceived?: number; // USDC amount received when closing leveraged position
   usdcDeposited?: number; // USDC amount deposited when opening LP position
+  fee?: number; // Transaction fee (protocol fee)
 }
 
 interface AnalyticsData {
