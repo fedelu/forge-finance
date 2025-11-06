@@ -188,7 +188,7 @@ export default function CrucibleManager({ className = '', onDeposit, onWithdraw,
               Available Crucibles
             </h2>
             <p className="text-fogo-gray-400 text-base max-w-2xl mx-auto">
-              Crucibles are on-chain yield engines. Wrap your tokens for steady APY, provide liquidity for amplified rewards, or enter Inferno Mode to tap Inferno Mode and maximize returns.
+              Crucibles are on-chain yield engines. Wrap your tokens for steady APY, provide liquidity for amplified rewards, or enter Inferno Mode to leverage your position and maximize returns.
             </p>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
