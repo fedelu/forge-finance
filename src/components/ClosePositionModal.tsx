@@ -314,7 +314,7 @@ export default function ClosePositionModal({
         const successMessage = `✅ ${ctokenSymbol} unwrapped successfully!\n\n` +
           `Unwrapped: ${formatNumberWithCommas(parseFloat(ctokenAmount))} ${ctokenSymbol}\n` +
           `Received: ${formatNumberWithCommas(result.baseAmount)} ${baseTokenSymbol}\n` +
-          (apyEarnedDisplay > 0 ? `APY Generated: +${formatNumberWithCommas(apyEarnedDisplay)} ${baseTokenSymbol}\n` : '') +
+          (apyEarnedDisplay > 0 ? `Yield Earned: +${formatNumberWithCommas(apyEarnedDisplay)} ${baseTokenSymbol}\n` : '') +
           `Transaction Fee: ${formatNumberWithCommas(result.feeAmount)} ${baseTokenSymbol}`
         
         alert(successMessage)
@@ -416,12 +416,12 @@ export default function ClosePositionModal({
           successMessage += `Remaining: ${remainingCollateral.toFixed(4)} ${baseTokenSymbol}\n\n`
         }
         successMessage += `Received:\n`
-          successMessage += `  • ${result.baseAmount.toFixed(4)} ${baseTokenSymbol} (with APY generated)\n`
+          successMessage += `  • ${result.baseAmount.toFixed(4)} ${baseTokenSymbol} (with Yield earned)\n`
         if (result.usdcAmount && result.usdcAmount > 0) {
           successMessage += `  • ${result.usdcAmount.toFixed(2)} USDC (redeemed - borrowing interest deducted)\n`
         }
         if (result.apyEarned && result.apyEarned > 0) {
-          successMessage += `\nAPY Generated: ${result.apyEarned.toFixed(4)} ${baseTokenSymbol}\n`
+          successMessage += `\nYield Earned: ${result.apyEarned.toFixed(4)} ${baseTokenSymbol}\n`
         }
         if (result.borrowingInterest && result.borrowingInterest > 0) {
           successMessage += `Borrowing Interest Paid: ${result.borrowingInterest.toFixed(2)} USDC\n`
@@ -550,7 +550,7 @@ export default function ClosePositionModal({
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-fogo-gray-400">APY Generated:</span>
+                    <span className="text-fogo-gray-400">Yield Earned:</span>
                     <span className="text-green-400 font-medium">
                       +{formatNumberWithCommas(cTokenUnwrapPreview.apyEarned)} {baseTokenSymbol}
                     </span>
@@ -635,7 +635,7 @@ export default function ClosePositionModal({
                     </div>
                     
                     <div className="flex justify-between text-sm">
-                      <span className="text-fogo-gray-400">APY Generated (Tokens):</span>
+                      <span className="text-fogo-gray-400">Yield Earned (Tokens):</span>
                       <span className="text-green-400 font-medium">
                         +{formatNumberWithCommas(lpTokenUnwrapPreview.apyEarnedTokens)} {baseTokenSymbol}
                       </span>

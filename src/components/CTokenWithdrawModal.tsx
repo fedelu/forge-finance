@@ -79,7 +79,7 @@ export default function CTokenWithdrawModal({
           subtractFromBalance(lpTokenSymbol, lpTokenAmount)
           
           // Show closing information with APY earnings
-          const apyMessage = result.apyEarned ? `\nAPY Generated: ${result.apyEarned.toFixed(4)} ${baseTokenSymbol}` : ''
+          const apyMessage = result.apyEarned ? `\nYield Earned: ${result.apyEarned.toFixed(4)} ${baseTokenSymbol}` : ''
           alert(`✅ LP Position closed!\n\nReceived: ${result.baseAmount.toFixed(2)} ${baseTokenSymbol} + ${result.usdcAmount.toFixed(2)} USDC${apyMessage}`)
         }
       } else {
@@ -118,7 +118,7 @@ export default function CTokenWithdrawModal({
           }
           
           // Show closing information with APY earnings
-          const apyMessage = result.apyEarned ? `\nAPY Generated: ${result.apyEarned.toFixed(4)} ${baseTokenSymbol}` : ''
+          const apyMessage = result.apyEarned ? `\nYield Earned: ${result.apyEarned.toFixed(4)} ${baseTokenSymbol}` : ''
           const usdcMessage = result.repaidUSDC > 0 ? `\nRepaid: ${result.repaidUSDC.toFixed(2)} USDC` : ''
           alert(`✅ Leveraged Position closed!\n\nReceived: ${result.baseAmount.toFixed(2)} ${baseTokenSymbol}${apyMessage}${usdcMessage}`)
         }
@@ -294,7 +294,7 @@ export default function CTokenWithdrawModal({
               </span>
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-fogo-gray-500">APY Generated</span>
+              <span className="text-fogo-gray-500">Yield Earned</span>
               <span className="text-green-400">
                 +{((exchangeRate - 1.045) * 100).toFixed(2)}%
               </span>

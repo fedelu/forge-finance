@@ -254,7 +254,7 @@ export default function SimpleStats({ className = '' }: SimpleStatsProps) {
                       <span className="text-fogo-accent font-inter-bold">{(crucible.apr * 100).toFixed(1)}%</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-fogo-gray-400 text-sm">APY Generated:</span>
+                      <span className="text-fogo-gray-400 text-sm">Yield Earned:</span>
                       <span className="text-fogo-primary font-inter-bold">{formatCurrency(yieldEarned)}</span>
                     </div>
                   </div>

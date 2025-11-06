@@ -151,7 +151,7 @@ export const FogoWithdrawModal: React.FC<FogoWithdrawModalProps> = ({ isOpen, on
           signature: mockSignature
         });
 
-        alert(`✅ cFOGO UNWRAP SUCCESSFUL\n\n✅ ${formatNumberWithCommas(withdrawAmount)} cFOGO unwrapped\n✅ Received: ${formatNumberWithCommas(fogoToReceive)} FOGO\n✅ APY generated: ${formatNumberWithCommas(fogoToReceive - withdrawAmount)} FOGO\n\nTransaction: ${mockSignature}`);
+        alert(`✅ cFOGO UNWRAP SUCCESSFUL\n\n✅ ${formatNumberWithCommas(withdrawAmount)} cFOGO unwrapped\n✅ Received: ${formatNumberWithCommas(fogoToReceive)} FOGO\n✅ Yield earned: ${formatNumberWithCommas(fogoToReceive - withdrawAmount)} FOGO\n\nTransaction: ${mockSignature}`);
       }
 
       setAmount('');
@@ -320,7 +320,7 @@ export const FogoWithdrawModal: React.FC<FogoWithdrawModalProps> = ({ isOpen, on
                   </>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-gray-300">APY generated:</span>
+                  <span className="text-gray-300">Yield earned:</span>
                   <span className="text-green-400 font-medium">
                     +{(parseFloat(calculateUnwrapPreview(crucibleId, amount).baseAmount) - parseFloat(amount)).toFixed(6)} {crucible?.baseToken}
                   </span>

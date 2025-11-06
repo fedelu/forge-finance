@@ -136,7 +136,7 @@ export default function CrucibleManager({ className = '', onDeposit, onWithdraw,
               <div className="w-10 h-10 bg-gradient-to-br from-fogo-accent/20 to-fogo-accent/10 rounded-xl flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform duration-300">
                 <BoltIcon className="h-5 w-5 text-fogo-accent" />
               </div>
-              <p className="text-fogo-gray-300 text-xs font-medium mb-1">APY Generated</p>
+              <p className="text-fogo-gray-300 text-xs font-medium mb-1">Yield Earned</p>
               <p className="text-2xl font-bold text-white group-hover:text-fogo-accent transition-colors duration-300">
                 ${crucibles.reduce((sum, c) => sum + (c.apyEarnedByUsers || 0), 0).toLocaleString()}
               </p>
@@ -289,7 +289,7 @@ export default function CrucibleManager({ className = '', onDeposit, onWithdraw,
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                       </svg>
-                      Total APY Generated
+                      Total Yield Earned
                     </span>
                     <span className="font-inter-bold text-lg text-fogo-primary">
                       ${(crucible.apyEarnedByUsers || 0).toLocaleString()}
