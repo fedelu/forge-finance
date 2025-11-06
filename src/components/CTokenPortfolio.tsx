@@ -677,7 +677,7 @@ function ClosePositionButton({ position, crucible, onClose }: {
           subtractFromBalance(lpTokenSymbol, lpTokenAmount)
           
           // Show closing information with APY earnings
-          const apyMessage = lvfResult.apyEarned ? `\nAPY Earned: ${lvfResult.apyEarned.toFixed(4)} ${crucible.baseTokenSymbol}` : ''
+          const apyMessage = lvfResult.apyEarned ? `\nAPY Generated: ${lvfResult.apyEarned.toFixed(4)} ${crucible.baseTokenSymbol}` : ''
           const usdcMessage = lvfResult.repaidUSDC > 0 ? `\nRepaid: ${lvfResult.repaidUSDC.toFixed(2)} USDC` : ''
           alert(`✅ Leveraged Position closed!\n\nReceived: ${lvfResult.baseAmount.toFixed(2)} ${crucible.baseTokenSymbol}${apyMessage}${usdcMessage}`)
         } else {
@@ -692,7 +692,7 @@ function ClosePositionButton({ position, crucible, onClose }: {
           subtractFromBalance(lpTokenSymbol, lpTokenAmount)
           
           // Show closing information with APY earnings
-          const apyMessage = lpResult.apyEarned ? `\nAPY Earned: ${lpResult.apyEarned.toFixed(4)} ${crucible.baseTokenSymbol}` : ''
+          const apyMessage = lpResult.apyEarned ? `\nAPY Generated: ${lpResult.apyEarned.toFixed(4)} ${crucible.baseTokenSymbol}` : ''
           alert(`✅ LP Position closed!\n\nReceived: ${lpResult.baseAmount.toFixed(2)} ${crucible.baseTokenSymbol} + ${lpResult.usdcAmount.toFixed(2)} USDC${apyMessage}`)
         }
         

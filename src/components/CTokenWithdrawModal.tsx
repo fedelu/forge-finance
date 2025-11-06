@@ -79,7 +79,7 @@ export default function CTokenWithdrawModal({
           subtractFromBalance(lpTokenSymbol, lpTokenAmount)
           
           // Show closing information with APY earnings
-          const apyMessage = result.apyEarned ? `\nAPY Earned: ${result.apyEarned.toFixed(4)} ${baseTokenSymbol}` : ''
+          const apyMessage = result.apyEarned ? `\nAPY Generated: ${result.apyEarned.toFixed(4)} ${baseTokenSymbol}` : ''
           alert(`✅ LP Position closed!\n\nReceived: ${result.baseAmount.toFixed(2)} ${baseTokenSymbol} + ${result.usdcAmount.toFixed(2)} USDC${apyMessage}`)
         }
       } else {
@@ -118,7 +118,7 @@ export default function CTokenWithdrawModal({
           }
           
           // Show closing information with APY earnings
-          const apyMessage = result.apyEarned ? `\nAPY Earned: ${result.apyEarned.toFixed(4)} ${baseTokenSymbol}` : ''
+          const apyMessage = result.apyEarned ? `\nAPY Generated: ${result.apyEarned.toFixed(4)} ${baseTokenSymbol}` : ''
           const usdcMessage = result.repaidUSDC > 0 ? `\nRepaid: ${result.repaidUSDC.toFixed(2)} USDC` : ''
           alert(`✅ Leveraged Position closed!\n\nReceived: ${result.baseAmount.toFixed(2)} ${baseTokenSymbol}${apyMessage}${usdcMessage}`)
         }
@@ -209,14 +209,16 @@ export default function CTokenWithdrawModal({
               Withdraw Amount ({ctokenSymbol})
             </label>
             <div className="flex space-x-2">
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="0.00"
-                max={availableBalance > 0 ? availableBalance.toString() : undefined}
-                className="flex-1 px-4 py-3 bg-fogo-gray-800 border border-fogo-gray-700 rounded-lg text-white placeholder-fogo-gray-500 focus:outline-none focus:ring-2 focus:ring-fogo-primary"
-              />
+              <div className="flex-1 relative">
+                <input
+                  type="number"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="0.00"
+                  max={availableBalance > 0 ? availableBalance.toString() : undefined}
+                  className="w-full px-4 py-3 pr-12 bg-fogo-gray-800 border border-fogo-gray-700 rounded-lg text-white placeholder-fogo-gray-500 focus:outline-none focus:ring-2 focus:ring-fogo-primary"
+                />
+              </div>
               <button
                 onClick={handleMax}
                 className="px-4 py-3 bg-fogo-gray-700 hover:bg-fogo-gray-600 text-white rounded-lg font-medium transition-colors"
@@ -292,7 +294,7 @@ export default function CTokenWithdrawModal({
               </span>
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-fogo-gray-500">Yield Earned</span>
+              <span className="text-fogo-gray-500">APY Generated</span>
               <span className="text-green-400">
                 +{((exchangeRate - 1.045) * 100).toFixed(2)}%
               </span>

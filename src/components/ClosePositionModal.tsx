@@ -225,7 +225,7 @@ export default function ClosePositionModal({
       totalBorrowingInterest = borrowedAmount * (borrowingInterestRatePercent / 100)
     }
     
-    // APY earned in tokens (based on cTOKEN exchange rate growth)
+    // Yield earned in tokens (based on cTOKEN exchange rate growth)
     const apyEarnedTokens = unwrapAmount * (exchangeRateGrowth / currentExchangeRateDecimal)
     
     // Calculate transaction fee (1.5% on total value)
@@ -307,14 +307,14 @@ export default function ClosePositionModal({
         // Trigger portfolio refresh to update cToken/USDC information
         window.dispatchEvent(new CustomEvent('forceRecalculateLP'))
         
-        // Calculate actual APY earned (received - unwrapped - fee)
+        // Calculate actual Yield earned (received - unwrapped - fee)
         const actualAPYEarned = result.baseAmount - parseFloat(ctokenAmount) - (result.feeAmount || 0)
         const apyEarnedDisplay = actualAPYEarned > 0 ? actualAPYEarned : result.apyEarned || 0
         
         const successMessage = `✅ ${ctokenSymbol} unwrapped successfully!\n\n` +
           `Unwrapped: ${formatNumberWithCommas(parseFloat(ctokenAmount))} ${ctokenSymbol}\n` +
           `Received: ${formatNumberWithCommas(result.baseAmount)} ${baseTokenSymbol}\n` +
-          (apyEarnedDisplay > 0 ? `APY Earned: +${formatNumberWithCommas(apyEarnedDisplay)} ${baseTokenSymbol}\n` : '') +
+          (apyEarnedDisplay > 0 ? `APY Generated: +${formatNumberWithCommas(apyEarnedDisplay)} ${baseTokenSymbol}\n` : '') +
           `Transaction Fee: ${formatNumberWithCommas(result.feeAmount)} ${baseTokenSymbol}`
         
         alert(successMessage)
@@ -416,12 +416,12 @@ export default function ClosePositionModal({
           successMessage += `Remaining: ${remainingCollateral.toFixed(4)} ${baseTokenSymbol}\n\n`
         }
         successMessage += `Received:\n`
-        successMessage += `  • ${result.baseAmount.toFixed(4)} ${baseTokenSymbol} (with APY earned)\n`
+          successMessage += `  • ${result.baseAmount.toFixed(4)} ${baseTokenSymbol} (with APY generated)\n`
         if (result.usdcAmount && result.usdcAmount > 0) {
           successMessage += `  • ${result.usdcAmount.toFixed(2)} USDC (redeemed - borrowing interest deducted)\n`
         }
         if (result.apyEarned && result.apyEarned > 0) {
-          successMessage += `\nAPY Earned: ${result.apyEarned.toFixed(4)} ${baseTokenSymbol}\n`
+          successMessage += `\nAPY Generated: ${result.apyEarned.toFixed(4)} ${baseTokenSymbol}\n`
         }
         if (result.borrowingInterest && result.borrowingInterest > 0) {
           successMessage += `Borrowing Interest Paid: ${result.borrowingInterest.toFixed(2)} USDC\n`
@@ -527,11 +527,11 @@ export default function ClosePositionModal({
                     value={ctokenAmount}
                     onChange={(e) => setCTokenAmount(e.target.value)}
                     placeholder="0.00"
-                    className="w-full px-4 py-3 bg-fogo-gray-800 border border-fogo-gray-700 rounded-xl text-white placeholder-fogo-gray-500 focus:outline-none focus:border-fogo-primary"
+                    className="w-full px-4 py-3 pr-12 bg-fogo-gray-800 border border-fogo-gray-700 rounded-xl text-white placeholder-fogo-gray-500 focus:outline-none focus:border-fogo-primary"
                   />
                   <button
                     onClick={() => setCTokenAmount(availableCTokens.toString())}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-fogo-primary hover:text-fogo-primary-light"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-fogo-primary hover:text-fogo-primary-light z-10"
                   >
                     MAX
                   </button>
@@ -550,7 +550,7 @@ export default function ClosePositionModal({
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-fogo-gray-400">APY Earned:</span>
+                    <span className="text-fogo-gray-400">APY Generated:</span>
                     <span className="text-green-400 font-medium">
                       +{formatNumberWithCommas(cTokenUnwrapPreview.apyEarned)} {baseTokenSymbol}
                     </span>
@@ -593,11 +593,11 @@ export default function ClosePositionModal({
                     value={lpTokenAmount}
                     onChange={(e) => setLpTokenAmount(e.target.value)}
                     placeholder="0.00"
-                    className="w-full px-4 py-3 bg-fogo-gray-800 border border-fogo-gray-700 rounded-xl text-white placeholder-fogo-gray-500 focus:outline-none focus:border-fogo-primary"
+                    className="w-full px-4 py-3 pr-12 bg-fogo-gray-800 border border-fogo-gray-700 rounded-xl text-white placeholder-fogo-gray-500 focus:outline-none focus:border-fogo-primary"
                   />
                   <button
                     onClick={() => setLpTokenAmount((availableLeveragedPosition.collateral || 0).toString())}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-fogo-primary hover:text-fogo-primary-light"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-fogo-primary hover:text-fogo-primary-light z-10"
                   >
                     MAX
                   </button>
@@ -628,14 +628,14 @@ export default function ClosePositionModal({
 
                   <div className="pt-2 border-t border-fogo-gray-700 space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-fogo-gray-400">APY Earned:</span>
+                      <span className="text-fogo-gray-400">APY Generated:</span>
                       <span className="text-green-400 font-medium">
                         {lpTokenUnwrapPreview.apyPercentage?.toFixed(2) || '0.00'}%
                       </span>
                     </div>
                     
                     <div className="flex justify-between text-sm">
-                      <span className="text-fogo-gray-400">APY Earned (Tokens):</span>
+                      <span className="text-fogo-gray-400">APY Generated (Tokens):</span>
                       <span className="text-green-400 font-medium">
                         +{formatNumberWithCommas(lpTokenUnwrapPreview.apyEarnedTokens)} {baseTokenSymbol}
                       </span>

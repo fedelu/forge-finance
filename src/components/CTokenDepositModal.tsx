@@ -455,10 +455,10 @@ export default function CTokenDepositModal({
                   }
                 }}
                 placeholder="0.00"
-                className="w-full px-4 py-3 bg-fogo-gray-800/80 backdrop-blur-sm border-2 border-fogo-gray-700 rounded-xl text-white font-medium placeholder-fogo-gray-500 focus:outline-none focus:border-fogo-primary focus:ring-4 focus:ring-fogo-primary/20 transition-all duration-300"
+                className="w-full px-4 py-3 pr-16 bg-fogo-gray-800/80 backdrop-blur-sm border-2 border-fogo-gray-700 rounded-xl text-white font-medium placeholder-fogo-gray-500 focus:outline-none focus:border-fogo-primary focus:ring-4 focus:ring-fogo-primary/20 transition-all duration-300"
               />
               {amount && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-fogo-gray-500 text-xs">
+                <div className="absolute right-12 top-1/2 -translate-y-1/2 text-fogo-gray-500 text-xs">
                   ≈ ${baseValueUSD.toFixed(2)}
                 </div>
               )}

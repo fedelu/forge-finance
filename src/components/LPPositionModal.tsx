@@ -173,10 +173,10 @@ export default function LPPositionModal({
                 value={baseAmount}
                 onChange={(e) => handleBaseAmountChange(e.target.value)}
                 placeholder="0.00"
-                className="w-full px-5 py-4 bg-fogo-gray-800/80 backdrop-blur-sm border-2 border-fogo-gray-700 rounded-xl text-white text-lg font-medium placeholder-fogo-gray-500 focus:outline-none focus:border-green-500 focus:ring-4 focus:ring-green-500/20 transition-all duration-300"
+                className="w-full px-5 py-4 pr-16 bg-fogo-gray-800/80 backdrop-blur-sm border-2 border-fogo-gray-700 rounded-xl text-white text-lg font-medium placeholder-fogo-gray-500 focus:outline-none focus:border-green-500 focus:ring-4 focus:ring-green-500/20 transition-all duration-300"
               />
               {baseAmount && (
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-fogo-gray-500 text-sm">
+                <div className="absolute right-16 top-1/2 -translate-y-1/2 text-fogo-gray-500 text-sm">
                   ≈ ${(parseFloat(baseAmount) * baseTokenPrice).toFixed(2)}
                 </div>
               )}

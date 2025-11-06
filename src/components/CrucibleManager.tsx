@@ -136,7 +136,7 @@ export default function CrucibleManager({ className = '', onDeposit, onWithdraw,
               <div className="w-10 h-10 bg-gradient-to-br from-fogo-accent/20 to-fogo-accent/10 rounded-xl flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform duration-300">
                 <BoltIcon className="h-5 w-5 text-fogo-accent" />
               </div>
-              <p className="text-fogo-gray-300 text-xs font-medium mb-1">APY Earned</p>
+              <p className="text-fogo-gray-300 text-xs font-medium mb-1">APY Generated</p>
               <p className="text-2xl font-bold text-white group-hover:text-fogo-accent transition-colors duration-300">
                 ${crucibles.reduce((sum, c) => sum + (c.apyEarnedByUsers || 0), 0).toLocaleString()}
               </p>
@@ -188,7 +188,7 @@ export default function CrucibleManager({ className = '', onDeposit, onWithdraw,
               Available Crucibles
             </h2>
             <p className="text-fogo-gray-400 text-base max-w-2xl mx-auto">
-              Crucibles are on-chain yield engines. Wrap your tokens for steady APY, provide liquidity for amplified rewards, or enter Inferno Mode to tap leveraged volatility farming and maximize returns.
+              Crucibles are on-chain yield engines. Wrap your tokens for steady APY, provide liquidity for amplified rewards, or enter Inferno Mode to tap Inferno Mode and maximize returns.
             </p>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
@@ -289,7 +289,7 @@ export default function CrucibleManager({ className = '', onDeposit, onWithdraw,
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                       </svg>
-                      Total Yield Earned
+                      Total APY Generated
                     </span>
                     <span className="font-inter-bold text-lg text-fogo-primary">
                       ${(crucible.apyEarnedByUsers || 0).toLocaleString()}

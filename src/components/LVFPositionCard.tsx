@@ -92,7 +92,7 @@ export default function LVFPositionCard({
         subtractFromBalance(lpTokenSymbol, lpTokenAmount)
         
         // Show closing information with APY earnings
-        const apyMessage = result.apyEarned ? `\nAPY Earned: ${result.apyEarned.toFixed(4)} ${baseTokenSymbol}` : ''
+        const apyMessage = result.apyEarned ? `\nAPY Generated: ${result.apyEarned.toFixed(4)} ${baseTokenSymbol}` : ''
         const usdcMessage = result.repaidUSDC > 0 ? `\nRepaid: ${result.repaidUSDC.toFixed(2)} USDC` : ''
         alert(`✅ Leveraged Position closed successfully!\n\nReceived: ${result.baseAmount.toFixed(4)} ${baseTokenSymbol}${apyMessage}${usdcMessage}`)
       }
@@ -176,7 +176,7 @@ export default function LVFPositionCard({
           </div>
         </div>
         <div className="text-right">
-          <div className="text-xs text-fogo-gray-400 mb-1">Yield Earned</div>
+          <div className="text-xs text-fogo-gray-400 mb-1">APY Generated</div>
           <div className="text-green-400 font-bold text-base">
             +{position.yieldEarned.toFixed(4)} {position.token}
           </div>
