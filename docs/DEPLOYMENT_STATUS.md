@@ -1,6 +1,5 @@
 # 🔥 Forge Finance - Deployment Status
 
-**Last Updated**: December 2024  
 **Network**: FOGO Testnet  
 **Status**: Development / Testing Phase
 
@@ -244,6 +243,5 @@ const finalPaymasterUrl = undefined;
 
 ---
 
-**Last Updated**: December 2024  
 **Maintained By**: Forge Finance Development Team
 
