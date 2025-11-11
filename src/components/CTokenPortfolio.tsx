@@ -6,6 +6,7 @@ import { useLP } from '../hooks/useLP'
 import { useBalance } from '../contexts/BalanceContext'
 import CTokenWithdrawModal from './CTokenWithdrawModal'
 import LVFPositionCard from './LVFPositionCard'
+import { formatNumberWithCommas } from '../utils/math'
 
 interface CTokenPosition {
   crucibleAddress: string
