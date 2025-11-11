@@ -689,6 +689,7 @@ function ClosePositionButton({ position, crucible, onClose }: {
           subtractFromBalance(lpTokenSymbol, lpTokenAmount)
           
           // Show closing information with APY earnings
+          const infernoSymbol = `if${crucible.ctokenSymbol.replace(/^c/i, '')}`
           const leveragedSummary = [
             '🔥 Forge Position Update',
             '',
@@ -737,6 +738,7 @@ function ClosePositionButton({ position, crucible, onClose }: {
           subtractFromBalance(lpTokenSymbol, lpTokenAmount)
           
           // Show closing information with APY earnings
+          const infernoSymbol = `if${crucible.ctokenSymbol.replace(/^c/i, '')}`
           const lpSummary = [
             '🔥 Forge Position Update',
             '',
