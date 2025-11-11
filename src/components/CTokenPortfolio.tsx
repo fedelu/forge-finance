@@ -372,7 +372,7 @@ export default function CTokenPortfolio() {
             <div className="text-3xl font-inter-bold text-white">
               {cTokenPositions.length + allCTokenUSDCPositions.length}
               <span className="text-base text-fogo-gray-400 ml-2 font-normal">
-                ({cTokenPositions.length} cTokens, {allCTokenUSDCPositions.length} cTokens/USDC)
+                ({cTokenPositions.length} cTokens, {allCTokenUSDCPositions.length} ifTOKEN/USDC)
               </span>
             </div>
           </div>
@@ -460,7 +460,7 @@ export default function CTokenPortfolio() {
         </div>
       </div>
 
-      {/* cTOKENS/USDC Section - LP positions with detailed info */}
+      {/* ifTOKEN/USDC Section - LP positions with detailed info */}
       <div className="bg-gradient-to-br from-fogo-gray-900 via-fogo-gray-800 to-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700/50 shadow-xl">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
@@ -468,7 +468,7 @@ export default function CTokenPortfolio() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
           </div>
-          <h3 className="text-2xl font-inter-bold text-white">cTOKENS/USDC</h3>
+          <h3 className="text-2xl font-inter-bold text-white">ifTOKEN/USDC</h3>
           <span className="px-3 py-1 bg-green-500/20 text-green-400 text-xs font-bold rounded-full">{allCTokenUSDCPositions.length}</span>
         </div>
         <div className="overflow-x-auto">
@@ -536,7 +536,9 @@ export default function CTokenPortfolio() {
                       <td className="py-4 px-4">
                         <div className="flex items-center space-x-2">
                           <span className="text-white font-medium">
-                            {crucible ? `${crucible.ctokenSymbol}/USDC` : `${position.baseToken}/USDC`}
+                            {crucible
+                              ? `if${crucible.ctokenSymbol.replace(/^c/i, '')}/USDC`
+                              : `if${position.baseToken.replace(/^if/i, '')}/USDC`}
                           </span>
                           <span className={`px-2 py-0.5 rounded text-xs font-medium ${
                             leverage > 1 ? 'bg-orange-500/20 text-orange-400' : 'bg-green-500/20 text-green-400'

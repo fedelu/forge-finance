@@ -41,6 +41,7 @@ export default function CTokenDepositModal({
   const { isEstablished, walletPublicKey } = useSession()
   const { balances, getBalance, subtractFromBalance, addToBalance } = useBalance()
   const { getCrucible } = useCrucible()
+  const displayPairSymbol = ctokenSymbol.replace(/^c/i, 'if')
   
   // Pass walletPublicKey to the hooks
   const publicKeyForHook = useMemo(() => {
@@ -555,7 +556,7 @@ export default function CTokenDepositModal({
               <>
                 <div className="flex justify-between items-center py-1.5 px-2.5 bg-fogo-gray-900/50 rounded-lg">
                   <span className="text-fogo-gray-400 text-xs">LP Pair</span>
-                  <span className="text-white font-bold text-base">{ctokenSymbol}/USDC</span>
+                  <span className="text-white font-bold text-base">{displayPairSymbol}/USDC</span>
                 </div>
                 <div className="flex justify-between items-center py-1.5 px-2.5 bg-fogo-gray-900/50 rounded-lg">
                   <span className="text-fogo-gray-400 text-xs">{baseTokenSymbol} Deposited</span>

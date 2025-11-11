@@ -139,7 +139,7 @@ export default function LeveragedProjectionChart({
                 dataKey="lp1x" 
                 stroke="#22c55e" 
                 strokeWidth={2}
-                name={`c${baseTokenSymbol}/USDC 1x`}
+                name={`if${baseTokenSymbol}/USDC 1x`}
                 dot={false}
                 activeDot={{ r: 5 }}
               />
@@ -148,7 +148,7 @@ export default function LeveragedProjectionChart({
                 dataKey="lp1_5x" 
                 stroke="#3b82f6" 
                 strokeWidth={2}
-                name={`c${baseTokenSymbol}/USDC 1.5x`}
+                name={`if${baseTokenSymbol}/USDC 1.5x`}
                 dot={false}
                 activeDot={{ r: 5 }}
               />
@@ -157,7 +157,7 @@ export default function LeveragedProjectionChart({
                 dataKey="lp2x" 
                 stroke="#ef4444" 
                 strokeWidth={2}
-                name={`c${baseTokenSymbol}/USDC 2x`}
+                name={`if${baseTokenSymbol}/USDC 2x`}
                 dot={false}
                 activeDot={{ r: 5 }}
               />

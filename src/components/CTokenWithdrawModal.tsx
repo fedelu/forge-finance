@@ -33,6 +33,7 @@ export default function CTokenWithdrawModal({
   const { unwrapTokens, getCrucible } = useCrucible()
   const { addToBalance, subtractFromBalance } = useBalance()
   const { isEstablished, walletPublicKey } = useSession()
+  const displayPairSymbol = ctokenSymbol.replace(/^c/i, 'if')
   
   // Check for LP and leveraged positions for this crucible
   const { positions: lpPositions, closePosition: closeLPPosition, loading: lpLoading } = useLP({
@@ -252,7 +253,7 @@ export default function CTokenWithdrawModal({
                   <div key={positionId} className="bg-fogo-gray-800/50 rounded p-3 flex items-center justify-between">
                     <div>
                       <div className="text-white text-sm font-medium">
-                        {ctokenSymbol}/USDC {isLeveraged && leverage && `${leverage}x`}
+                        {displayPairSymbol}/USDC {isLeveraged && leverage && `${leverage}x`}
                       </div>
                       <div className="text-xs text-fogo-gray-400 mt-1">
                         {baseAmount?.toFixed(2) || '0.00'} {baseTokenSymbol} + {usdcAmount?.toFixed(2) || '0.00'} USDC

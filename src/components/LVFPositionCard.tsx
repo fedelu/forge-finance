@@ -35,6 +35,8 @@ export default function LVFPositionCard({
   const { addToBalance, subtractFromBalance, getBalance } = useBalance()
   const { getCrucible } = useCrucible()
 
+  const displayPairToken = position.token.replace(/^c/i, 'if')
+
   const effectiveAPY = calculateEffectiveAPY(baseAPY, position.leverageFactor)
   const healthColor =
     position.health >= 200 ? 'text-green-400' :
@@ -114,7 +116,7 @@ export default function LVFPositionCard({
             </svg>
           </div>
           <div>
-            <h3 className="text-lg font-inter-bold text-white">{position.token}/USDC</h3>
+            <h3 className="text-lg font-inter-bold text-white">{displayPairToken}/USDC</h3>
             <p className="text-xs text-fogo-gray-400">Leveraged Position</p>
           </div>
         </div>

@@ -1046,7 +1046,9 @@ export function FogoSessionsButton() {
                 <h3 className="text-sm font-inter-bold text-white">Assets</h3>
                 <div className="w-1.5 h-1.5 bg-fogo-success rounded-full animate-pulse" title="Live"></div>
               </div>
-              {balances.filter(balance => ['FOGO', 'USDC', 'FORGE', 'cFOGO', 'cFORGE', 'cFOGO/USDC LP', 'cFORGE/USDC LP'].includes(balance.symbol)).map((balance) => (
+              {balances.filter(balance => ['FOGO', 'USDC', 'FORGE', 'cFOGO', 'cFORGE', 'cFOGO/USDC LP', 'cFORGE/USDC LP'].includes(balance.symbol)).map((balance) => {
+                const displaySymbol = balance.symbol.replace(/^c([A-Z]+)/, 'if$1')
+                return (
                   <div 
                     key={balance.symbol} 
                     className="group bg-gradient-to-br from-fogo-gray-800/80 via-fogo-gray-800 to-fogo-gray-900/80 rounded-xl p-3 border border-fogo-gray-700/50 hover:border-fogo-primary/50 transition-all duration-300 hover:shadow-md hover:shadow-fogo-primary/10 backdrop-blur-sm"
@@ -1086,13 +1088,13 @@ export function FogoSessionsButton() {
                             />
                           ) : (
                             <div className="w-full h-full bg-gradient-to-br from-fogo-primary/20 to-fogo-secondary/20 rounded-lg flex items-center justify-center group-hover:from-fogo-primary/30 group-hover:to-fogo-secondary/30 transition-all duration-300">
-                              <span className="text-fogo-primary font-bold text-[8px]">{balance.symbol.charAt(0)}</span>
+                              <span className="text-fogo-primary font-bold text-[8px]">{displaySymbol.charAt(0)}</span>
                             </div>
                           )}
                         </div>
                         <div>
                           <div className="text-xs font-semibold text-fogo-gray-300 group-hover:text-white transition-colors duration-200">
-                            {balance.symbol}
+                            {displaySymbol}
                           </div>
                         </div>
                       </div>
@@ -1106,7 +1108,8 @@ export function FogoSessionsButton() {
                       </div>
                     </div>
                   </div>
-                ))}
+                )
+              })}
               </div>
 
             </div>
