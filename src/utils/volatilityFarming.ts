@@ -1,8 +1,10 @@
 // Volatility Farming Fee Calculations
 // Based on MVP specifications
 
+import { INFERNO_CLOSE_FEE_RATE } from '../config/fees'
+
 export interface VolatilityFarmingConfig {
-  feeRate: number; // 1.5% = 0.015 (opening/closing positions)
+  feeRate: number; // Closing fee on principal (e.g. 2% = 0.02)
   protocolFeeCut: number; // 20% = 0.20 (protocol treasury)
   crucibleHoldersCut: number; // 80% = 0.80 (crucible holders)
   totalProtocolTVL: number; // 4,300,000 FOGO
@@ -27,7 +29,7 @@ export interface VolatilityFarmingResults {
 
 // Default configuration
 export const DEFAULT_CONFIG: VolatilityFarmingConfig = {
-  feeRate: 0.015, // 1.5% opening/closing positions
+  feeRate: INFERNO_CLOSE_FEE_RATE, // Forge principal close fee
   protocolFeeCut: 0.20, // 20% to protocol treasury
   crucibleHoldersCut: 0.80, // 80% to crucible holders
   totalProtocolTVL: 4_300_000, // 4.3M FOGO

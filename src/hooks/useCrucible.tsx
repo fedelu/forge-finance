@@ -10,6 +10,11 @@ import {
   RATE_SCALE 
 } from '../utils/math';
 import { calculateVolatilityFarmingMetrics, CRUCIBLE_CONFIGS, DEFAULT_CONFIG, formatAPY, formatCurrency } from '../utils/volatilityFarming';
+import {
+  WRAP_FEE_RATE,
+  UNWRAP_FEE_RATE,
+  INFERNO_OPEN_FEE_RATE,
+} from '../config/fees';
 
 export interface CrucibleData {
   id: string;
@@ -203,8 +208,8 @@ export const CrucibleProvider: React.FC<CrucibleProviderProps> = ({ children }) 
     if (crucible && crucible.exchangeRate) {
       const baseDeposited = parseFloat(amount);
       
-      // Calculate wrap fee (1.5%)
-      const feeAmount = baseDeposited * 0.015;
+      // Calculate wrap fee
+      const feeAmount = baseDeposited * WRAP_FEE_RATE;
       const netAmount = baseDeposited - feeAmount;
       
       // Calculate cTokens based on net amount (after fee deduction)
@@ -261,8 +266,8 @@ export const CrucibleProvider: React.FC<CrucibleProviderProps> = ({ children }) 
       const baseAmount = computeFogoOut(ptokenAmount, crucible.exchangeRate);
       const baseToWithdraw = Number(formatAmount(baseAmount));
       
-      // Calculate unwrap fee (1.5%)
-      const feeAmount = baseToWithdraw * 0.015;
+      // Calculate unwrap fee
+      const feeAmount = baseToWithdraw * UNWRAP_FEE_RATE;
       const netAmount = baseToWithdraw - feeAmount;
       
       // Convert to USDC (assuming 1:1 rate for simplicity, but could be dynamic)
@@ -310,7 +315,7 @@ export const CrucibleProvider: React.FC<CrucibleProviderProps> = ({ children }) 
       // Trigger re-render
       setCrucibleUpdateTrigger(prev => prev + 1);
       
-      console.log(`Withdrew ${usdcAmount.toFixed(2)} USDC from ${crucibleId} (1.5% fee: ${feeAmount.toFixed(2)})`);
+      console.log(`Withdrew ${usdcAmount.toFixed(2)} USDC from ${crucibleId} (${(UNWRAP_FEE_RATE * 100).toFixed(2)}% fee: ${feeAmount.toFixed(2)})`);
     }
   }, []);
 
@@ -321,8 +326,8 @@ export const CrucibleProvider: React.FC<CrucibleProviderProps> = ({ children }) 
       const baseAmount = computeFogoOut(ptokenAmount, crucible.exchangeRate);
       const baseToWithdraw = Number(formatAmount(baseAmount));
       
-      // Calculate unwrap fee (1.5%)
-      const feeAmount = baseToWithdraw * 0.015;
+      // Calculate unwrap fee
+      const feeAmount = baseToWithdraw * UNWRAP_FEE_RATE;
       const netAmount = baseToWithdraw - feeAmount;
 
       // Update crucible stats - burn tokens
@@ -412,8 +417,8 @@ export const CrucibleProvider: React.FC<CrucibleProviderProps> = ({ children }) 
 
     const baseDeposited = parseFloat(baseAmount);
     
-    // Calculate wrap fee (1.5%)
-    const feeAmount = baseDeposited * 0.015;
+    // Calculate wrap fee
+    const feeAmount = baseDeposited * WRAP_FEE_RATE;
     const netAmount = baseDeposited - feeAmount;
     
     // Calculate cTokens based on net amount (after fee deduction)
@@ -437,8 +442,8 @@ export const CrucibleProvider: React.FC<CrucibleProviderProps> = ({ children }) 
     const baseAmount = computeFogoOut(amount, crucible.exchangeRate);
     const baseToWithdraw = Number(formatAmount(baseAmount));
     
-    // Calculate unwrap fee (1.5%)
-    const feeAmount = baseToWithdraw * 0.015;
+    // Calculate unwrap fee
+    const feeAmount = baseToWithdraw * UNWRAP_FEE_RATE;
     const netAmount = baseToWithdraw - feeAmount;
 
     return {
@@ -466,9 +471,7 @@ export const CrucibleProvider: React.FC<CrucibleProviderProps> = ({ children }) 
     const crucible = getUpdatedCrucibles().find(c => c.id === crucibleId);
     if (!crucible || !crucible.exchangeRate) return;
 
-    // Calculate fee (1.5%)
-    const feeAmount = baseAmount * 0.015;
-    const netAmount = baseAmount - feeAmount;
+    const netAmount = baseAmount;
 
     // Calculate cTokens (same as wrapTokens)
     const netAmountBigInt = parseAmount(netAmount.toString());

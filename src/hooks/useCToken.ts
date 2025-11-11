@@ -3,6 +3,7 @@ import { PublicKey, Transaction } from '@solana/web3.js'
 import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress } from '@solana/spl-token'
 import { useWallet } from '../contexts/WalletContext'
 import { useSession } from '../components/FogoSessions'
+import { UNWRAP_FEE_RATE } from '../config/fees'
 
 interface CTokenBalance {
   ctokenBalance: bigint
@@ -264,8 +265,8 @@ export function useCToken(crucibleAddress?: string, ctokenMint?: string, provide
       const currentExchangeRate = exchangeRate || balance?.exchangeRate || 1.045
       const baseAmountBeforeFee = Number(ctokenAmount) * currentExchangeRate
       
-      // Calculate 1.5% withdrawal fee
-      const withdrawalFeePercent = 0.015 // 1.5%
+      // Calculate Forge unwrap fee
+      const withdrawalFeePercent = UNWRAP_FEE_RATE
       const withdrawalFee = baseAmountBeforeFee * withdrawalFeePercent
       const baseAmountAfterFee = baseAmountBeforeFee - withdrawalFee
 

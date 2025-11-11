@@ -6,6 +6,7 @@ import { lendingPool } from '../contracts/lendingPool'
 import { useBalance } from '../contexts/BalanceContext'
 import { useAnalytics } from '../contexts/AnalyticsContext'
 import { useCrucible } from '../hooks/useCrucible'
+import { INFERNO_OPEN_FEE_RATE } from '../config/fees'
 
 interface LVFPositionModalProps {
   isOpen: boolean
@@ -81,8 +82,8 @@ export default function LVFPositionModal({
       // Note: LP tokens are automatically added to wallet by the LP balance calculation effect
       // which listens for 'lvfPositionOpened' events and recalculates balances from localStorage
 
-      // Calculate protocol fee (1.5%)
-      const protocolFeePercent = 0.015 // 1.5%
+      // Calculate protocol fee (1%)
+      const protocolFeePercent = INFERNO_OPEN_FEE_RATE
       const protocolFee = collateralAmount * protocolFeePercent
       const collateralAfterFee = collateralAmount - protocolFee
       
@@ -102,7 +103,7 @@ export default function LVFPositionModal({
         leverage: leverage,
         usdValue: (collateralAfterFee * baseTokenPrice) + borrowedUSDC + depositedUSDC,
         usdcDeposited: depositedUSDC, // USDC deposited (for 1.5x leverage)
-        fee: protocolFee, // Protocol fee (1.5%)
+        fee: protocolFee, // Protocol fee (1%)
       }
       
       console.log('📝 Recording leveraged position transaction:', {
@@ -252,16 +253,16 @@ export default function LVFPositionModal({
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        Opening Fee (1.5%)
+                      Opening Fee (1%)
                       </span>
                       <span className="text-red-400 font-semibold">
-                        -{(parseFloat(amount) * 0.015).toFixed(2)} {baseTokenSymbol}
+                        -{(parseFloat(amount) * INFERNO_OPEN_FEE_RATE).toFixed(2)} {baseTokenSymbol}
                       </span>
                     </div>
                     <div className="flex justify-between items-center py-2 px-3 bg-fogo-gray-900/50 rounded-lg">
                       <span className="text-fogo-gray-400 text-xs">Collateral After Fee</span>
                       <span className="text-fogo-gray-300 font-semibold">
-                        {(parseFloat(amount) * 0.985).toFixed(2)} {baseTokenSymbol}
+                        {(parseFloat(amount) * (1 - INFERNO_OPEN_FEE_RATE)).toFixed(2)} {baseTokenSymbol}
                       </span>
                     </div>
                   </>

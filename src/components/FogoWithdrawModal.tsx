@@ -5,6 +5,7 @@ import { useCrucible } from '../hooks/useCrucible';
 import { useAnalytics } from '../contexts/AnalyticsContext';
 import { useSession } from './FogoSessions';
 import { formatNumberWithCommas, getCTokenPrice, RATE_SCALE } from '../utils/math';
+import { UNWRAP_FEE_RATE } from '../config/fees';
 import { Transaction, SystemProgram, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 
 interface FogoWithdrawModalProps {
@@ -93,7 +94,7 @@ export const FogoWithdrawModal: React.FC<FogoWithdrawModalProps> = ({ isOpen, on
         
         // Add USDC to balance and subtract cTokens
         const preview = calculateUnwrapPreview(crucibleId, amount);
-        const usdcAmount = parseFloat(preview.baseAmount) * 0.985; // 1.5% fee
+        const usdcAmount = parseFloat(preview.baseAmount) * (1 - UNWRAP_FEE_RATE); // Apply Forge unwrap fee
         
         const targetPTokenSymbol = crucible?.ptokenSymbol === 'cFORGE' ? 'cFORGE' : 'cFOGO';
         subtractFromBalance(targetPTokenSymbol, withdrawAmount);
@@ -238,12 +239,12 @@ export const FogoWithdrawModal: React.FC<FogoWithdrawModalProps> = ({ isOpen, on
                     : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                 }`}
               >
-                Receive USDC (1.5% fee)
+                Receive USDC ({(UNWRAP_FEE_RATE * 100).toFixed(2)}% fee)
               </button>
             </div>
             <div className="text-xs text-gray-400 mt-1">
               {withdrawalMode === 'usdc' 
-                ? 'Convert to USDC with 1.5% commission fee'
+                ? `Convert to USDC with ${(UNWRAP_FEE_RATE * 100).toFixed(2)}% commission fee`
                 : 'Receive original token with yield included'
               }
             </div>
@@ -295,13 +296,13 @@ export const FogoWithdrawModal: React.FC<FogoWithdrawModalProps> = ({ isOpen, on
                     <div className="flex justify-between">
                       <span className="text-gray-300">USDC to receive:</span>
                       <span className="text-blue-400 font-medium">
-                        {formatNumberWithCommas(parseFloat(calculateUnwrapPreview(crucibleId, amount).baseAmount) * 0.985)} USDC
+                        {formatNumberWithCommas(parseFloat(calculateUnwrapPreview(crucibleId, amount).baseAmount) * (1 - UNWRAP_FEE_RATE))} USDC
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-300">Commission fee (1.5%):</span>
+                      <span className="text-gray-300">Commission fee ({(UNWRAP_FEE_RATE * 100).toFixed(2)}%):</span>
                       <span className="text-red-300 font-medium">
-                        -{formatNumberWithCommas(parseFloat(calculateUnwrapPreview(crucibleId, amount).baseAmount) * 0.015)} USDC
+                        -{formatNumberWithCommas(parseFloat(calculateUnwrapPreview(crucibleId, amount).baseAmount) * UNWRAP_FEE_RATE)} USDC
                       </span>
                     </div>
                   </>

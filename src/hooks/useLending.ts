@@ -2,6 +2,7 @@
 // Integrates later with on-chain IDLs via Anchor provider used elsewhere in app.
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { LENDING_YIELD_FEE_RATE } from '../config/fees'
 
 export interface MarketInfo {
   marketPubkey: string
@@ -17,7 +18,7 @@ export interface LendingPosition {
   baseMint: string
   suppliedAmount: number
   interestEarned: number
-  effectiveApy: number // After 1.5% fee
+  effectiveApy: number // After Forge 10% yield fee
 }
 
 export function useLending() {
@@ -39,9 +40,9 @@ export function useLending() {
     if (!marketInfo) throw new Error('Market not found')
     
     const suppliedAmount = parseFloat(amount)
-    // Calculate effective APY after 1.5% fee on interest
+    // Calculate effective APY after Forge yield fee on interest
     const baseApy = marketInfo.supplyApyBps / 100
-    const feeOnInterest = baseApy * 0.015
+    const feeOnInterest = baseApy * LENDING_YIELD_FEE_RATE
     const effectiveApy = baseApy - feeOnInterest
     
     const existingPosition = positions.find(p => p.marketPubkey === market)

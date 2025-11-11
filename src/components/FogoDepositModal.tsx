@@ -5,6 +5,7 @@ import { useCrucible } from '../hooks/useCrucible';
 import { useAnalytics } from '../contexts/AnalyticsContext';
 import { useSession } from './FogoSessions';
 import { formatNumberWithCommas, getCTokenPrice, RATE_SCALE } from '../utils/math';
+import { WRAP_FEE_RATE } from '../config/fees';
 import { Transaction, SystemProgram, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 
 interface FogoDepositModalProps {
@@ -195,12 +196,12 @@ export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onCl
                   <span className="text-white font-medium">{formatNumberWithCommas(parseFloat(amount))} {crucible?.baseToken}</span>
                 </div>
             <div className="flex justify-between">
-              <span>Wrap Fee (1.5%):</span>
-              <span className="text-red-300 font-medium">-{formatNumberWithCommas(parseFloat(amount) * 0.015)} {crucible?.baseToken}</span>
+              <span>Wrap Fee ({(WRAP_FEE_RATE * 100).toFixed(1)}%):</span>
+              <span className="text-red-300 font-medium">-{formatNumberWithCommas(parseFloat(amount) * WRAP_FEE_RATE)} {crucible?.baseToken}</span>
             </div>
                 <div className="flex justify-between border-t border-fogo-gray-600 pt-1">
                   <span>Net deposit:</span>
-                  <span className="text-fogo-success font-medium">{formatNumberWithCommas(parseFloat(amount) * 0.985)} {crucible?.baseToken}</span>
+                  <span className="text-fogo-success font-medium">{formatNumberWithCommas(parseFloat(amount) * (1 - WRAP_FEE_RATE))} {crucible?.baseToken}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>{crucible?.ptokenSymbol} to receive:</span>
@@ -208,7 +209,7 @@ export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onCl
                 </div>
                 <div className="flex justify-between">
                   <span>Current value (at $0.50):</span>
-                  <span className="text-white font-medium">${formatNumberWithCommas(parseFloat(amount) * 0.985 * 0.5)} USD</span>
+                  <span className="text-white font-medium">${formatNumberWithCommas(parseFloat(amount) * (1 - WRAP_FEE_RATE) * 0.5)} USD</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Est. exchange rate:</span>

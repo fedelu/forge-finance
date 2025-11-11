@@ -11,6 +11,7 @@ import { CrucibleProvider } from '../hooks/useCrucible'
 import { AnalyticsProvider } from '../contexts/AnalyticsContext'
 import { AnalyticsDashboard } from '../components/AnalyticsDashboard'
 import { useLending, MarketInfo } from '../hooks/useLending'
+import { LENDING_YIELD_FEE_RATE } from '../config/fees'
 
 // Lending Supply Modal Component
 function LendingSupplyModal({ 
@@ -39,7 +40,7 @@ function LendingSupplyModal({
   
   const balance = getBalance(market.baseMint)
   const baseApy = market.supplyApyBps / 100
-  const feeOnInterest = baseApy * 0.015
+  const feeOnInterest = baseApy * LENDING_YIELD_FEE_RATE
   const effectiveApy = baseApy - feeOnInterest
   
   const handleSupply = async () => {
@@ -96,7 +97,7 @@ function LendingSupplyModal({
               <span className="text-green-400 font-semibold">{baseApy.toFixed(2)}%</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-fogo-gray-400 text-sm">Fee on Interest (1.5%)</span>
+              <span className="text-fogo-gray-400 text-sm">Fee on Interest (10%)</span>
               <span className="text-red-400 font-semibold">-{feeOnInterest.toFixed(2)}%</span>
             </div>
             <div className="flex justify-between pt-2 border-t border-fogo-gray-700">

@@ -663,7 +663,17 @@ function ClosePositionButton({ position, crucible, onClose }: {
         if (isLeveraged) {
           // Leveraged position: return base tokens (with APY) + repay borrowed USDC
           // Type guard: result from closeLVFPosition has 'repaidUSDC'
-          const lvfResult = result as { success: boolean; baseAmount: number; apyEarned: number; fee: number; feePercent: number; repaidUSDC: number }
+          const lvfResult = result as {
+            success: boolean
+            baseAmount: number
+            apyEarned: number
+            usdcAmount?: number
+            fee?: number
+            feePercent?: number
+            repaidUSDC: number
+            yieldFee?: number
+            principalFee?: number
+          }
           addToBalance(crucible.baseTokenSymbol, lvfResult.baseAmount) // Includes APY earnings
           if (lvfResult.repaidUSDC > 0) {
             subtractFromBalance('USDC', lvfResult.repaidUSDC)
@@ -679,13 +689,46 @@ function ClosePositionButton({ position, crucible, onClose }: {
           subtractFromBalance(lpTokenSymbol, lpTokenAmount)
           
           // Show closing information with APY earnings
-          const apyMessage = lvfResult.apyEarned ? `\nYield Earned: ${lvfResult.apyEarned.toFixed(4)} ${crucible.baseTokenSymbol}` : ''
-          const usdcMessage = lvfResult.repaidUSDC > 0 ? `\nRepaid: ${lvfResult.repaidUSDC.toFixed(2)} USDC` : ''
-          alert(`✅ Leveraged Position closed!\n\nReceived: ${lvfResult.baseAmount.toFixed(2)} ${crucible.baseTokenSymbol}${apyMessage}${usdcMessage}`)
+          const leveragedSummary = [
+            '🔥 Forge Position Update',
+            '',
+            `${infernoSymbol}/USDC leveraged position closed.`,
+            '',
+            `• Released: ${formatNumberWithCommas(lvfResult.baseAmount, 4)} ${crucible.baseTokenSymbol}`,
+          ]
+
+          if (lvfResult.usdcAmount && lvfResult.usdcAmount > 0) {
+            leveragedSummary.push(`• USDC Settled: ${formatNumberWithCommas(lvfResult.usdcAmount, 2)} USDC`)
+          }
+          if (lvfResult.apyEarned && lvfResult.apyEarned > 0) {
+            leveragedSummary.push(`• Net Yield: +${formatNumberWithCommas(lvfResult.apyEarned, 4)} ${crucible.baseTokenSymbol}`)
+          }
+          if ((lvfResult as any).principalFee && (lvfResult as any).principalFee > 0) {
+            leveragedSummary.push(`• Forge Principal Fee: ${formatNumberWithCommas((lvfResult as any).principalFee, 4)} ${crucible.baseTokenSymbol}`)
+          }
+          if ((lvfResult as any).yieldFee && (lvfResult as any).yieldFee > 0) {
+            leveragedSummary.push(`• Forge Yield Fee: ${formatNumberWithCommas((lvfResult as any).yieldFee, 4)} ${crucible.baseTokenSymbol}`)
+          }
+          if (lvfResult.repaidUSDC && lvfResult.repaidUSDC > 0) {
+            leveragedSummary.push(`• Lending Pool Repaid: ${formatNumberWithCommas(lvfResult.repaidUSDC, 2)} USDC`)
+          }
+
+          leveragedSummary.push('', 'Forge portfolio and wallet balances refresh automatically.')
+
+          alert(leveragedSummary.join('\n'))
         } else {
           // Standard LP position: return base tokens (with APY) + deposited USDC
           // Type guard: result from closeLPPosition has 'usdcAmount'
-          const lpResult = result as { success: boolean; baseAmount: number; apyEarned: number; usdcAmount: number; feeAmount: number; feePercent: number }
+          const lpResult = result as {
+            success: boolean
+            baseAmount: number
+            apyEarned: number
+            usdcAmount: number
+            feeAmount: number
+            feePercent: number
+            yieldFee?: number
+            principalFee?: number
+          }
           addToBalance(crucible.baseTokenSymbol, lpResult.baseAmount) // Includes APY earnings
           addToBalance('USDC', lpResult.usdcAmount) // Return deposited USDC
           const lpTokenSymbol = `${crucible.ctokenSymbol}/USDC LP`
@@ -694,8 +737,28 @@ function ClosePositionButton({ position, crucible, onClose }: {
           subtractFromBalance(lpTokenSymbol, lpTokenAmount)
           
           // Show closing information with APY earnings
-          const apyMessage = lpResult.apyEarned ? `\nYield Earned: ${lpResult.apyEarned.toFixed(4)} ${crucible.baseTokenSymbol}` : ''
-          alert(`✅ LP Position closed!\n\nReceived: ${lpResult.baseAmount.toFixed(2)} ${crucible.baseTokenSymbol} + ${lpResult.usdcAmount.toFixed(2)} USDC${apyMessage}`)
+          const lpSummary = [
+            '🔥 Forge Position Update',
+            '',
+            `${infernoSymbol}/USDC position closed.`,
+            '',
+            `• Base Tokens Returned: ${formatNumberWithCommas(lpResult.baseAmount, 4)} ${crucible.baseTokenSymbol}`,
+            `• USDC Returned: ${formatNumberWithCommas(lpResult.usdcAmount, 2)} USDC`,
+          ]
+
+          if (lpResult.apyEarned && lpResult.apyEarned > 0) {
+            lpSummary.push(`• Net Yield: +${formatNumberWithCommas(lpResult.apyEarned, 4)} ${crucible.baseTokenSymbol}`)
+          }
+          if (lpResult.principalFee && lpResult.principalFee > 0) {
+            lpSummary.push(`• Forge Principal Fee: ${formatNumberWithCommas(lpResult.principalFee, 4)} ${crucible.baseTokenSymbol}`)
+          }
+          if (lpResult.yieldFee && lpResult.yieldFee > 0) {
+            lpSummary.push(`• Forge Yield Fee: ${formatNumberWithCommas(lpResult.yieldFee, 4)} ${crucible.baseTokenSymbol}`)
+          }
+
+          lpSummary.push('', 'Wallet balances refresh instantly in Forge.')
+
+          alert(lpSummary.join('\n'))
         }
         
         // Trigger refresh

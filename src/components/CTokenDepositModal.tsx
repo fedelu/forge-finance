@@ -9,6 +9,7 @@ import { useSession } from './FogoSessions'
 import { useBalance } from '../contexts/BalanceContext'
 import { lendingPool } from '../contracts/lendingPool'
 import { useCrucible } from '../hooks/useCrucible'
+import { WRAP_FEE_RATE, INFERNO_OPEN_FEE_RATE } from '../config/fees'
 
 interface CTokenDepositModalProps {
   isOpen: boolean
@@ -35,7 +36,6 @@ export default function CTokenDepositModal({
   const [mode, setMode] = useState<Mode>('wrap')
   const [amount, setAmount] = useState('')
   const [leverage, setLeverage] = useState<Leverage>(1)
-  const [usdcAmount, setUsdcAmount] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const { addTransaction } = useAnalytics()
   const { isEstablished, walletPublicKey } = useSession()
@@ -87,6 +87,9 @@ export default function CTokenDepositModal({
   const baseTokenBalance = getBalance(baseTokenSymbol)
   const usdcBalance = getBalance('USDC')
   const loading = depositLoading || lpLoading || leveragedLoading || submitting
+const parsedAmount = amount ? parseFloat(amount) : 0
+const infernoOpenFee = mode === 'lp' ? parsedAmount * INFERNO_OPEN_FEE_RATE : 0
+const baseAmountForPosition = mode === 'lp' ? Math.max(0, parsedAmount - infernoOpenFee) : parsedAmount
 
   // Calculate USDC needed for LP positions
   const calculateUSDCNeeded = (baseAmount: number, leverageValue: number): { totalUSDC: number, depositUSDC: number, borrowUSDC: number } => {
@@ -117,17 +120,6 @@ export default function CTokenDepositModal({
   }
 
   // Auto-calculate USDC when base amount or leverage changes (LP mode only)
-  React.useEffect(() => {
-    if (mode === 'lp' && amount && parseFloat(amount) > 0) {
-      const baseAmt = parseFloat(amount)
-      const usdcDetails = calculateUSDCNeeded(baseAmt, leverage)
-      // Show total USDC needed
-      setUsdcAmount(usdcDetails.totalUSDC.toFixed(2))
-    } else if (mode === 'lp') {
-      setUsdcAmount('')
-    }
-  }, [mode, amount, leverage])
-
   const handleMax = () => {
     if (mode === 'wrap') {
       setAmount(baseTokenBalance.toString())
@@ -169,14 +161,14 @@ export default function CTokenDepositModal({
         // Wrap mode: Mint cToken using wrapTokens from useCrucible
         const depositAmount = parseFloat(amount)
         
-        // Call wrapTokens which handles the deposit and cToken minting (with 1.5% fee)
+        // Call wrapTokens which handles the deposit and cToken minting with Forge fee
         await wrapTokens(crucibleAddress, depositAmount.toString())
         
         // Update wallet balances AFTER wrapTokens completes
         subtractFromBalance(baseTokenSymbol, depositAmount)
         
-        // Calculate cTokens received based on exchange rate (after 1.5% fee)
-        const feeAmount = depositAmount * 0.015
+        // Calculate cTokens received based on exchange rate (after fee)
+        const feeAmount = depositAmount * WRAP_FEE_RATE
         const netAmount = depositAmount - feeAmount
         const ctokensReceived = netAmount / 1.045 // Based on initial exchange rate
         addToBalance(ctokenSymbol, ctokensReceived)
@@ -195,7 +187,15 @@ export default function CTokenDepositModal({
       } else {
         // LP mode
         const baseAmt = parseFloat(amount)
-        const usdcDetails = calculateUSDCNeeded(baseAmt, leverage)
+        const openFeeAmount = baseAmt * INFERNO_OPEN_FEE_RATE
+        const baseForPosition = baseAmt - openFeeAmount
+
+        if (baseForPosition <= 0) {
+          alert('Amount too small after applying the Forge open fee.')
+          return
+        }
+
+        const usdcDetails = calculateUSDCNeeded(baseForPosition, leverage)
         
         if (leverage === 1) {
           // Standard LP: deposit equal USDC
@@ -210,11 +210,11 @@ export default function CTokenDepositModal({
             return
           }
           
-          await openLPPosition(baseAmt, usdcDetails.depositUSDC)
+          await openLPPosition(baseForPosition, usdcDetails.depositUSDC)
           
           // Track this position in userBalances for exchange rate growth (same as normal wrap)
           // This allows cToken price to increase over time
-          trackLeveragedPosition(crucibleAddress, baseAmt)
+          trackLeveragedPosition(crucibleAddress, baseForPosition)
           
           // Subtract tokens from wallet balance
           subtractFromBalance(baseTokenSymbol, baseAmt)
@@ -224,7 +224,7 @@ export default function CTokenDepositModal({
           const crucible = getCrucible(crucibleAddress)
           const lpTokenSymbol = crucible ? `${crucible.ptokenSymbol}/USDC LP` : `${baseTokenSymbol}/USDC LP`
           // Calculate LP tokens: baseAmount becomes cToken via exchange rate, then sqrt(cToken * USDC)
-          const cTokenAmount = baseAmt * 1.045 // Exchange rate to get cToken amount
+          const cTokenAmount = baseForPosition * 1.045 // Exchange rate to get cToken amount
           const lpTokenAmount = Math.sqrt(cTokenAmount * usdcDetails.depositUSDC) // Constant product formula
           addToBalance(lpTokenSymbol, lpTokenAmount)
           
@@ -238,10 +238,10 @@ export default function CTokenDepositModal({
           // Add transaction to analytics
           addTransaction({
             type: 'deposit',
-            amount: baseAmt + usdcDetails.depositUSDC,
+            amount: baseForPosition + usdcDetails.depositUSDC,
             token: baseTokenSymbol,
             crucibleId: crucibleAddress,
-            usdValue: (baseAmt * baseTokenPrice) + usdcDetails.depositUSDC,
+            usdValue: (baseForPosition * baseTokenPrice) + usdcDetails.depositUSDC,
           })
           
           // Dispatch event
@@ -281,14 +281,14 @@ export default function CTokenDepositModal({
           
           // For leveraged LP, we still create an LP position but with borrowed USDC
           // The leverage factor is passed to track it
-          console.log('📞 Calling openLeveragedPosition with:', { baseAmt, leverage, crucibleAddress, baseTokenSymbol })
+          console.log('📞 Calling openLeveragedPosition with:', { collateralAmount: baseAmt, leverage, crucibleAddress, baseTokenSymbol, openFeeAmount })
           await openLeveragedPosition(baseAmt, leverage)
           console.log('✅ openLeveragedPosition completed')
           
           // Track this position in userBalances for exchange rate growth (same as normal wrap)
           // This allows cToken price to increase over time
           // NOTE: Does NOT add to ptokenBalance - cTOKENS are locked in LP
-          trackLeveragedPosition(crucibleAddress, baseAmt)
+          trackLeveragedPosition(crucibleAddress, baseForPosition)
           
           // DON'T add LP tokens here - let FogoSessions calculate them from localStorage
           // This ensures consistency and prevents double counting
@@ -297,12 +297,12 @@ export default function CTokenDepositModal({
           // Add transaction to analytics
           addTransaction({
             type: 'deposit',
-            amount: baseAmt + usdcDetails.depositUSDC,
+            amount: baseForPosition + usdcDetails.depositUSDC,
             token: baseTokenSymbol,
             crucibleId: crucibleAddress,
             borrowedAmount: usdcDetails.borrowUSDC,
             leverage: leverage,
-            usdValue: (baseAmt * baseTokenPrice) + usdcDetails.depositUSDC + usdcDetails.borrowUSDC,
+            usdValue: (baseForPosition * baseTokenPrice) + usdcDetails.depositUSDC + usdcDetails.borrowUSDC,
           })
           
           // Events are dispatched from useLVFPosition hook immediately after localStorage update
@@ -312,7 +312,6 @@ export default function CTokenDepositModal({
       
       onClose()
       setAmount('')
-      setUsdcAmount('')
       setMode('wrap')
       setLeverage(1)
     } catch (error: any) {
@@ -326,7 +325,9 @@ export default function CTokenDepositModal({
   if (!isOpen) return null
 
   const baseValueUSD = amount ? parseFloat(amount) * baseTokenPrice : 0
-  const usdcDetails = mode === 'lp' && amount ? calculateUSDCNeeded(parseFloat(amount), leverage) : { totalUSDC: 0, depositUSDC: 0, borrowUSDC: 0 }
+  const usdcDetails = mode === 'lp' && baseAmountForPosition > 0
+    ? calculateUSDCNeeded(baseAmountForPosition, leverage)
+    : { totalUSDC: 0, depositUSDC: 0, borrowUSDC: 0 }
   const hasEnoughUSDC = leverage === 1 ? usdcDetails.depositUSDC <= usdcBalance : true // Leveraged positions borrow, so no balance check needed
   const effectiveAPY = mode === 'lp' 
     ? leverage === 1 
@@ -375,7 +376,6 @@ export default function CTokenDepositModal({
             <button
               onClick={() => {
                 setMode('wrap')
-                setUsdcAmount('')
               }}
               className={`px-4 py-2 text-sm rounded-lg font-semibold transition-all duration-300 relative overflow-hidden ${
                 mode === 'wrap'
@@ -529,7 +529,7 @@ export default function CTokenDepositModal({
                 <div className="flex justify-between items-center py-2.5 px-3 bg-fogo-gray-900/50 rounded-lg">
                   <span className="text-fogo-gray-400 text-sm">You'll receive</span>
                   <span className="text-white font-bold text-lg">
-                    {amount ? ((parseFloat(amount) * 0.985) / 1.045).toFixed(2) : '0.00'} {ctokenSymbol}
+                    {amount ? ((parseFloat(amount) * (1 - WRAP_FEE_RATE)) / 1.045).toFixed(2) : '0.00'} {ctokenSymbol}
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-2.5 px-3 bg-red-500/10 rounded-lg border border-red-500/20">
@@ -537,10 +537,10 @@ export default function CTokenDepositModal({
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    Wrap Fee (1.5%)
+                    Wrap Fee ({(WRAP_FEE_RATE * 100).toFixed(2)}%)
                   </span>
                   <span className="text-red-400 font-semibold">
-                    -{amount ? (parseFloat(amount) * 0.015).toFixed(2) : '0.00'} {baseTokenSymbol}
+                    -{amount ? (parseFloat(amount) * WRAP_FEE_RATE).toFixed(2) : '0.00'} {baseTokenSymbol}
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-2.5 px-3 bg-fogo-gray-900/50 rounded-lg">
@@ -560,7 +560,7 @@ export default function CTokenDepositModal({
                 </div>
                 <div className="flex justify-between items-center py-1.5 px-2.5 bg-fogo-gray-900/50 rounded-lg">
                   <span className="text-fogo-gray-400 text-xs">{baseTokenSymbol} Deposited</span>
-                  <span className="text-white font-semibold text-sm">{amount ? parseFloat(amount).toFixed(2) : '0.00'} {baseTokenSymbol}</span>
+                  <span className="text-white font-semibold text-sm">{mode === 'lp' && amount ? baseAmountForPosition.toFixed(2) : '0.00'} {baseTokenSymbol}</span>
                 </div>
                 {leverage === 1.5 ? (
                   <>
@@ -587,16 +587,16 @@ export default function CTokenDepositModal({
                     </span>
                   </div>
                 )}
-                {leverage > 1 && (
+                {mode === 'lp' && amount && parseFloat(amount) > 0 && (
                   <div className="flex justify-between items-center py-1.5 px-2.5 bg-red-500/10 rounded-lg border border-red-500/20">
                     <span className="text-red-400 text-xs font-medium flex items-center gap-1">
                       <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      Opening Fee (1.5%)
+                      Inferno Open Fee ({(INFERNO_OPEN_FEE_RATE * 100).toFixed(2)}%)
                     </span>
                     <span className="text-red-400 font-semibold text-xs">
-                      -{(parseFloat(amount) * 0.015).toFixed(2)} {baseTokenSymbol}
+                      -{(parseFloat(amount) * INFERNO_OPEN_FEE_RATE).toFixed(2)} {baseTokenSymbol}
                     </span>
                   </div>
                 )}

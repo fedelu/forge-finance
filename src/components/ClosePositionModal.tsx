@@ -6,6 +6,7 @@ import { useLVFPosition } from '../hooks/useLVFPosition'
 import { useSession } from './FogoSessions'
 import { useAnalytics } from '../contexts/AnalyticsContext'
 import { formatNumberWithCommas, RATE_SCALE } from '../utils/math'
+import { UNWRAP_FEE_RATE, INFERNO_CLOSE_FEE_RATE, INFERNO_YIELD_FEE_RATE } from '../config/fees'
 
 interface ClosePositionModalProps {
   isOpen: boolean
@@ -32,6 +33,7 @@ export default function ClosePositionModal({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [timeUpdateTrigger, setTimeUpdateTrigger] = useState(0) // Trigger to update calculations as time passes
+  const infernoPairSymbol = ctokenSymbol.replace(/^c/i, 'if')
   
   // Update calculations every second for dynamic exchange rate
   React.useEffect(() => {
@@ -156,7 +158,7 @@ export default function ClosePositionModal({
     
     const preview = calculateUnwrapPreview(crucibleAddress, ctokenAmount)
     const baseToReceive = parseFloat(preview.baseAmount)
-    const feeAmount = (baseToReceive / (1 - 0.015)) * 0.015 // Reverse calculate fee
+    const feeAmount = (baseToReceive / (1 - UNWRAP_FEE_RATE)) * UNWRAP_FEE_RATE // Reverse calculate fee
     const apyEarned = baseToReceive - (parseFloat(ctokenAmount) / 1.045) // APY = received - original deposit
     
     return {
@@ -228,13 +230,13 @@ export default function ClosePositionModal({
     // Yield earned in tokens (based on cTOKEN exchange rate growth)
     const apyEarnedTokens = unwrapAmount * (exchangeRateGrowth / currentExchangeRateDecimal)
     
-    // Calculate transaction fee (1.5% on total value)
-    const totalValueUSD = cTokenValue + usdcAmount // Total position value
-    const transactionFeeUSD = totalValueUSD * 0.015
-    const transactionFeeTokens = transactionFeeUSD / baseTokenPrice
+    const principalFeeTokens = unwrapAmount * INFERNO_CLOSE_FEE_RATE
+    const yieldFeeTokens = apyEarnedTokens * INFERNO_YIELD_FEE_RATE
+    const transactionFeeTokens = principalFeeTokens + yieldFeeTokens
+    const transactionFeeUSD = transactionFeeTokens * baseTokenPrice
     
     // Net tokens to receive after fees
-    const netTokensToReceive = unwrapAmount + apyEarnedTokens - transactionFeeTokens
+    const netTokensToReceive = (unwrapAmount - principalFeeTokens) + (apyEarnedTokens - yieldFeeTokens)
     
     // For leveraged positions, user also gets USDC (deposited minus borrowing interest)
     const depositedUSDC = position.depositUSDC || 0
@@ -263,6 +265,8 @@ export default function ClosePositionModal({
       proportionalBorrowedUSDC: proportionalBorrowedUSDC + (proportionalBorrowingInterest * proportion), // Borrowed + interest
       apyPercentage, // Include APY percentage
       borrowingInterestRatePercent, // Include borrowing interest rate percentage
+      principalFeeTokens,
+      yieldFeeTokens,
     }
   }, [lpTokenAmount, availableLeveragedPosition, baseTokenPrice, timeUpdateTrigger, crucible])
 
@@ -311,13 +315,25 @@ export default function ClosePositionModal({
         const actualAPYEarned = result.baseAmount - parseFloat(ctokenAmount) - (result.feeAmount || 0)
         const apyEarnedDisplay = actualAPYEarned > 0 ? actualAPYEarned : result.apyEarned || 0
         
-        const successMessage = `✅ ${ctokenSymbol} unwrapped successfully!\n\n` +
-          `Unwrapped: ${formatNumberWithCommas(parseFloat(ctokenAmount))} ${ctokenSymbol}\n` +
-          `Received: ${formatNumberWithCommas(result.baseAmount)} ${baseTokenSymbol}\n` +
-          (apyEarnedDisplay > 0 ? `Yield Earned: +${formatNumberWithCommas(apyEarnedDisplay)} ${baseTokenSymbol}\n` : '') +
-          `Transaction Fee: ${formatNumberWithCommas(result.feeAmount)} ${baseTokenSymbol}`
-        
-        alert(successMessage)
+        const summary = [
+          '🔥 Forge Position Update',
+          '',
+          `${ctokenSymbol} position closed.`,
+          '',
+          `• Burned: ${formatNumberWithCommas(parseFloat(ctokenAmount))} ${ctokenSymbol}`,
+          `• Released: ${formatNumberWithCommas(result.baseAmount)} ${baseTokenSymbol}`,
+        ]
+
+        if (apyEarnedDisplay > 0) {
+          summary.push(`• Net Yield: +${formatNumberWithCommas(apyEarnedDisplay)} ${baseTokenSymbol}`)
+        }
+        if (result.feeAmount && result.feeAmount > 0) {
+          summary.push(`• Forge Safety Fee (${(UNWRAP_FEE_RATE * 100).toFixed(2)}%): ${formatNumberWithCommas(result.feeAmount)} ${baseTokenSymbol}`)
+        }
+
+        summary.push('', 'Wallet and portfolio balances refresh instantly in Forge.')
+
+        alert(summary.join('\n'))
         setCTokenAmount('')
         onClose()
       }
@@ -409,29 +425,41 @@ export default function ClosePositionModal({
         
         // Build success message
         const closeType = isPartialClose ? 'partially' : 'fully'
-        let successMessage = `✅ Leveraged position ${closeType} closed successfully!\n\n`
+        const summary = [
+          '🔥 Forge Position Update',
+          '',
+          `${infernoPairSymbol}/USDC leveraged position ${closeType} closed.`,
+          '',
+          `• Released: ${formatNumberWithCommas(result.baseAmount, 4)} ${baseTokenSymbol}`,
+        ]
+
         if (isPartialClose) {
           const remainingCollateral = availableLeveragedPosition.collateral - unwrapAmount
-          successMessage += `Closed: ${unwrapAmount.toFixed(4)} ${baseTokenSymbol}\n`
-          successMessage += `Remaining: ${remainingCollateral.toFixed(4)} ${baseTokenSymbol}\n\n`
+          summary.push(`• Remaining Collateral: ${formatNumberWithCommas(remainingCollateral, 4)} ${baseTokenSymbol}`)
         }
-        successMessage += `Received:\n`
-          successMessage += `  • ${result.baseAmount.toFixed(4)} ${baseTokenSymbol} (with Yield earned)\n`
+
         if (result.usdcAmount && result.usdcAmount > 0) {
-          successMessage += `  • ${result.usdcAmount.toFixed(2)} USDC (redeemed - borrowing interest deducted)\n`
+          summary.push(`• USDC Settled: ${formatNumberWithCommas(result.usdcAmount, 2)} USDC`)
         }
         if (result.apyEarned && result.apyEarned > 0) {
-          successMessage += `\nYield Earned: ${result.apyEarned.toFixed(4)} ${baseTokenSymbol}\n`
+          summary.push(`• Net Yield: +${formatNumberWithCommas(result.apyEarned, 4)} ${baseTokenSymbol}`)
         }
-        if (result.borrowingInterest && result.borrowingInterest > 0) {
-          successMessage += `Borrowing Interest Paid: ${result.borrowingInterest.toFixed(2)} USDC\n`
+        if (result.principalFee && result.principalFee > 0) {
+          summary.push(`• Forge Principal Fee: ${formatNumberWithCommas(result.principalFee, 4)} ${baseTokenSymbol}`)
         }
-        if (result.fee && result.fee > 0) {
-          successMessage += `Transaction Fee: ${result.fee.toFixed(4)} ${baseTokenSymbol} (${result.feePercent?.toFixed(2)}%)\n`
+        if (result.yieldFee && result.yieldFee > 0) {
+          summary.push(`• Forge Yield Fee: ${formatNumberWithCommas(result.yieldFee, 4)} ${baseTokenSymbol}`)
         }
         if (result.repaidUSDC && result.repaidUSDC > 0) {
-          successMessage += `\nRepaid to Lending Pool: ${result.repaidUSDC.toFixed(2)} USDC (borrowed + interest)`
+          summary.push(`• Lending Pool Repaid: ${formatNumberWithCommas(result.repaidUSDC, 2)} USDC`)
         }
+        if (result.borrowingInterest && result.borrowingInterest > 0) {
+          summary.push(`• Interest Paid: ${formatNumberWithCommas(result.borrowingInterest, 2)} USDC`)
+        }
+
+        summary.push('', 'Forge balances and analytics refresh automatically.')
+
+        const successMessage = summary.join('\n')
         
         // Trigger LP balance recalculation to update wallet - immediately and with delay
         // This ensures both wallet and portfolio update properly
@@ -558,7 +586,7 @@ export default function ClosePositionModal({
                   <div className="flex justify-between text-sm">
                     <span className="text-fogo-gray-400">Transaction Fee:</span>
                     <span className="text-fogo-gray-400">
-                      -{formatNumberWithCommas(cTokenUnwrapPreview.feeAmount)} {baseTokenSymbol} (1.5%)
+                      -{formatNumberWithCommas(cTokenUnwrapPreview.feeAmount)} {baseTokenSymbol} ({(UNWRAP_FEE_RATE * 100).toFixed(2)}%)
                     </span>
                   </div>
                 </div>
@@ -642,9 +670,16 @@ export default function ClosePositionModal({
                     </div>
                     
                     <div className="flex justify-between text-sm">
-                      <span className="text-fogo-gray-400">Transaction Fee:</span>
+                      <span className="text-fogo-gray-400">Forge Principal Fee ({(INFERNO_CLOSE_FEE_RATE * 100).toFixed(2)}%):</span>
                       <span className="text-fogo-gray-400">
-                        -{formatNumberWithCommas(lpTokenUnwrapPreview.transactionFeeTokens)} {baseTokenSymbol} (1.5%)
+                        -{formatNumberWithCommas(lpTokenUnwrapPreview.principalFeeTokens || 0)} {baseTokenSymbol}
+                      </span>
+                    </div>
+                    
+                    <div className="flex justify-between text-sm">
+                      <span className="text-fogo-gray-400">Forge Yield Fee ({(INFERNO_YIELD_FEE_RATE * 100).toFixed(0)}%):</span>
+                      <span className="text-fogo-gray-400">
+                        -{formatNumberWithCommas(lpTokenUnwrapPreview.yieldFeeTokens || 0)} {baseTokenSymbol}
                       </span>
                     </div>
                     

@@ -6,6 +6,8 @@ import { useBalance } from '../contexts/BalanceContext'
 import { useLP } from '../hooks/useLP'
 import { useLVFPosition } from '../hooks/useLVFPosition'
 import { useSession } from './FogoSessions'
+import { formatNumberWithCommas } from '../utils/math'
+import { UNWRAP_FEE_RATE, INFERNO_CLOSE_FEE_RATE, INFERNO_YIELD_FEE_RATE } from '../config/fees'
 
 interface CTokenWithdrawModalProps {
   isOpen: boolean
@@ -79,9 +81,28 @@ export default function CTokenWithdrawModal({
           const lpTokenAmount = Math.sqrt(cTokenAmount * result.usdcAmount)
           subtractFromBalance(lpTokenSymbol, lpTokenAmount)
           
-          // Show closing information with APY earnings
-          const apyMessage = result.apyEarned ? `\nYield Earned: ${result.apyEarned.toFixed(4)} ${baseTokenSymbol}` : ''
-          alert(`✅ LP Position closed!\n\nReceived: ${result.baseAmount.toFixed(2)} ${baseTokenSymbol} + ${result.usdcAmount.toFixed(2)} USDC${apyMessage}`)
+          const lpSummary = [
+            '🔥 Forge Position Update',
+            '',
+            `${displayPairSymbol}/USDC position closed.`,
+            '',
+            `• Base Tokens Returned: ${formatNumberWithCommas(result.baseAmount, 4)} ${baseTokenSymbol}`,
+            `• USDC Returned: ${formatNumberWithCommas(result.usdcAmount, 2)} USDC`,
+          ]
+
+          if (result.apyEarned && result.apyEarned > 0) {
+            lpSummary.push(`• Net Yield: +${formatNumberWithCommas(result.apyEarned, 4)} ${baseTokenSymbol}`)
+          }
+          if (result.principalFee && result.principalFee > 0) {
+            lpSummary.push(`• Forge Principal Fee: ${formatNumberWithCommas(result.principalFee, 4)} ${baseTokenSymbol}`)
+          }
+          if (result.yieldFee && result.yieldFee > 0) {
+            lpSummary.push(`• Forge Yield Fee: ${formatNumberWithCommas(result.yieldFee, 4)} ${baseTokenSymbol}`)
+          }
+
+          lpSummary.push('', 'Wallet balances refresh instantly in Forge.')
+
+          alert(lpSummary.join('\n'))
         }
       } else {
         const result = await closeLVFPosition(positionId)
@@ -118,10 +139,36 @@ export default function CTokenWithdrawModal({
             subtractFromBalance(lpTokenSymbol, lpTokenAmount)
           }
           
-          // Show closing information with APY earnings
-          const apyMessage = result.apyEarned ? `\nYield Earned: ${result.apyEarned.toFixed(4)} ${baseTokenSymbol}` : ''
-          const usdcMessage = result.repaidUSDC > 0 ? `\nRepaid: ${result.repaidUSDC.toFixed(2)} USDC` : ''
-          alert(`✅ Leveraged Position closed!\n\nReceived: ${result.baseAmount.toFixed(2)} ${baseTokenSymbol}${apyMessage}${usdcMessage}`)
+          const lvfSummary = [
+            '🔥 Forge Position Update',
+            '',
+            `${displayPairSymbol}/USDC leveraged position closed.`,
+            '',
+            `• Released: ${formatNumberWithCommas(result.baseAmount, 4)} ${baseTokenSymbol}`,
+          ]
+
+          if (result.usdcAmount && result.usdcAmount > 0) {
+            lvfSummary.push(`• USDC Settled: ${formatNumberWithCommas(result.usdcAmount, 2)} USDC`)
+          }
+          if (result.apyEarned && result.apyEarned > 0) {
+            lvfSummary.push(`• Net Yield: +${formatNumberWithCommas(result.apyEarned, 4)} ${baseTokenSymbol}`)
+          }
+          if (result.principalFee && result.principalFee > 0) {
+            lvfSummary.push(`• Forge Principal Fee: ${formatNumberWithCommas(result.principalFee, 4)} ${baseTokenSymbol}`)
+          }
+          if (result.yieldFee && result.yieldFee > 0) {
+            lvfSummary.push(`• Forge Yield Fee: ${formatNumberWithCommas(result.yieldFee, 4)} ${baseTokenSymbol}`)
+          }
+          if (result.repaidUSDC && result.repaidUSDC > 0) {
+            lvfSummary.push(`• Lending Pool Repaid: ${formatNumberWithCommas(result.repaidUSDC, 2)} USDC`)
+          }
+          if (result.borrowingInterest && result.borrowingInterest > 0) {
+            lvfSummary.push(`• Interest Paid: ${formatNumberWithCommas(result.borrowingInterest, 2)} USDC`)
+          }
+
+          lvfSummary.push('', 'Portfolio metrics refresh automatically in Forge.')
+
+          alert(lvfSummary.join('\n'))
         }
       }
       
@@ -146,14 +193,29 @@ export default function CTokenWithdrawModal({
       if (result && result.baseAmount) {
         addToBalance(baseTokenSymbol, result.baseAmount)
         
-        // Show success message with APY earnings
-        const apyMessage = result.apyEarned ? `\nAPY Earned: ${result.apyEarned.toFixed(4)} ${baseTokenSymbol}` : ''
-        alert(`✅ Position closed successfully!\n\nReceived: ${result.baseAmount.toFixed(4)} ${baseTokenSymbol}${apyMessage}`)
+        const unwrapSummary = [
+          '🔥 Forge Position Update',
+          '',
+          `${ctokenSymbol} position closed.`,
+          '',
+          `• Released: ${formatNumberWithCommas(result.baseAmount, 4)} ${baseTokenSymbol}`,
+        ]
+
+        if (result.apyEarned && result.apyEarned > 0) {
+          unwrapSummary.push(`• Net Yield: +${formatNumberWithCommas(result.apyEarned, 4)} ${baseTokenSymbol}`)
+        }
+        if (result.feeAmount && result.feeAmount > 0) {
+          unwrapSummary.push(`• Forge Safety Fee (${(UNWRAP_FEE_RATE * 100).toFixed(2)}%): ${formatNumberWithCommas(result.feeAmount, 4)} ${baseTokenSymbol}`)
+        }
+
+        unwrapSummary.push('', 'Balances update instantly in your Forge wallet.')
+
+        alert(unwrapSummary.join('\n'))
       } else {
         // Fallback calculation if result is null
         const ctokenAmount = parseFloat(amount)
         const baseAmountBeforeFee = ctokenAmount * exchangeRate
-        const feeAmount = baseAmountBeforeFee * 0.015
+        const feeAmount = baseAmountBeforeFee * UNWRAP_FEE_RATE
         const netAmount = baseAmountBeforeFee - feeAmount
         addToBalance(baseTokenSymbol, netAmount)
       }
@@ -182,7 +244,7 @@ export default function CTokenWithdrawModal({
 
   // Calculate amounts with fee
   const baseAmountBeforeFee = amount ? parseFloat(amount) * exchangeRate : 0
-  const withdrawalFee = baseAmountBeforeFee * 0.015 // 1.5% fee
+  const withdrawalFee = baseAmountBeforeFee * UNWRAP_FEE_RATE // Forge unwrap fee
   const estimatedBaseAmount = amount 
     ? (baseAmountBeforeFee - withdrawalFee).toFixed(2)
     : '0.00'
@@ -289,7 +351,7 @@ export default function CTokenWithdrawModal({
               </span>
             </div>
             <div className="flex justify-between text-xs pt-2 border-t border-fogo-gray-700">
-              <span className="text-fogo-gray-500">Withdrawal Fee (1.5%)</span>
+              <span className="text-fogo-gray-500">Withdrawal Fee ({(UNWRAP_FEE_RATE * 100).toFixed(2)}%)</span>
               <span className="text-red-400">
                 -{withdrawalFee.toFixed(2)} {baseTokenSymbol}
               </span>

@@ -2,6 +2,8 @@ import React from 'react'
 import { useLVFPosition } from '../hooks/useLVFPosition'
 import { useBalance } from '../contexts/BalanceContext'
 import { useCrucible } from '../hooks/useCrucible'
+import { formatNumberWithCommas } from '../utils/math'
+import { INFERNO_CLOSE_FEE_RATE, INFERNO_YIELD_FEE_RATE } from '../config/fees'
 
 interface LVFPositionCardProps {
   position: {
@@ -48,10 +50,10 @@ export default function LVFPositionCard({
     // Calculate closing fee for confirmation
     const baseTokenPrice = baseTokenSymbol === 'FOGO' ? 0.5 : 0.002
     const collateralValueUSD = position.collateral * baseTokenPrice
-    const closingFee = collateralValueUSD * 0.015 // 1.5% fee
-    const baseAmountAfterFee = position.collateral * (1 - 0.015)
+    const principalFeeUSD = collateralValueUSD * INFERNO_CLOSE_FEE_RATE
+    const baseAmountAfterFee = position.collateral * (1 - INFERNO_CLOSE_FEE_RATE)
     
-    const feeMessage = `Closing fee: ${closingFee.toFixed(2)} USD (1.5%)\nYou'll receive: ${baseAmountAfterFee.toFixed(2)} ${baseTokenSymbol}`
+    const feeMessage = `Closing fee: ${principalFeeUSD.toFixed(2)} USD (${(INFERNO_CLOSE_FEE_RATE * 100).toFixed(2)}% on principal) + ${(INFERNO_YIELD_FEE_RATE * 100).toFixed(0)}% of accrued yield.\nYou'll receive approximately ${baseAmountAfterFee.toFixed(2)} ${baseTokenSymbol} plus net yield.`
     
     if (!confirm(`Are you sure you want to close this leveraged position?\n\n${feeMessage}`)) {
       return
@@ -93,10 +95,41 @@ export default function LVFPositionCard({
         const lpTokenAmount = Math.sqrt(cTokenAmount * totalUSDC) // Constant product formula
         subtractFromBalance(lpTokenSymbol, lpTokenAmount)
         
-        // Show closing information with APY earnings
-        const apyMessage = result.apyEarned ? `\nYield Earned: ${result.apyEarned.toFixed(4)} ${baseTokenSymbol}` : ''
-        const usdcMessage = result.repaidUSDC > 0 ? `\nRepaid: ${result.repaidUSDC.toFixed(2)} USDC` : ''
-        alert(`✅ Leveraged Position closed successfully!\n\nReceived: ${result.baseAmount.toFixed(4)} ${baseTokenSymbol}${apyMessage}${usdcMessage}`)
+        const summaryLines = [
+          '🔥 Forge Position Update',
+          '',
+          `${displayPairToken}/USDC leveraged position closed.`,
+          '',
+          `• Released: ${formatNumberWithCommas(result.baseAmount, 4)} ${baseTokenSymbol}`,
+        ]
+
+        if (result.usdcAmount && result.usdcAmount > 0) {
+          summaryLines.push(`• USDC Settled: ${formatNumberWithCommas(result.usdcAmount, 2)} USDC`)
+        }
+
+        if (result.apyEarned && result.apyEarned > 0) {
+          summaryLines.push(`• Net Yield: +${formatNumberWithCommas(result.apyEarned, 4)} ${baseTokenSymbol}`)
+        }
+
+        if (result.yieldFee && result.yieldFee > 0) {
+          summaryLines.push(`• Forge Yield Fee: ${formatNumberWithCommas(result.yieldFee, 4)} ${baseTokenSymbol}`)
+        }
+
+        if (result.principalFee && result.principalFee > 0) {
+          summaryLines.push(`• Forge Principal Fee: ${formatNumberWithCommas(result.principalFee, 4)} ${baseTokenSymbol}`)
+        }
+
+        if (result.repaidUSDC && result.repaidUSDC > 0) {
+          summaryLines.push(`• Lending Pool Repaid: ${formatNumberWithCommas(result.repaidUSDC, 2)} USDC`)
+        }
+
+        if (result.borrowingInterest && result.borrowingInterest > 0) {
+          summaryLines.push(`• Interest Paid: ${formatNumberWithCommas(result.borrowingInterest, 2)} USDC`)
+        }
+
+        summaryLines.push('', 'Wallet and portfolio balances refresh instantly in Forge.')
+
+        alert(summaryLines.join('\n'))
       }
       
       onClose()

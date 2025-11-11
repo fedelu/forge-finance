@@ -6,6 +6,11 @@ import { useCrucible as useCrucibleContext } from '../contexts/CrucibleContext'
 import { useCrucible } from '../hooks/useCrucible'
 import { useBalance } from '../contexts/BalanceContext'
 import { RATE_SCALE } from '../utils/math'
+import {
+  INFERNO_OPEN_FEE_RATE,
+  INFERNO_CLOSE_FEE_RATE,
+  INFERNO_YIELD_FEE_RATE,
+} from '../config/fees'
 
 interface LeveragedPosition {
   id: string
@@ -263,23 +268,20 @@ export function useLVFPosition({ crucibleAddress, baseTokenSymbol }: UseLVFPosit
 
       setLoading(true)
       try {
-        // Calculate 1.5% protocol fee first
-        const protocolFeePercent = 0.015 // 1.5%
+        // Calculate Forge open fee
+        const protocolFeePercent = INFERNO_OPEN_FEE_RATE
         const protocolFee = collateralAmount * protocolFeePercent
         const collateralAfterFee = collateralAmount - protocolFee
         
-        // Calculate borrowed USDC and deposited USDC based on ORIGINAL collateral value (before fee)
-        // This matches the calculation in CTokenDepositModal
+        // Calculate borrowed USDC and deposited USDC based on collateral after fee
         const baseTokenPrice = baseTokenSymbol === 'FOGO' ? 0.5 : 0.002
-        const originalCollateralValue = collateralAmount * baseTokenPrice // Use original amount, not after fee
-        const borrowedUSDC = originalCollateralValue * (leverageFactor - 1)
+        const collateralValueUSD = collateralAfterFee * baseTokenPrice
+        const borrowedUSDC = collateralValueUSD * (leverageFactor - 1)
         
-        // Calculate deposited USDC based on leverage factor (using original collateral value)
-        // For 1.5x: depositUSDC = 0.5 * originalCollateralValue (equal to borrowed)
-        // For 2x: depositUSDC = 0 (only borrowed)
+        // Calculate deposited USDC based on leverage factor (using net collateral value)
         let depositUSDC = 0
         if (leverageFactor === 1.5) {
-          depositUSDC = originalCollateralValue * 0.5 // 50% deposited, 50% borrowed
+          depositUSDC = collateralValueUSD * 0.5 // 50% deposited, 50% borrowed
         } else if (leverageFactor === 2.0) {
           depositUSDC = 0 // 100% borrowed, 0% deposited
         }
@@ -335,8 +337,8 @@ export function useLVFPosition({ crucibleAddress, baseTokenSymbol }: UseLVFPosit
         // Update crucible TVL with deposit + borrow amount
         // TVL should increase by: collateral value + borrowed USDC value
         // baseTokenPrice is already defined above, reuse it
-        const collateralValueUSD = collateralAfterFee * baseTokenPrice
-        const totalTVLIncreaseUSD = collateralValueUSD + borrowedUSDC
+        const collateralValueUSDNet = collateralAfterFee * baseTokenPrice
+        const totalTVLIncreaseUSD = collateralValueUSDNet + borrowedUSDC
         
         console.log('📊 Updating crucible TVL:', {
           crucibleAddress,
@@ -565,11 +567,12 @@ export function useLVFPosition({ crucibleAddress, baseTokenSymbol }: UseLVFPosit
         // Total collateral value including APY earnings (for the portion being closed)
         const totalCollateralValueUSD = collateralValueAtCurrentRate * baseTokenPriceForClose
         
-        // Calculate 1.5% protocol fee on withdrawal (applied to total value including APY)
-        const withdrawalFeePercent = 0.015 // 1.5%
-        const withdrawalFeeUSD = totalCollateralValueUSD * withdrawalFeePercent
-        const amountAfterFeeUSD = totalCollateralValueUSD - withdrawalFeeUSD
-        const baseAmountAfterFee = amountAfterFeeUSD / baseTokenPriceForClose
+        // Apply Forge close fees: 2% on principal, 10% on yield
+        const principalFeeTokens = collateralToClose * INFERNO_CLOSE_FEE_RATE
+        const yieldFeeTokens = apyEarnedTokens * INFERNO_YIELD_FEE_RATE
+        const netYieldTokens = Math.max(0, apyEarnedTokens - yieldFeeTokens)
+        const baseAmountAfterFee = (collateralToClose - principalFeeTokens) + netYieldTokens
+        const totalFeeTokens = principalFeeTokens + yieldFeeTokens
 
         // Calculate borrowing interest (proportional for partial close)
         // Borrowing interest rate = APY% × 5%
@@ -692,17 +695,21 @@ export function useLVFPosition({ crucibleAddress, baseTokenSymbol }: UseLVFPosit
             baseAmount: baseAmountAfterFee,
             usdcAmount: netUSDCReturned,
             repaidUSDC: totalOwedUSDC,
-            borrowingInterest: borrowingInterest
+            borrowingInterest: borrowingInterest,
+            yieldFee: yieldFeeTokens,
+            principalFee: principalFeeTokens
           } 
         }))
 
         return { 
           success: true,
-          baseAmount: baseAmountAfterFee, // Tokens with APY minus transaction fee
-          apyEarned: apyEarnedTokens, // APY earnings in base tokens
+          baseAmount: baseAmountAfterFee, // Tokens returned after fees
+          apyEarned: netYieldTokens, // Net yield returned to user
           usdcAmount: netUSDCReturned, // Deposited USDC minus borrowing interest (if any)
-          fee: (totalCollateralValueUSD * withdrawalFeePercent) / baseTokenPriceForClose,
-          feePercent: withdrawalFeePercent * 100,
+          fee: totalFeeTokens,
+          feePercent: INFERNO_CLOSE_FEE_RATE * 100,
+          yieldFee: yieldFeeTokens,
+          principalFee: principalFeeTokens,
           repaidUSDC: totalOwedUSDC, // Total borrowed USDC + interest that was repaid
           borrowingInterest: borrowingInterest // Interest paid on borrowed USDC
         }

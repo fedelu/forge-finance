@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { PublicKey } from '@solana/web3.js'
 import { useWallet } from '../contexts/WalletContext'
 import { useSession } from '../components/FogoSessions'
+import { INFERNO_CLOSE_FEE_RATE, INFERNO_YIELD_FEE_RATE } from '../config/fees'
 
 export interface LPPosition {
   id: string
@@ -332,13 +333,14 @@ export function useLP({ crucibleAddress, baseTokenSymbol, baseAPY }: UseLPProps)
         const baseAmountAtCurrentRate = position.baseAmount * currentExchangeRate
         const apyEarnedTokens = position.baseAmount * (exchangeRateGrowth / currentExchangeRate)
         
-        // Calculate 1.5% protocol fee on total value (including APY earnings)
+        // Apply Forge close fees: 2% on principal, 10% on yield
         const baseTokenPrice = baseTokenSymbol === 'FOGO' ? 0.5 : 0.002
-        const totalValueUSD = baseAmountAtCurrentRate * baseTokenPrice
-        const withdrawalFeePercent = 0.015 // 1.5%
-        const withdrawalFeeUSD = totalValueUSD * withdrawalFeePercent
-        const amountAfterFeeUSD = totalValueUSD - withdrawalFeeUSD
-        const baseAmountAfterFee = amountAfterFeeUSD / baseTokenPrice
+        const principalTokens = position.baseAmount
+        const principalFeeTokens = principalTokens * INFERNO_CLOSE_FEE_RATE
+        const yieldFeeTokens = apyEarnedTokens * INFERNO_YIELD_FEE_RATE
+        const baseAmountAfterFee = (principalTokens - principalFeeTokens) + (apyEarnedTokens - yieldFeeTokens)
+        const feeAmountTokens = principalFeeTokens + yieldFeeTokens
+        const feeAmountUSD = feeAmountTokens * baseTokenPrice
 
         // TODO: In production, create and send close_lp_position instruction
         await new Promise((resolve) => setTimeout(resolve, 1500))
@@ -359,13 +361,17 @@ export function useLP({ crucibleAddress, baseTokenSymbol, baseAPY }: UseLPProps)
           return updated
         })
 
+        const netYieldTokens = Math.max(0, apyEarnedTokens - yieldFeeTokens)
+
         return { 
           success: true,
-          baseAmount: baseAmountAfterFee, // Base tokens including APY earnings (after fee)
-          apyEarned: apyEarnedTokens, // APY earnings in base tokens
+          baseAmount: baseAmountAfterFee, // Base tokens returned after fees
+          apyEarned: netYieldTokens, // Net yield after Forge yield fee
           usdcAmount: position.usdcAmount, // Return deposited USDC
-          feeAmount: withdrawalFeeUSD / baseTokenPrice,
-          feePercent: withdrawalFeePercent * 100
+          feeAmount: feeAmountTokens,
+          feePercent: INFERNO_CLOSE_FEE_RATE * 100,
+          yieldFee: yieldFeeTokens,
+          principalFee: principalFeeTokens
         }
       } catch (error: any) {
         console.error('Error closing LP position:', error)
