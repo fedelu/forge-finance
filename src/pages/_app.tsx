@@ -1,5 +1,6 @@
 import '../styles/globals.css'
 import type { AppProps } from 'next/app'
+import Head from 'next/head'
 import { useEffect, useState } from 'react'
 // Defer importing Fogo session client to the browser to avoid SSR module incompatibilities
 import dynamic from 'next/dynamic'
@@ -31,8 +32,13 @@ export default function App({ Component, pageProps }: AppProps) {
   }
 
   return (
-    <FogoSessionsProvider fogoClient={fogoClient}>
-      <Component {...pageProps} fogoClient={fogoClient} />
-    </FogoSessionsProvider>
+    <>
+      <Head>
+        <link rel="icon" type="image/png" href="/forgo%20logo%20straight.png" />
+      </Head>
+      <FogoSessionsProvider fogoClient={fogoClient}>
+        <Component {...pageProps} fogoClient={fogoClient} />
+      </FogoSessionsProvider>
+    </>
   )
 }
