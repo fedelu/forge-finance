@@ -65,19 +65,17 @@ export function CTokenPriceChart({ isOpen, onClose, crucibleId }: CTokenPriceCha
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onClose}
       />
       
-      {/* Modal */}
-      <div className="relative bg-gradient-to-br from-fogo-gray-900 via-fogo-gray-800 to-fogo-gray-900 rounded-3xl shadow-2xl border border-fogo-primary/30 w-full max-w-4xl max-h-[90vh] overflow-hidden backdrop-blur-xl">
+      <div className="relative panel border border-fogo-primary/30 w-full max-w-4xl max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="p-6 border-b border-fogo-gray-700 bg-fogo-gray-900">
+        <div className="p-6 border-b border-fogo-gray-700 panel">
           <div className="flex items-center justify-between mb-2">
             <div>
-              <h3 className="text-2xl font-inter-bold text-white">
+              <h3 className="text-2xl font-heading text-white">
                 {crucible.ptokenSymbol} Price Projection
               </h3>
               <p className="text-fogo-gray-400 text-sm mt-1">
@@ -128,7 +126,7 @@ export function CTokenPriceChart({ isOpen, onClose, crucibleId }: CTokenPriceCha
           </div>
 
           {/* Chart */}
-          <div className="bg-fogo-gray-900 rounded-xl p-4 border border-fogo-gray-700">
+          <div className="panel rounded-xl p-4 border border-fogo-gray-700">
             <div className="mb-4">
               <h4 className="text-lg font-semibold text-white mb-1">
                 {crucible.ptokenSymbol} Price Growth
@@ -141,8 +139,8 @@ export function CTokenPriceChart({ isOpen, onClose, crucibleId }: CTokenPriceCha
               <AreaChart data={chartData}>
                 <defs>
                   <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#FF6B35" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#FF6B35" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#FF660E" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#FF660E" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
@@ -178,7 +176,7 @@ export function CTokenPriceChart({ isOpen, onClose, crucibleId }: CTokenPriceCha
                 <Area
                   type="monotone"
                   dataKey="price"
-                  stroke="#FF6B35"
+                  stroke="#FF660E"
                   strokeWidth={2}
                   fill="url(#priceGradient)"
                   name={`${crucible.ptokenSymbol} Price`}
@@ -188,7 +186,7 @@ export function CTokenPriceChart({ isOpen, onClose, crucibleId }: CTokenPriceCha
           </div>
 
           {/* Info Section */}
-          <div className="mt-6 bg-fogo-gray-900 rounded-xl p-4 border border-fogo-primary/20">
+          <div className="mt-6 panel rounded-xl p-4 border border-fogo-primary/20">
             <h4 className="text-sm font-semibold text-fogo-primary mb-2">How it works</h4>
             <div className="text-xs text-fogo-gray-300 space-y-1">
               <div>• At deposit: 1 {crucible.baseToken} = 1 {crucible.ptokenSymbol} (1:1 exchange rate)</div>

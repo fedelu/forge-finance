@@ -495,7 +495,7 @@ export default function ClosePositionModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-gradient-to-br from-fogo-gray-900 via-fogo-gray-800 to-fogo-gray-900 rounded-3xl border border-fogo-primary/20 shadow-2xl shadow-fogo-primary/10 w-full max-w-lg max-h-[90vh] overflow-y-auto backdrop-blur-xl">
+        <div className="panel rounded-3xl border border-fogo-primary/20 shadow-2xl shadow-fogo-primary/10 w-full max-w-lg max-h-[90vh] overflow-y-auto backdrop-blur-xl">
         {/* Header */}
         <div className="relative bg-gradient-to-r from-fogo-primary/20 via-fogo-primary/10 to-transparent p-6 border-b border-fogo-gray-700/50">
           <div className="flex items-center justify-between">
@@ -503,7 +503,7 @@ export default function ClosePositionModal({
               <div className="w-10 h-10 bg-fogo-primary/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
                 <ArrowDownIcon className="h-6 w-6 text-fogo-primary" />
               </div>
-              <h2 className="text-2xl font-inter-bold text-white">Close Position</h2>
+              <h2 className="text-2xl font-heading text-white">Close Position</h2>
             </div>
             <button
               onClick={onClose}
@@ -520,7 +520,7 @@ export default function ClosePositionModal({
             onClick={() => setActiveTab('ctoken')}
             className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
               activeTab === 'ctoken'
-                ? 'text-fogo-primary border-b-2 border-fogo-primary bg-fogo-gray-800/50'
+                ? 'text-fogo-primary border-b-2 border-fogo-primary panel-muted'
                 : 'text-fogo-gray-400 hover:text-fogo-gray-300'
             }`}
             disabled={!hasCTokenPosition}
@@ -531,7 +531,7 @@ export default function ClosePositionModal({
             onClick={() => setActiveTab('lp')}
             className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
               activeTab === 'lp'
-                ? 'text-fogo-primary border-b-2 border-fogo-primary bg-fogo-gray-800/50'
+                ? 'text-fogo-primary border-b-2 border-fogo-primary panel-muted'
                 : 'text-fogo-gray-400 hover:text-fogo-gray-300'
             }`}
             disabled={!hasLeveragedPosition}
@@ -555,7 +555,7 @@ export default function ClosePositionModal({
                     value={ctokenAmount}
                     onChange={(e) => setCTokenAmount(e.target.value)}
                     placeholder="0.00"
-                    className="w-full px-4 py-3 pr-12 bg-fogo-gray-800 border border-fogo-gray-700 rounded-xl text-white placeholder-fogo-gray-500 focus:outline-none focus:border-fogo-primary"
+                    className="w-full px-4 py-3 pr-12 panel-muted rounded-xl text-white placeholder-fogo-gray-500 focus:outline-none focus:border-fogo-primary"
                   />
                   <button
                     onClick={() => setCTokenAmount(availableCTokens.toString())}
@@ -570,7 +570,7 @@ export default function ClosePositionModal({
               </div>
 
               {cTokenUnwrapPreview && (
-                <div className="bg-fogo-gray-800/50 rounded-xl p-4 border border-fogo-gray-700 space-y-2">
+                <div className="panel-muted rounded-xl p-4 border border-fogo-gray-700 space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-fogo-gray-400">You will receive:</span>
                     <span className="text-white font-medium">
@@ -621,7 +621,7 @@ export default function ClosePositionModal({
                     value={lpTokenAmount}
                     onChange={(e) => setLpTokenAmount(e.target.value)}
                     placeholder="0.00"
-                    className="w-full px-4 py-3 pr-12 bg-fogo-gray-800 border border-fogo-gray-700 rounded-xl text-white placeholder-fogo-gray-500 focus:outline-none focus:border-fogo-primary"
+                    className="w-full px-4 py-3 pr-12 panel-muted rounded-xl text-white placeholder-fogo-gray-500 focus:outline-none focus:border-fogo-primary"
                   />
                   <button
                     onClick={() => setLpTokenAmount((availableLeveragedPosition.collateral || 0).toString())}
@@ -637,7 +637,7 @@ export default function ClosePositionModal({
               </div>
 
               {lpTokenUnwrapPreview && (
-                <div className="bg-fogo-gray-800/50 rounded-xl p-4 border border-fogo-gray-700 space-y-3">
+                <div className="panel-muted rounded-xl p-4 border border-fogo-gray-700 space-y-3">
                   <div className="text-sm font-medium text-fogo-gray-300 mb-2">You will receive:</div>
                   
                   <div className="flex justify-between text-sm">

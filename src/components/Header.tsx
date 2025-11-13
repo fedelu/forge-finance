@@ -1,64 +1,74 @@
 import React from 'react'
 import dynamic from 'next/dynamic'
 const WalletMultiButton = dynamic(async () => (await import('@solana/wallet-adapter-react-ui')).WalletMultiButton, { ssr: false })
-import { BanknotesIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline'
 import { FogoSessionsButton } from './FogoSessions'
+
+const NAV_ITEMS = [
+  { label: 'Demo', href: '/demo', active: false },
+  { label: 'Lending', href: '/lending', active: false },
+  { label: 'Crucibles', href: '#', active: true },
+  { label: 'Heat', href: '#', active: false },
+  { label: 'Sparks', href: '#', active: false },
+  { label: 'Governance', href: '#', active: false },
+]
 
 export const Header: React.FC = () => {
   return (
-    <header className="bg-gradient-to-r from-black via-fogo-secondary/80 to-black border-b border-fogo-primary/30 shadow-2xl backdrop-blur-sm sticky top-0 z-40">
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          {/* Logo and Brand - Enhanced */}
-          <div className="flex items-center space-x-3 group">
-            <div className="flex items-center space-x-2">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-fogo-primary/20 to-fogo-primary/10 flex items-center justify-center border border-fogo-primary/20 group-hover:border-fogo-primary/40 transition-all duration-300">
-                <img 
-                  src="/forgo logo straight.png" 
-                  alt="Forge Logo" 
-                  className="w-8 h-8 object-contain group-hover:scale-110 transition-transform duration-300"
-                />
+    <header className="sticky top-0 z-50 px-4 pt-4">
+      <div className="mx-auto max-w-7xl">
+        <div className="relative">
+          <div className="pointer-events-none absolute inset-x-6 -bottom-px h-px bg-gradient-to-r from-transparent via-fogo-primary/60 to-transparent opacity-70" />
+          <div className="relative overflow-hidden rounded-2xl panel px-6 py-4">
+            <div className="pointer-events-none absolute inset-0 opacity-60 mix-blend-screen bg-gradient-to-r from-fogo-primary/25 via-transparent to-fogo-secondary/25 blur-3xl" />
+            <div className="pointer-events-none absolute -inset-x-40 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-60" />
+            <div className="relative flex items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <div className="absolute inset-0 rounded-xl bg-fogo-primary/30 blur-2xl opacity-60" />
+                <div className="relative flex h-11 w-11 items-center justify-center rounded-xl border border-white/15 bg-black/50 shadow-[0_10px_25px_rgba(255,106,0,0.25)]">
+                  <img
+                    src="/forgo logo straight.png"
+                    alt="Forge Logo"
+                    className="h-7 w-7 object-contain transition-transform duration-300 group-hover:scale-110"
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[0.65rem] uppercase tracking-[0.42em] text-fogo-gray-400 font-heading">
+                  Forge Protocol
+                </span>
+                <h1 className="text-lg font-heading text-white">
+                  Real Yield Infrastructure
+                </h1>
               </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-inter-bold bg-gradient-to-r from-fogo-gray-50 via-fogo-primary-light to-fogo-gray-50 bg-clip-text text-transparent group-hover:from-fogo-primary group-hover:via-fogo-primary-light group-hover:to-fogo-primary transition-all duration-300">
-                Forge Protocol
-              </h1>
-            </div>
-          </div>
-          
-          {/* Navigation - Enhanced */}
-          <nav className="hidden md:flex items-center space-x-6">
-            <a href="/demo" className="text-fogo-gray-300 hover:text-fogo-primary transition-all duration-200 font-inter font-medium px-3 py-2 rounded-lg hover:bg-fogo-primary/10 relative group">
-              Demo
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-fogo-primary group-hover:w-full transition-all duration-300"></span>
-            </a>
-            <a href="/lending" className="text-fogo-gray-300 hover:text-fogo-primary transition-all duration-200 font-inter font-medium px-3 py-2 rounded-lg hover:bg-fogo-primary/10 relative group">
-              Lending
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-fogo-primary group-hover:w-full transition-all duration-300"></span>
-            </a>
-            <a href="#" className="text-fogo-primary font-inter font-semibold px-3 py-2 rounded-lg bg-fogo-primary/10 relative group">
-              Crucibles
-              <span className="absolute bottom-0 left-0 w-full h-0.5 bg-fogo-primary"></span>
-            </a>
-            <a href="#" className="text-fogo-gray-300 hover:text-fogo-primary transition-all duration-200 font-inter font-medium px-3 py-2 rounded-lg hover:bg-fogo-primary/10 relative group">
-              Heat
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-fogo-primary group-hover:w-full transition-all duration-300"></span>
-            </a>
-            <a href="#" className="text-fogo-gray-300 hover:text-fogo-primary transition-all duration-200 font-inter font-medium px-3 py-2 rounded-lg hover:bg-fogo-primary/10 relative group">
-              Sparks
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-fogo-primary group-hover:w-full transition-all duration-300"></span>
-            </a>
-            <a href="#" className="text-fogo-gray-300 hover:text-fogo-primary transition-all duration-200 font-inter font-medium px-3 py-2 rounded-lg hover:bg-fogo-primary/10 relative group">
-              Governance
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-fogo-primary group-hover:w-full transition-all duration-300"></span>
-            </a>
-          </nav>
 
-          {/* Wallet Connection - Enhanced */}
-          <div className="flex items-center space-x-3">
-            <FogoSessionsButton />
-            <WalletMultiButton className="!bg-gradient-to-r !from-fogo-primary !to-fogo-primary-light hover:!from-fogo-primary-dark hover:!to-fogo-primary !text-white !font-semibold !px-5 !py-2.5 !rounded-xl !transition-all !transform hover:!scale-105 !shadow-lg hover:!shadow-fogo-lg !border !border-fogo-primary/20" />
+              <nav className="hidden md:flex items-center gap-2">
+                {NAV_ITEMS.map(({ label, href, active }) => (
+                  <a
+                    key={label}
+                    href={href}
+                    className={`relative inline-flex items-center justify-center rounded-xl px-5 py-2 transition-all duration-300 uppercase tracking-[0.2em] text-[0.7rem] font-heading border ${
+                      active
+                        ? 'bg-gradient-to-r from-fogo-primary to-fogo-primary-light text-white shadow-[0_10px_30px_rgba(255,106,0,0.35)] border-white/20'
+                        : 'text-fogo-gray-300/90 border-white/10 hover:text-white hover:bg-white/10 hover:border-white/20'
+                    }`}
+                  >
+                    {label}
+                    {active && (
+                      <span className="pointer-events-none absolute inset-x-3 bottom-1 h-px bg-white/50 opacity-60" />
+                    )}
+                  </a>
+                ))}
+              </nav>
+
+              <div className="flex items-center gap-3">
+                <div className="hidden md:flex">
+                  <FogoSessionsButton />
+                </div>
+                <WalletMultiButton className="!rounded-xl !bg-white/10 !px-5 !py-2.5 !text-white hover:!bg-white/20 !backdrop-blur !border !border-white/15 !shadow-[0_15px_35px_rgba(4,5,15,0.4)]" />
+              </div>
+            </div>
           </div>
         </div>
       </div>

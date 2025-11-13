@@ -249,11 +249,14 @@ export default function CTokenWithdrawModal({
     ? (baseAmountBeforeFee - withdrawalFee).toFixed(2)
     : '0.00'
 
+  const withdrawDisabled =
+    !amount || loading || parseFloat(amount) <= 0 || parseFloat(amount) > availableBalance
+
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-fogo-gray-900 rounded-xl border border-fogo-gray-700 shadow-2xl w-full max-w-md p-6 relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+      <div className="panel rounded-3xl w-full max-w-md p-6 relative">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-fogo-gray-400 hover:text-white transition-colors"
@@ -279,7 +282,7 @@ export default function CTokenWithdrawModal({
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="0.00"
                   max={availableBalance > 0 ? availableBalance.toString() : undefined}
-                  className="w-full px-4 py-3 pr-12 bg-fogo-gray-800 border border-fogo-gray-700 rounded-lg text-white placeholder-fogo-gray-500 focus:outline-none focus:ring-2 focus:ring-fogo-primary"
+                className="w-full px-4 py-3 pr-12 panel-muted rounded-lg text-white placeholder-fogo-gray-500 focus:outline-none focus:ring-2 focus:ring-fogo-primary"
                 />
               </div>
               <button
@@ -312,7 +315,7 @@ export default function CTokenWithdrawModal({
                 const positionId = position.id
                 
                 return (
-                  <div key={positionId} className="bg-fogo-gray-800/50 rounded p-3 flex items-center justify-between">
+                  <div key={positionId} className="panel-muted rounded p-3 flex items-center justify-between">
                     <div>
                       <div className="text-white text-sm font-medium">
                         {displayPairSymbol}/USDC {isLeveraged && leverage && `${leverage}x`}
@@ -336,29 +339,29 @@ export default function CTokenWithdrawModal({
         )}
 
         {/* Preview */}
-        <div className="bg-fogo-gray-800/50 rounded-lg p-4 mb-4 border border-fogo-gray-700">
+        <div className="panel-muted rounded-lg p-4 mb-4 border border-fogo-gray-700">
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-fogo-gray-400">You'll receive</span>
-              <span className="text-white font-medium">
+              <span className="text-fogo-gray-400 font-satoshi">You'll receive</span>
+              <span className="text-white text-lg font-heading">
                 {estimatedBaseAmount} {baseTokenSymbol}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-fogo-gray-400">Exchange Rate</span>
-              <span className="text-white font-medium">
+              <span className="text-fogo-gray-400 font-satoshi">Exchange Rate</span>
+              <span className="text-white text-sm font-heading">
                 1 {ctokenSymbol} = {exchangeRate.toFixed(2)} {baseTokenSymbol}
               </span>
             </div>
             <div className="flex justify-between text-xs pt-2 border-t border-fogo-gray-700">
-              <span className="text-fogo-gray-500">Withdrawal Fee ({(UNWRAP_FEE_RATE * 100).toFixed(2)}%)</span>
-              <span className="text-red-400">
+              <span className="text-fogo-gray-500 font-satoshi">Withdrawal Fee ({(UNWRAP_FEE_RATE * 100).toFixed(2)}%)</span>
+              <span className="text-red-400 font-heading">
                 -{withdrawalFee.toFixed(2)} {baseTokenSymbol}
               </span>
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-fogo-gray-500">Yield Earned</span>
-              <span className="text-green-400">
+              <span className="text-fogo-gray-500 font-satoshi">Yield Earned</span>
+              <span className="text-green-400 font-heading">
                 +{((exchangeRate - 1.045) * 100).toFixed(2)}%
               </span>
             </div>
@@ -375,8 +378,8 @@ export default function CTokenWithdrawModal({
           </button>
           <button
             onClick={handleWithdraw}
-            disabled={!amount || loading || parseFloat(amount) <= 0 || parseFloat(amount) > availableBalance}
-            className="flex-1 px-4 py-3 bg-fogo-primary hover:bg-fogo-secondary text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={withdrawDisabled}
+            className="flex-1 px-4 py-3 bg-fogo-primary-light hover:bg-fogo-primary text-white rounded-lg font-medium transition-colors shadow-[0_10px_30px_rgba(255,102,14,0.25)] disabled:bg-fogo-primary/40 disabled:hover:bg-fogo-primary/40 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Processing...' : 'Close Position'}
           </button>

@@ -36,8 +36,20 @@ export default function App({ Component, pageProps }: AppProps) {
       <Head>
         <link rel="icon" type="image/png" href="/forgo%20logo%20straight.png" />
       </Head>
+      <div className="background-video-wrapper" aria-hidden="true">
+        <video
+          className="background-video"
+          src="/background.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+        />
+      </div>
       <FogoSessionsProvider fogoClient={fogoClient}>
-        <Component {...pageProps} fogoClient={fogoClient} />
+        <div className="app-content">
+          <Component {...pageProps} fogoClient={fogoClient} />
+        </div>
       </FogoSessionsProvider>
     </>
   )

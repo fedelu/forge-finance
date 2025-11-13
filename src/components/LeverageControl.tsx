@@ -44,7 +44,7 @@ export default function LeverageControl({
   }
 
   return (
-    <div className="bg-fogo-gray-800/50 rounded-lg p-4 border border-fogo-gray-700">
+    <div className="panel-muted rounded-lg p-4 border border-fogo-gray-700">
       {/* Leverage Toggle - Only shown when leverage > 1.0 */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2">
@@ -141,7 +141,7 @@ export default function LeverageControl({
       )}
 
       {/* Effective APY Display */}
-      <div className="bg-fogo-gray-900/50 rounded p-2 mb-3">
+      <div className="panel-muted rounded p-2 mb-3">
         <div className="flex items-center justify-between">
           <span className="text-xs text-fogo-gray-400">Effective APY</span>
           <span className="text-sm font-bold text-fogo-primary">

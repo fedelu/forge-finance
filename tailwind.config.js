@@ -10,19 +10,19 @@ module.exports = {
       colors: {
         fogo: {
           // Professional color palette - refined and cohesive
-          primary: '#FF6B35',      // Vibrant Orange - primary brand color
-          'primary-dark': '#E55A2B', // Darker orange
-          'primary-light': '#FF8A5B', // Lighter orange
+          primary: '#FF660E',      // Vibrant Orange - primary brand color
+          'primary-dark': '#CC520B', // Darker orange
+          'primary-light': '#FF8A4B', // Lighter orange
           secondary: '#1A1A2E',    // Deep Navy - secondary brand color
           'secondary-dark': '#16213E', // Darker navy
           'secondary-light': '#0F3460', // Lighter navy
-          accent: '#FF6B35',       // Orange accent
-          'accent-dark': '#E55A2B',
+          accent: '#FF660E',       // Orange accent
+          'accent-dark': '#CC520B',
           dark: '#0D1117',         // GitHub dark
           'dark-light': '#161B22', // Slightly lighter dark
-          flame: '#FF6B35',        // Main flame color
-          'flame-dark': '#E55A2B', // Dark flame
-          'flame-light': '#FF8A5B', // Light flame
+          flame: '#FF660E',        // Main flame color
+          'flame-dark': '#CC520B', // Dark flame
+          'flame-light': '#FF8A4B', // Light flame
           gray: {
             50: '#F8FAFC',   // Clean White
             100: '#F1F5F9',
@@ -48,18 +48,19 @@ module.exports = {
         },
         // Gradient colors - Professional and modern
         gradient: {
-          'fogo-primary': 'linear-gradient(135deg, #FF6B35 0%, #FF8A5B 100%)',
+          'fogo-primary': 'linear-gradient(135deg, #FF660E 0%, #FF8A4B 100%)',
           'fogo-secondary': 'linear-gradient(135deg, #1A1A2E 0%, #0F3460 100%)',
-          'fogo-flame': 'linear-gradient(135deg, #FF6B35 0%, #FF8A5B 100%)',
+          'fogo-flame': 'linear-gradient(135deg, #FF660E 0%, #FF8A4B 100%)',
           'dark-gradient': 'linear-gradient(135deg, #0D1117 0%, #1A1A2E 100%)',
-          'speed-gradient': 'linear-gradient(135deg, #FF6B35 0%, #1A1A2E 50%, #FF8A5B 100%)',
-          'brand-gradient': 'linear-gradient(135deg, #FF6B35 0%, #1A1A2E 100%)',
+          'speed-gradient': 'linear-gradient(135deg, #FF660E 0%, #1A1A2E 50%, #FF8A4B 100%)',
+          'brand-gradient': 'linear-gradient(135deg, #FF660E 0%, #1A1A2E 100%)',
           'hero-gradient': 'linear-gradient(135deg, #0D1117 0%, #1A1A2E 50%, #0F3460 100%)',
         }
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+        sans: ['Satoshi', 'Inter', 'system-ui', 'sans-serif'],
+        heading: ['"Azeret Mono"', 'Satoshi', 'monospace'],
+        mono: ['"Azeret Mono"', 'JetBrains Mono', 'Fira Code', 'monospace'],
         inter: ['Inter', 'system-ui', 'sans-serif'],
       },
       fontSize: {

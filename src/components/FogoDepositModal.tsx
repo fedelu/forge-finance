@@ -120,7 +120,7 @@ export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onCl
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-fogo-gray-900 rounded-3xl w-full max-w-md max-h-[90vh] flex flex-col shadow-fogo-lg border border-fogo-gray-700">
+      <div className="panel rounded-3xl w-full max-w-md max-h-[90vh] flex flex-col shadow-fogo-lg border border-fogo-gray-700">
         <div className="p-6 border-b border-fogo-gray-700">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-fogo-primary/20 rounded-2xl flex items-center justify-center">
@@ -169,7 +169,7 @@ export const FogoDepositModal: React.FC<FogoDepositModalProps> = ({ isOpen, onCl
                 max={fogoBalance || undefined}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-full px-4 py-3 bg-fogo-gray-800 border border-fogo-gray-600 rounded-2xl text-white focus:outline-none focus:border-fogo-primary focus:ring-2 focus:ring-fogo-primary/20 transition-all duration-200"
+                className="w-full px-4 py-3 panel-muted rounded-2xl text-white focus:outline-none focus:border-fogo-primary focus:ring-2 focus:ring-fogo-primary/20 transition-all duration-200"
                 placeholder="0.0"
               />
             </div>

@@ -151,13 +151,13 @@ export const AnalyticsDashboard: React.FC = () => {
     <div className="space-y-8">
       {/* Header */}
       <div className="mb-10">
-        <h1 className="text-4xl font-inter-bold bg-gradient-to-r from-white via-fogo-primary-light to-white bg-clip-text text-transparent mb-3">Portfolio</h1>
-        <p className="text-fogo-gray-400 font-inter-light text-lg">Track your Forge portfolio performance</p>
+        <h1 className="text-4xl font-heading bg-gradient-to-r from-white via-fogo-primary-light to-white bg-clip-text text-transparent mb-3">Portfolio</h1>
+        <p className="text-fogo-gray-400 font-satoshi-light text-lg">Track your Forge portfolio performance</p>
       </div>
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 justify-items-stretch">
-        <div className="group relative bg-gradient-to-br from-fogo-gray-900 via-fogo-gray-800 to-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700/50 shadow-lg hover:shadow-2xl hover:shadow-fogo-primary/20 transition-all duration-500 hover:border-fogo-primary/50 hover:-translate-y-1 overflow-hidden">
+        <div className="group relative panel rounded-2xl p-6 hover:shadow-2xl hover:shadow-fogo-primary/20 transition-all duration-500 hover:border-fogo-primary/50 hover:-translate-y-1 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-fogo-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
           <div className="relative flex items-center space-x-4">
             <div className="w-12 h-12 bg-gradient-to-br from-fogo-primary/30 to-fogo-primary/10 rounded-xl flex items-center justify-center ring-2 ring-fogo-primary/20 group-hover:ring-fogo-primary/40 transition-all duration-300 group-hover:scale-110">
@@ -165,7 +165,7 @@ export const AnalyticsDashboard: React.FC = () => {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-fogo-gray-400 text-xs font-medium uppercase tracking-wide mb-1">APY Earnings</p>
-              <p className="text-2xl font-inter-bold text-white mb-1">{formatCurrency(getTotalAPYEarnings())}</p>
+              <p className="text-2xl font-heading text-white mb-1">{formatCurrency(getTotalAPYEarnings())}</p>
               <p className="text-xs text-fogo-primary/80 font-medium">
                 Annual APY based on cToken holdings
               </p>
@@ -173,7 +173,7 @@ export const AnalyticsDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="group relative bg-gradient-to-br from-fogo-gray-900 via-fogo-gray-800 to-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700/50 shadow-lg hover:shadow-2xl hover:shadow-fogo-success/20 transition-all duration-500 hover:border-fogo-success/50 hover:-translate-y-1 overflow-hidden">
+        <div className="group relative panel rounded-2xl p-6 hover:shadow-2xl hover:shadow-fogo-success/20 transition-all duration-500 hover:border-fogo-success/50 hover:-translate-y-1 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-fogo-success/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
           <div className="relative flex items-center space-x-4">
             <div className="w-12 h-12 bg-gradient-to-br from-fogo-success/30 to-fogo-success/10 rounded-xl flex items-center justify-center ring-2 ring-fogo-success/20 group-hover:ring-fogo-success/40 transition-all duration-300 group-hover:scale-110">
@@ -181,12 +181,12 @@ export const AnalyticsDashboard: React.FC = () => {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-fogo-gray-400 text-xs font-medium uppercase tracking-wide mb-1">Total Deposits</p>
-              <p className="text-2xl font-inter-bold text-white">{formatCurrency(analytics.totalDeposits)}</p>
+              <p className="text-2xl font-heading text-white">{formatCurrency(analytics.totalDeposits)}</p>
             </div>
           </div>
         </div>
 
-        <div className="group relative bg-gradient-to-br from-fogo-gray-900 via-fogo-gray-800 to-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700/50 shadow-lg hover:shadow-2xl hover:shadow-fogo-error/20 transition-all duration-500 hover:border-fogo-error/50 hover:-translate-y-1 overflow-hidden">
+        <div className="group relative panel rounded-2xl p-6 hover:shadow-2xl hover:shadow-fogo-error/20 transition-all duration-500 hover:border-fogo-error/50 hover:-translate-y-1 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-fogo-error/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
           <div className="relative flex items-center space-x-4">
             <div className="w-12 h-12 bg-gradient-to-br from-fogo-error/30 to-fogo-error/10 rounded-xl flex items-center justify-center ring-2 ring-fogo-error/20 group-hover:ring-fogo-error/40 transition-all duration-300 group-hover:scale-110">
@@ -194,12 +194,12 @@ export const AnalyticsDashboard: React.FC = () => {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-fogo-gray-400 text-xs font-medium uppercase tracking-wide mb-1">Total Withdrawals</p>
-              <p className="text-2xl font-inter-bold text-white">{formatCurrency(analytics.totalWithdrawals)}</p>
+              <p className="text-2xl font-heading text-white">{formatCurrency(analytics.totalWithdrawals)}</p>
             </div>
           </div>
         </div>
 
-        <div className="group relative bg-gradient-to-br from-fogo-gray-900 via-fogo-gray-800 to-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700/50 shadow-lg hover:shadow-2xl hover:shadow-orange-500/20 transition-all duration-500 hover:border-orange-500/50 hover:-translate-y-1 overflow-hidden">
+        <div className="group relative panel rounded-2xl p-6 hover:shadow-2xl hover:shadow-orange-500/20 transition-all duration-500 hover:border-orange-500/50 hover:-translate-y-1 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
           <div className="relative flex items-center space-x-4">
             <div className="w-12 h-12 bg-gradient-to-br from-orange-500/30 to-orange-500/10 rounded-xl flex items-center justify-center ring-2 ring-orange-500/20 group-hover:ring-orange-500/40 transition-all duration-300 group-hover:scale-110">
@@ -207,7 +207,7 @@ export const AnalyticsDashboard: React.FC = () => {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-fogo-gray-400 text-xs font-medium uppercase tracking-wide mb-1">Borrowed</p>
-              <p className="text-2xl font-inter-bold text-white mb-1">{formatCurrency(getTotalBorrowed())}</p>
+              <p className="text-2xl font-heading text-white mb-1">{formatCurrency(getTotalBorrowed())}</p>
               <p className="text-xs text-orange-400/80 font-medium">
                 Total USDC borrowed from lending pool
               </p>
@@ -220,19 +220,19 @@ export const AnalyticsDashboard: React.FC = () => {
       {/* Portfolio overview moved to DynamicTokenBalances component */}
 
       {/* cToken Portfolio Overview */}
-      <div className="bg-gradient-to-br from-fogo-gray-900 via-fogo-gray-800/50 to-fogo-gray-900 rounded-3xl p-8 border border-fogo-gray-700/50 shadow-2xl backdrop-blur-sm">
+      <div className="panel rounded-3xl p-8">
         <CTokenPortfolio />
       </div>
 
 
       {/* Recent Transactions */}
-      <div className="bg-gradient-to-br from-fogo-gray-900 via-fogo-gray-800/50 to-fogo-gray-900 rounded-3xl p-8 border border-fogo-gray-700/50 shadow-2xl backdrop-blur-sm">
+      <div className="panel rounded-3xl p-8">
         <div className="flex items-center space-x-4 mb-8">
           <div className="w-12 h-12 bg-gradient-to-br from-fogo-secondary/30 to-fogo-secondary/10 rounded-xl flex items-center justify-center ring-2 ring-fogo-secondary/20">
             <ChartBarIcon className="h-6 w-6 text-fogo-secondary" />
           </div>
           <div>
-            <h3 className="text-2xl font-inter-bold text-white">Recent Transactions</h3>
+            <h3 className="text-2xl font-heading text-white">Recent Transactions</h3>
             <p className="text-fogo-gray-400 text-sm mt-1">Your latest activity</p>
           </div>
         </div>
@@ -241,7 +241,7 @@ export const AnalyticsDashboard: React.FC = () => {
             recentTransactions.map((tx, index) => (
               <div 
                 key={tx.id} 
-                className="group relative flex items-center justify-between p-5 bg-gradient-to-br from-fogo-gray-800/80 to-fogo-gray-900/80 rounded-2xl border border-fogo-gray-700/50 hover:border-fogo-primary/30 transition-all duration-300 hover:shadow-xl hover:shadow-fogo-primary/10 hover:-translate-y-0.5 backdrop-blur-sm overflow-hidden"
+                className="group relative flex items-center justify-between p-5 panel rounded-2xl border border-fogo-gray-700/50 hover:border-fogo-primary/30 transition-all duration-300 hover:shadow-xl hover:shadow-fogo-primary/10 hover:-translate-y-0.5 backdrop-blur-sm overflow-hidden"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-fogo-primary/0 via-fogo-primary/5 to-fogo-primary/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -254,7 +254,7 @@ export const AnalyticsDashboard: React.FC = () => {
                     {(tx.type === 'deposit' || tx.type === 'wrap') ? '↑' : '↓'}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-white font-semibold text-base mb-1">
+                    <p className="text-white font-heading text-base mb-1">
                       {(() => {
                         if (tx.type === 'deposit' || tx.type === 'wrap') {
                           return 'LP Position';
@@ -263,29 +263,29 @@ export const AnalyticsDashboard: React.FC = () => {
                         return tx.type;
                       })()} - {tx.crucibleId}
                     </p>
-                    <p className="text-fogo-gray-400 text-sm font-medium">
+                    <p className="text-fogo-gray-400 text-sm font-satoshi">
                       {new Date(tx.timestamp).toLocaleString()}
                     </p>
                   </div>
                 </div>
                 <div className="relative text-right ml-4">
-                  <p className="text-white font-semibold text-base mb-1">
+                  <p className="text-white font-heading text-base mb-1">
                     {tx.amount.toFixed(2)} {tx.token}
                     {tx.usdcDeposited !== undefined && tx.usdcDeposited > 0 && (
-                      <span className="text-fogo-primary ml-2 font-medium">+ {tx.usdcDeposited.toFixed(2)} USDC</span>
+                      <span className="text-fogo-primary ml-2 font-heading">+ {tx.usdcDeposited.toFixed(2)} USDC</span>
                     )}
                     {tx.usdcReceived !== undefined && tx.usdcReceived > 0 && (
-                      <span className="text-fogo-primary ml-2 font-medium">+ {tx.usdcReceived.toFixed(2)} USDC</span>
+                      <span className="text-fogo-primary ml-2 font-heading">+ {tx.usdcReceived.toFixed(2)} USDC</span>
                     )}
                     {tx.borrowedAmount !== undefined && tx.borrowedAmount > 0 && (
-                      <span className="text-orange-400 ml-2 font-medium">+ {tx.borrowedAmount.toFixed(2)} USDC (borrowed)</span>
+                      <span className="text-orange-400 ml-2 font-heading">+ {tx.borrowedAmount.toFixed(2)} USDC (borrowed)</span>
                     )}
                   </p>
-                  <p className="text-fogo-gray-400 text-sm font-medium mb-1">
+                  <p className="text-fogo-gray-400 text-sm font-satoshi mb-1">
                     {formatCurrency(tx.usdValue || tx.amount * (tx.token === 'FOGO' ? 0.5 : tx.token === 'FORGE' ? 0.002 : tx.token === 'cFOGO' ? 0.5224 : tx.token === 'cFORGE' ? 0.0025 : tx.token === 'SOL' ? 200 : tx.token === 'USDC' ? 1 : tx.token === 'ETH' ? 4000 : 110000))}
                   </p>
                   {tx.leverage && tx.leverage > 1 && (
-                    <p className="inline-flex items-center px-2 py-1 bg-orange-500/20 text-orange-400 text-xs font-semibold rounded-lg mt-1">
+                    <p className="inline-flex items-center px-2 py-1 bg-orange-500/20 text-orange-400 text-xs font-heading rounded-lg mt-1 uppercase tracking-[0.16em]">
                       {tx.leverage}x leverage
                     </p>
                   )}
@@ -302,7 +302,7 @@ export const AnalyticsDashboard: React.FC = () => {
               <div className="w-20 h-20 bg-gradient-to-br from-fogo-primary/20 to-fogo-primary/10 rounded-3xl flex items-center justify-center mx-auto mb-6 ring-2 ring-fogo-primary/20">
                 <BanknotesIcon className="h-10 w-10 text-fogo-primary" />
               </div>
-              <p className="text-fogo-gray-300 text-xl font-semibold mb-2">No transactions yet</p>
+              <p className="text-fogo-gray-300 text-xl font-heading mb-2">No transactions yet</p>
               <p className="text-fogo-gray-500 text-sm">Make your first deposit to see analytics!</p>
             </div>
           )}

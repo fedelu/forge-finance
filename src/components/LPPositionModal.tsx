@@ -132,11 +132,11 @@ export default function LPPositionModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md animate-fade-in">
-      <div className="bg-gradient-to-br from-fogo-gray-900 via-fogo-gray-900 to-fogo-gray-800 rounded-3xl border border-fogo-gray-700/50 shadow-2xl w-full max-w-lg p-8 relative animate-scale-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md animate-fade-in px-4">
+      <div className="panel rounded-3xl w-full max-w-lg p-8 relative animate-scale-in">
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 text-fogo-gray-400 hover:text-white transition-all duration-200 p-2 rounded-lg hover:bg-fogo-gray-800/50"
+          className="absolute top-5 right-5 text-fogo-gray-400 hover:text-white transition-all duration-200 p-2 rounded-lg hover:bg-black/40"
           aria-label="Close modal"
         >
           <XMarkIcon className="w-5 h-5" />
@@ -151,7 +151,7 @@ export default function LPPositionModal({
               </svg>
             </div>
             <div>
-              <h2 className="text-2xl font-inter-bold text-white">LP Mode</h2>
+              <h2 className="text-2xl font-heading text-white">LP Mode</h2>
               <p className="text-fogo-gray-400 text-sm">Standard LP Farming</p>
             </div>
           </div>
@@ -173,7 +173,7 @@ export default function LPPositionModal({
                 value={baseAmount}
                 onChange={(e) => handleBaseAmountChange(e.target.value)}
                 placeholder="0.00"
-                className="w-full px-5 py-4 pr-16 bg-fogo-gray-800/80 backdrop-blur-sm border-2 border-fogo-gray-700 rounded-xl text-white text-lg font-medium placeholder-fogo-gray-500 focus:outline-none focus:border-green-500 focus:ring-4 focus:ring-green-500/20 transition-all duration-300"
+                className="w-full px-5 py-4 pr-16 panel-muted backdrop-blur-sm border-2 border-fogo-gray-700 rounded-xl text-white text-lg font-medium placeholder-fogo-gray-500 focus:outline-none focus:border-green-500 focus:ring-4 focus:ring-green-500/20 transition-all duration-300"
               />
               {baseAmount && (
                 <div className="absolute right-16 top-1/2 -translate-y-1/2 text-fogo-gray-500 text-sm">
@@ -202,7 +202,7 @@ export default function LPPositionModal({
               value={usdcAmount}
               onChange={(e) => handleUSDCAmountChange(e.target.value)}
               placeholder="0.00"
-              className="w-full px-5 py-4 bg-fogo-gray-800/80 backdrop-blur-sm border-2 border-fogo-gray-700 rounded-xl text-white text-lg font-medium placeholder-fogo-gray-500 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all duration-300"
+              className="w-full px-5 py-4 panel-muted backdrop-blur-sm border-2 border-fogo-gray-700 rounded-xl text-white text-lg font-medium placeholder-fogo-gray-500 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all duration-300"
             />
             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-fogo-gray-400 font-semibold">
               $
@@ -226,25 +226,25 @@ export default function LPPositionModal({
               Position Preview
             </h3>
             <div className="space-y-3">
-              <div className="flex justify-between items-center py-2.5 px-3 bg-fogo-gray-900/50 rounded-lg">
+              <div className="flex justify-between items-center py-2.5 px-3 panel-muted rounded-lg">
                 <span className="text-fogo-gray-400 text-sm">LP Pair</span>
-                <span className="text-white font-bold text-lg">
+                <span className="text-white text-lg font-heading">
                   {baseTokenSymbol}/USDC
                 </span>
               </div>
-              <div className="flex justify-between items-center py-2.5 px-3 bg-fogo-gray-900/50 rounded-lg">
+              <div className="flex justify-between items-center py-2.5 px-3 panel-muted rounded-lg">
                 <span className="text-fogo-gray-400 text-sm">{baseTokenSymbol} Deposited</span>
                 <span className="text-white font-semibold">
                   {parseFloat(baseAmount).toFixed(4)} {baseTokenSymbol}
                 </span>
               </div>
-              <div className="flex justify-between items-center py-2.5 px-3 bg-fogo-gray-900/50 rounded-lg">
+              <div className="flex justify-between items-center py-2.5 px-3 panel-muted rounded-lg">
                 <span className="text-fogo-gray-400 text-sm">USDC Deposited</span>
                 <span className="text-white font-semibold">
                   {parseFloat(usdcAmount).toFixed(2)} USDC
                 </span>
               </div>
-              <div className="flex justify-between items-center py-2.5 px-3 bg-fogo-gray-900/50 rounded-lg border border-fogo-gray-700/50">
+              <div className="flex justify-between items-center py-2.5 px-3 panel-muted rounded-lg border border-fogo-gray-700/50">
                 <span className="text-fogo-gray-400 text-sm font-medium">Total Value</span>
                 <span className="text-white font-bold text-xl">
                   ${totalValue} USD
@@ -272,7 +272,7 @@ export default function LPPositionModal({
         <div className="flex space-x-3">
           <button
             onClick={onClose}
-            className="flex-1 px-6 py-4 bg-fogo-gray-800/80 hover:bg-fogo-gray-700 border-2 border-fogo-gray-700 hover:border-fogo-gray-600 text-white rounded-xl font-semibold transition-all duration-300 hover:scale-105"
+            className="flex-1 px-6 py-4 panel-muted hover:bg-fogo-gray-700 border-2 border-fogo-gray-700 hover:border-fogo-gray-600 text-white rounded-xl font-semibold transition-all duration-300 hover:scale-105"
           >
             Cancel
           </button>

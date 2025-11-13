@@ -140,7 +140,7 @@ export default function LVFPositionCard({
   }
 
   return (
-    <div className="bg-gradient-to-br from-fogo-gray-800/80 to-fogo-gray-900/80 backdrop-blur-sm rounded-xl p-5 border border-orange-500/20 hover:border-orange-500/40 transition-all duration-300 hover:shadow-lg group">
+    <div className="panel rounded-xl p-5 border border-orange-500/20 hover:border-orange-500/40 transition-all duration-300 hover:shadow-lg group">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-orange-500/20 flex items-center justify-center">
@@ -149,7 +149,7 @@ export default function LVFPositionCard({
             </svg>
           </div>
           <div>
-            <h3 className="text-lg font-inter-bold text-white">{displayPairToken}/USDC</h3>
+            <h3 className="text-lg font-heading text-white">{displayPairToken}/USDC</h3>
             <p className="text-xs text-fogo-gray-400">Leveraged Position</p>
           </div>
         </div>
@@ -164,19 +164,19 @@ export default function LVFPositionCard({
       </div>
 
       <div className="grid grid-cols-2 gap-3 mb-4">
-        <div className="bg-fogo-gray-900/60 backdrop-blur-sm rounded-lg p-3 border border-fogo-gray-700/50">
+        <div className="panel-muted backdrop-blur-sm rounded-lg p-3 border border-fogo-gray-700/50">
           <div className="text-xs text-fogo-gray-400 mb-1">Collateral</div>
           <div className="text-white font-bold text-base">
             {position.collateral.toFixed(2)} {position.token}
           </div>
         </div>
-        <div className="bg-fogo-gray-900/60 backdrop-blur-sm rounded-lg p-3 border border-orange-500/20">
+        <div className="panel-muted backdrop-blur-sm rounded-lg p-3 border border-orange-500/20">
           <div className="text-xs text-fogo-gray-400 mb-1">Borrowed</div>
           <div className="text-orange-400 font-bold text-base">
             {position.borrowedUSDC.toFixed(2)} USDC
           </div>
         </div>
-        <div className={`bg-fogo-gray-900/60 backdrop-blur-sm rounded-lg p-3 border ${
+        <div className={`panel-muted backdrop-blur-sm rounded-lg p-3 border ${
           position.health >= 200 ? 'border-green-500/30' :
           position.health >= 150 ? 'border-yellow-500/30' :
           position.health >= 120 ? 'border-orange-500/30' :
@@ -195,7 +195,7 @@ export default function LVFPositionCard({
             </div>
           )}
         </div>
-        <div className="bg-fogo-gray-900/60 backdrop-blur-sm rounded-lg p-3 border border-fogo-gray-700/50">
+        <div className="panel-muted backdrop-blur-sm rounded-lg p-3 border border-fogo-gray-700/50">
           <div className="text-xs text-fogo-gray-400 mb-1">Current Value</div>
           <div className="text-white font-bold text-base">
             ${position.currentValue.toFixed(2)}

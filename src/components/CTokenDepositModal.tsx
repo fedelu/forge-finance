@@ -336,12 +336,12 @@ const baseAmountForPosition = mode === 'lp' ? Math.max(0, parsedAmount - inferno
     : currentAPY
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md animate-fade-in">
-      <div className="bg-gradient-to-br from-fogo-gray-900 via-fogo-gray-900 to-fogo-gray-800 rounded-3xl border border-fogo-gray-700/50 shadow-2xl w-full max-w-2xl relative animate-scale-in max-h-[90vh] overflow-y-auto p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md animate-fade-in px-4">
+      <div className="panel rounded-3xl w-full max-w-2xl relative animate-scale-in max-h-[90vh] overflow-y-auto p-6">
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 text-fogo-gray-400 hover:text-white transition-all duration-200 p-2 rounded-lg hover:bg-fogo-gray-800/50 z-10"
+          className="absolute top-5 right-5 text-fogo-gray-400 hover:text-white transition-all duration-200 p-2 rounded-lg hover:bg-black/40 z-10"
           aria-label="Close modal"
         >
           <XMarkIcon className="w-5 h-5" />
@@ -362,7 +362,7 @@ const baseAmountForPosition = mode === 'lp' ? Math.max(0, parsedAmount - inferno
               )}
             </div>
             <div>
-              <h2 className="text-xl font-inter-bold text-white">Open Position</h2>
+              <h2 className="text-xl font-heading text-white">Open Position</h2>
               <p className="text-fogo-gray-400 text-xs">
                 {mode === 'wrap' ? `Deposit ${baseTokenSymbol} to mint ${ctokenSymbol}` : 'Leveraged position with borrowed USDC'}
               </p>
@@ -372,12 +372,12 @@ const baseAmountForPosition = mode === 'lp' ? Math.max(0, parsedAmount - inferno
 
         {/* Mode Toggle - Compact */}
         <div className="mb-4">
-          <div className="grid grid-cols-2 gap-2 p-1 bg-fogo-gray-800/60 rounded-xl border border-fogo-gray-700/50">
+          <div className="grid grid-cols-2 gap-2 p-1 panel-muted rounded-2xl border border-fogo-gray-700/50">
             <button
               onClick={() => {
                 setMode('wrap')
               }}
-              className={`px-4 py-2 text-sm rounded-lg font-semibold transition-all duration-300 relative overflow-hidden ${
+              className={`px-5 py-3 text-sm rounded-xl font-heading uppercase tracking-[0.18em] transition-all duration-300 relative overflow-hidden ${
                 mode === 'wrap'
                   ? 'bg-gradient-to-r from-fogo-primary to-fogo-primary-light text-white shadow-lg shadow-fogo-primary/30'
                   : 'text-fogo-gray-400 hover:text-white hover:bg-fogo-gray-700/50'
@@ -385,12 +385,12 @@ const baseAmountForPosition = mode === 'lp' ? Math.max(0, parsedAmount - inferno
             >
               <div className="relative flex items-center justify-center gap-2">
                 <FireIcon className="w-4 h-4" />
-                <span>Wrap</span>
+                <span className="text-base">Wrap</span>
               </div>
             </button>
             <button
               onClick={() => setMode('lp')}
-              className={`px-4 py-2 text-sm rounded-lg font-semibold transition-all duration-300 relative overflow-hidden ${
+              className={`px-5 py-3 text-sm rounded-xl font-heading uppercase tracking-[0.18em] transition-all duration-300 relative overflow-hidden ${
                 mode === 'lp'
                   ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30'
                   : 'text-fogo-gray-400 hover:text-white hover:bg-fogo-gray-700/50'
@@ -398,7 +398,7 @@ const baseAmountForPosition = mode === 'lp' ? Math.max(0, parsedAmount - inferno
             >
               <div className="relative flex items-center justify-center gap-2">
                 <BoltIcon className="w-4 h-4" />
-                <span>Leveraged</span>
+                <span className="text-base">Leveraged</span>
               </div>
             </button>
           </div>
@@ -407,20 +407,22 @@ const baseAmountForPosition = mode === 'lp' ? Math.max(0, parsedAmount - inferno
         {/* Leverage Toggle (Leveraged Mode Only) */}
         {mode === 'lp' && (
           <div className="mb-4">
-            <label className="block text-xs font-semibold text-fogo-gray-300 mb-2">Leverage</label>
+            <label className="block text-xs font-heading text-fogo-gray-300 mb-2 uppercase tracking-[0.18em]">
+              Leverage
+            </label>
             <div className="grid grid-cols-3 gap-2">
               {([1, 1.5, 2] as Leverage[]).map((lev) => (
                 <button
                   key={lev}
                   onClick={() => setLeverage(lev)}
-                  className={`px-3 py-2 rounded-lg font-semibold transition-all duration-300 border-2 ${
+                  className={`px-4 py-2.5 rounded-xl transition-all duration-300 border-2 ${
                     leverage === lev
-                      ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30 border-orange-400'
+                      ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/35 border-orange-400'
                       : 'bg-fogo-gray-700/80 text-fogo-gray-300 hover:bg-fogo-gray-600 border-fogo-gray-600'
                   }`}
                 >
-                  <div className="text-sm font-bold">{lev}x</div>
-                  <div className="text-xs mt-0.5 opacity-80">
+                  <div className="text-sm font-heading">{lev}x</div>
+                  <div className="text-xs mt-0.5 opacity-80 font-satoshi">
                     {lev === 1 ? '50/50' : lev === 1.5 ? '50/100' : '0/100'}
                   </div>
                 </button>
@@ -456,7 +458,7 @@ const baseAmountForPosition = mode === 'lp' ? Math.max(0, parsedAmount - inferno
                   }
                 }}
                 placeholder="0.00"
-                className="w-full px-4 py-3 pr-16 bg-fogo-gray-800/80 backdrop-blur-sm border-2 border-fogo-gray-700 rounded-xl text-white font-medium placeholder-fogo-gray-500 focus:outline-none focus:border-fogo-primary focus:ring-4 focus:ring-fogo-primary/20 transition-all duration-300"
+                className="no-spinner w-full px-4 py-3 pr-16 bg-fogo-gray-800/80 backdrop-blur-sm border-2 border-fogo-gray-700 rounded-xl text-white font-heading placeholder-fogo-gray-500 focus:outline-none focus:border-fogo-primary focus:ring-4 focus:ring-fogo-primary/20 transition-all duration-300"
               />
               {amount && (
                 <div className="absolute right-12 top-1/2 -translate-y-1/2 text-fogo-gray-500 text-xs">
@@ -487,7 +489,7 @@ const baseAmountForPosition = mode === 'lp' ? Math.max(0, parsedAmount - inferno
                 </span>
               )}
             </label>
-            <div className={`px-3 py-2.5 bg-fogo-gray-800/80 backdrop-blur-sm border-2 rounded-xl ${
+            <div className={`px-3 py-2.5 panel-muted backdrop-blur-sm border-2 rounded-xl ${
               leverage === 1 && !hasEnoughUSDC
                 ? 'border-red-500/50'
                 : 'border-blue-500/50'
@@ -512,11 +514,7 @@ const baseAmountForPosition = mode === 'lp' ? Math.max(0, parsedAmount - inferno
         )}
 
         {/* Preview - Compact */}
-        <div className={`bg-gradient-to-br backdrop-blur-sm rounded-2xl p-4 mb-4 border ${
-          mode === 'wrap'
-            ? 'from-fogo-gray-800/60 to-fogo-gray-900/60 border-fogo-gray-700/50'
-            : 'from-orange-500/10 via-orange-500/5 to-transparent border-orange-500/20'
-        }`}>
+        <div className="panel rounded-2xl p-4 mb-4 border border-fogo-gray-700/50">
           <h3 className="text-xs font-semibold text-fogo-gray-300 mb-3 flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -526,88 +524,88 @@ const baseAmountForPosition = mode === 'lp' ? Math.max(0, parsedAmount - inferno
           <div className="space-y-2">
             {mode === 'wrap' ? (
               <>
-                <div className="flex justify-between items-center py-2.5 px-3 bg-fogo-gray-900/50 rounded-lg">
-                  <span className="text-fogo-gray-400 text-sm">You'll receive</span>
-                  <span className="text-white font-bold text-lg">
+                <div className="flex justify-between items-center py-2.5 px-3 panel-muted rounded-lg">
+                  <span className="text-fogo-gray-400 text-sm font-satoshi">You'll receive</span>
+                  <span className="text-white text-lg font-heading">
                     {amount ? ((parseFloat(amount) * (1 - WRAP_FEE_RATE)) / 1.045).toFixed(2) : '0.00'} {ctokenSymbol}
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-2.5 px-3 bg-red-500/10 rounded-lg border border-red-500/20">
-                  <span className="text-red-400 text-xs font-medium flex items-center gap-1">
+                  <span className="text-red-400 text-xs font-satoshi flex items-center gap-1">
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     Wrap Fee ({(WRAP_FEE_RATE * 100).toFixed(2)}%)
                   </span>
-                  <span className="text-red-400 font-semibold">
+                  <span className="text-red-400 font-heading font-semibold">
                     -{amount ? (parseFloat(amount) * WRAP_FEE_RATE).toFixed(2) : '0.00'} {baseTokenSymbol}
                   </span>
                 </div>
-                <div className="flex justify-between items-center py-2.5 px-3 bg-fogo-gray-900/50 rounded-lg">
-                  <span className="text-fogo-gray-400 text-sm">Exchange Rate</span>
-                  <span className="text-fogo-primary font-semibold">1 {ctokenSymbol} = 1.045 {baseTokenSymbol}</span>
+                <div className="flex justify-between items-center py-2.5 px-3 panel-muted rounded-lg">
+                  <span className="text-fogo-gray-400 text-sm font-satoshi">Exchange Rate</span>
+                  <span className="text-fogo-primary font-heading font-semibold">1 {ctokenSymbol} = 1.045 {baseTokenSymbol}</span>
                 </div>
-                <div className="flex justify-between items-center py-2.5 px-3 bg-gradient-to-r from-fogo-primary/10 to-fogo-primary/5 rounded-lg border border-fogo-primary/20">
-                  <span className="text-fogo-gray-300 text-sm font-medium">Base APY</span>
-                  <span className="text-fogo-primary font-bold text-xl">{currentAPY.toFixed(2)}%</span>
+                <div className="flex justify-between items-center py-2.5 px-3 bg-gradient-to-r from-fogo-primary/18 to-fogo-primary/6 rounded-lg border border-fogo-primary/25 shadow-[0_8px_25px_rgba(255,102,14,0.2)]">
+                  <span className="text-fogo-gray-200 text-sm font-satoshi">Base APY</span>
+                  <span className="text-fogo-primary font-heading font-bold text-xl">{currentAPY.toFixed(2)}%</span>
                 </div>
               </>
             ) : (
               <>
-                <div className="flex justify-between items-center py-1.5 px-2.5 bg-fogo-gray-900/50 rounded-lg">
-                  <span className="text-fogo-gray-400 text-xs">LP Pair</span>
-                  <span className="text-white font-bold text-base">{displayPairSymbol}/USDC</span>
+                <div className="flex justify-between items-center py-1.5 px-2.5 panel-muted rounded-lg">
+                  <span className="text-fogo-gray-400 text-xs font-satoshi">LP Pair</span>
+                  <span className="text-white text-base font-heading">{displayPairSymbol}/USDC</span>
                 </div>
-                <div className="flex justify-between items-center py-1.5 px-2.5 bg-fogo-gray-900/50 rounded-lg">
-                  <span className="text-fogo-gray-400 text-xs">{baseTokenSymbol} Deposited</span>
-                  <span className="text-white font-semibold text-sm">{mode === 'lp' && amount ? baseAmountForPosition.toFixed(2) : '0.00'} {baseTokenSymbol}</span>
+                <div className="flex justify-between items-center py-1.5 px-2.5 panel-muted rounded-lg">
+                  <span className="text-fogo-gray-400 text-xs font-satoshi">{baseTokenSymbol} Deposited</span>
+                  <span className="text-white text-sm font-heading">{mode === 'lp' && amount ? baseAmountForPosition.toFixed(2) : '0.00'} {baseTokenSymbol}</span>
                 </div>
                 {leverage === 1.5 ? (
                   <>
-                    <div className="flex justify-between items-center py-1.5 px-2.5 bg-fogo-gray-900/50 rounded-lg">
-                      <span className="text-fogo-gray-400 text-xs">USDC to Deposit</span>
-                      <span className="font-semibold text-sm text-white">
+                    <div className="flex justify-between items-center py-1.5 px-2.5 panel-muted rounded-lg">
+                      <span className="text-fogo-gray-400 text-xs font-satoshi">USDC to Deposit</span>
+                      <span className="text-sm font-heading text-white">
                         {usdcDetails.depositUSDC.toFixed(2)} USDC
                       </span>
                     </div>
-                    <div className="flex justify-between items-center py-1.5 px-2.5 bg-fogo-gray-900/50 rounded-lg">
-                      <span className="text-fogo-gray-400 text-xs">USDC to Borrow</span>
-                      <span className="font-semibold text-sm text-orange-400">
+                    <div className="flex justify-between items-center py-1.5 px-2.5 panel-muted rounded-lg">
+                      <span className="text-fogo-gray-400 text-xs font-satoshi">USDC to Borrow</span>
+                      <span className="text-sm font-heading text-fogo-primary-light">
                         {usdcDetails.borrowUSDC.toFixed(2)} USDC
                       </span>
                     </div>
                   </>
                 ) : (
-                  <div className="flex justify-between items-center py-1.5 px-2.5 bg-fogo-gray-900/50 rounded-lg">
-                    <span className="text-fogo-gray-400 text-xs">
+                  <div className="flex justify-between items-center py-1.5 px-2.5 panel-muted rounded-lg">
+                    <span className="text-fogo-gray-400 text-xs font-satoshi">
                       {leverage === 1 ? 'USDC Deposited' : 'USDC Borrowed'}
                     </span>
-                    <span className={`font-semibold text-sm ${leverage === 1 ? 'text-white' : 'text-orange-400'}`}>
+                    <span className={`text-sm font-heading ${leverage === 1 ? 'text-white' : 'text-fogo-primary-light'}`}>
                       {usdcDetails.totalUSDC.toFixed(2)} USDC
                     </span>
                   </div>
                 )}
                 {mode === 'lp' && amount && parseFloat(amount) > 0 && (
                   <div className="flex justify-between items-center py-1.5 px-2.5 bg-red-500/10 rounded-lg border border-red-500/20">
-                    <span className="text-red-400 text-xs font-medium flex items-center gap-1">
+                    <span className="text-red-400 text-xs font-satoshi flex items-center gap-1">
                       <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       Inferno Open Fee ({(INFERNO_OPEN_FEE_RATE * 100).toFixed(2)}%)
                     </span>
-                    <span className="text-red-400 font-semibold text-xs">
+                    <span className="text-red-400 font-heading font-semibold text-xs">
                       -{(parseFloat(amount) * INFERNO_OPEN_FEE_RATE).toFixed(2)} {baseTokenSymbol}
                     </span>
                   </div>
                 )}
-                <div className="flex justify-between items-center py-1.5 px-2.5 bg-gradient-to-r from-orange-500/20 to-orange-500/10 rounded-lg border border-orange-500/30">
-                  <span className="text-orange-300 text-xs font-medium">Effective APY</span>
-                  <span className="text-orange-400 font-bold text-lg">{effectiveAPY.toFixed(2)}%</span>
+                <div className="flex justify-between items-center py-1.5 px-2.5 bg-gradient-to-r from-fogo-primary/18 to-fogo-primary/6 rounded-lg border border-fogo-primary/25 shadow-[0_8px_25px_rgba(255,102,14,0.2)]">
+                  <span className="text-fogo-primary-light text-xs font-satoshi">Effective APY</span>
+                  <span className="text-fogo-primary-light text-lg font-heading">{effectiveAPY.toFixed(2)}%</span>
                 </div>
                 {leverage > 1 && (
-                  <div className="flex justify-between items-center py-1.5 px-2.5 bg-blue-500/10 rounded-lg border border-blue-500/20">
-                    <span className="text-blue-400 text-xs font-medium">Borrowing Interest Rate</span>
-                    <span className="text-blue-300 font-semibold text-xs">5% APY</span>
+                  <div className="flex justify-between items-center py-1.5 px-2.5 panel-muted rounded-lg border border-blue-500/20">
+                    <span className="text-blue-300 text-xs font-satoshi">Borrowing Interest Rate</span>
+                    <span className="text-blue-200 text-xs font-heading">5% APY</span>
                   </div>
                 )}
               </>
@@ -619,7 +617,7 @@ const baseAmountForPosition = mode === 'lp' ? Math.max(0, parsedAmount - inferno
         <div className="flex space-x-3">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-3 bg-fogo-gray-800/80 hover:bg-fogo-gray-700 border-2 border-fogo-gray-700 hover:border-fogo-gray-600 text-white rounded-xl font-semibold transition-all duration-300 hover:scale-105"
+            className="flex-1 px-4 py-3 panel-muted hover:bg-fogo-gray-700 border-2 border-fogo-gray-700 hover:border-fogo-gray-600 text-white rounded-xl font-semibold transition-all duration-300 hover:scale-105"
           >
             Cancel
           </button>

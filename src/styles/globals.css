@@ -3,6 +3,8 @@
 @tailwind utilities;
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Azeret+Mono:wght@400;500;600;700&display=swap');
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
 
 /* Wallet adapter styles */
@@ -18,11 +20,84 @@ html {
 }
 
 body {
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Satoshi', 'Inter', system-ui, sans-serif;
   background: linear-gradient(135deg, #0D1117 0%, #1A1A2E 100%);
   min-height: 100vh;
   color: #F8FAFC;
   overflow-x: hidden;
+}
+
+.background-video-wrapper {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  overflow: hidden;
+  pointer-events: none;
+  background: radial-gradient(circle at top, rgba(13, 13, 13, 0.7), rgba(9, 9, 20, 0.85));
+}
+
+.background-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.7;
+  mix-blend-mode: lighten;
+}
+
+.app-content {
+  position: relative;
+  z-index: 1;
+}
+
+.panel {
+  background: rgba(8, 8, 16, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: 0 30px 80px rgba(4, 5, 15, 0.55);
+}
+
+.panel-muted {
+  background: rgba(8, 8, 16, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.no-spinner {
+  -moz-appearance: textfield;
+}
+
+.no-spinner::-webkit-outer-spin-button,
+.no-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+p {
+  font-family: 'Satoshi', 'Inter', system-ui, sans-serif;
+}
+.font-satoshi {
+  font-family: 'Satoshi', 'Inter', system-ui, sans-serif;
+}
+
+.font-heading {
+  font-family: 'Azeret Mono', 'Satoshi', monospace;
+}
+
+h1, h2, h3, h4, h5, .heading {
+  font-family: 'Azeret Mono', 'Satoshi', monospace;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.font-satoshi {
+  font-family: 'Satoshi', 'Inter', system-ui, sans-serif;
+}
+
+.font-satoshi-light {
+  font-family: 'Satoshi', 'Inter', system-ui, sans-serif;
+  font-weight: 300;
 }
 
 /* Enhanced scrollbar */
@@ -36,24 +111,24 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #FF6B35 0%, #FF8A5B 100%);
+  background: linear-gradient(135deg, #FF660E 0%, #FF8A4B 100%);
   border-radius: 4px;
   transition: all 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #E55A2B 0%, #FF6B35 100%);
+  background: linear-gradient(135deg, #CC520B 0%, #FF660E 100%);
   box-shadow: 0 0 10px rgba(255, 107, 53, 0.4);
 }
 
 /* Selection styles */
 ::selection {
-  background: rgba(255, 107, 53, 0.3);
+  background: rgba(255, 102, 14, 0.3);
   color: #F8FAFC;
 }
 
 ::-moz-selection {
-  background: rgba(255, 107, 53, 0.3);
+  background: rgba(255, 102, 14, 0.3);
   color: #F8FAFC;
 }
 
@@ -91,7 +166,7 @@ body {
 
 /* Enhanced card styles - Fogo inspired */
 .card {
-  @apply bg-fogo-gray-800/50 backdrop-blur-sm rounded-2xl p-8 border border-fogo-gray-700/50 shadow-fogo transition-all duration-300 hover:shadow-fogo-lg hover:border-fogo-primary/30;
+  @apply panel rounded-2xl p-8 transition-all duration-300 hover:shadow-fogo-lg hover:border-fogo-primary/30;
 }
 
 .card-hover {
@@ -99,11 +174,11 @@ body {
 }
 
 .card-glow {
-  @apply card shadow-flame;
+  @apply panel rounded-2xl p-8 shadow-flame border border-fogo-primary/25;
 }
 
 .card-gradient {
-  @apply bg-gradient-to-br from-fogo-gray-800/80 to-fogo-gray-900/80 backdrop-blur-sm rounded-2xl p-8 border border-fogo-gray-700/50;
+  @apply panel rounded-2xl p-8 border border-white/10;
 }
 
 /* Input styles */
@@ -222,22 +297,24 @@ body {
 
 /* Inter font utilities */
 .font-inter {
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Satoshi', 'Inter', system-ui, sans-serif;
 }
 
 .font-inter-light {
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Satoshi', 'Inter', system-ui, sans-serif;
   font-weight: 300;
 }
 
 .font-inter-bold {
-  font-family: 'Inter', system-ui, sans-serif;
-  font-weight: 700;
+  font-family: 'Azeret Mono', 'Satoshi', monospace;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 .font-inter-black {
-  font-family: 'Inter', system-ui, sans-serif;
-  font-weight: 900;
+  font-family: 'Azeret Mono', 'Satoshi', monospace;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
 /* Animation delays */

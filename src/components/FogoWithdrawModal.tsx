@@ -169,7 +169,7 @@ export const FogoWithdrawModal: React.FC<FogoWithdrawModalProps> = ({ isOpen, on
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-fogo-gray-900 rounded-3xl w-full max-w-md max-h-[90vh] flex flex-col shadow-fogo-lg border border-fogo-gray-700">
+      <div className="panel rounded-3xl w-full max-w-md max-h-[90vh] flex flex-col shadow-fogo-lg border border-fogo-gray-700">
         <div className="p-6 border-b border-gray-700">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center">

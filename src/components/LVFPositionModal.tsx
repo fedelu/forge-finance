@@ -143,11 +143,11 @@ export default function LVFPositionModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md animate-fade-in">
-      <div className="bg-gradient-to-br from-fogo-gray-900 via-fogo-gray-900 to-fogo-gray-800 rounded-3xl border border-fogo-gray-700/50 shadow-2xl w-full max-w-lg p-8 relative animate-scale-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md animate-fade-in px-4">
+      <div className="panel rounded-3xl w-full max-w-lg p-8 relative animate-scale-in">
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 text-fogo-gray-400 hover:text-white transition-all duration-200 p-2 rounded-lg hover:bg-fogo-gray-800/50"
+          className="absolute top-5 right-5 text-fogo-gray-400 hover:text-white transition-all duration-200 p-2 rounded-lg hover:bg-black/40"
           aria-label="Close modal"
         >
           <XMarkIcon className="w-5 h-5" />
@@ -160,7 +160,7 @@ export default function LVFPositionModal({
               <BoltIcon className="w-6 h-6 text-orange-400" />
             </div>
             <div>
-              <h2 className="text-2xl font-inter-bold text-white">Leveraged LP</h2>
+              <h2 className="text-2xl font-heading text-white">Leveraged LP</h2>
               <p className="text-fogo-gray-400 text-sm">Amplified Yield</p>
             </div>
           </div>
@@ -182,7 +182,7 @@ export default function LVFPositionModal({
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0.00"
-                className="w-full px-5 py-4 pr-16 bg-fogo-gray-800/80 backdrop-blur-sm border-2 border-fogo-gray-700 rounded-xl text-white text-lg font-medium placeholder-fogo-gray-500 focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/20 transition-all duration-300"
+                className="w-full px-5 py-4 pr-16 panel-muted backdrop-blur-sm border-2 border-fogo-gray-700 rounded-xl text-white text-lg font-medium placeholder-fogo-gray-500 focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/20 transition-all duration-300"
               />
               {amount && (
                 <div className="absolute right-16 top-1/2 -translate-y-1/2 text-fogo-gray-500 text-sm">
@@ -240,7 +240,7 @@ export default function LVFPositionModal({
                 Position Preview
               </h3>
               <div className="space-y-3">
-                <div className="flex justify-between items-center py-2.5 px-3 bg-fogo-gray-900/50 rounded-lg">
+                <div className="flex justify-between items-center py-2.5 px-3 panel-muted rounded-lg">
                   <span className="text-fogo-gray-400 text-sm">Collateral</span>
                   <span className="text-white font-bold text-lg">
                     {amount ? parseFloat(amount).toFixed(4) : '0.0000'} {baseTokenSymbol}
@@ -259,7 +259,7 @@ export default function LVFPositionModal({
                         -{(parseFloat(amount) * INFERNO_OPEN_FEE_RATE).toFixed(2)} {baseTokenSymbol}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center py-2 px-3 bg-fogo-gray-900/50 rounded-lg">
+                    <div className="flex justify-between items-center py-2 px-3 panel-muted rounded-lg">
                       <span className="text-fogo-gray-400 text-xs">Collateral After Fee</span>
                       <span className="text-fogo-gray-300 font-semibold">
                         {(parseFloat(amount) * (1 - INFERNO_OPEN_FEE_RATE)).toFixed(2)} {baseTokenSymbol}

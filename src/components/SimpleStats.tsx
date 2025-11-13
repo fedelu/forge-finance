@@ -157,15 +157,15 @@ export default function SimpleStats({ className = '' }: SimpleStatsProps) {
     
     return (
       <div
-        className="bg-fogo-gray-800/50 backdrop-blur-sm rounded-2xl p-8 border border-fogo-gray-700/50 shadow-fogo hover:shadow-fogo-lg transition-all duration-300 hover:scale-105 hover:-translate-y-1 min-h-[180px] overflow-hidden"
+        className="panel-muted backdrop-blur-sm rounded-2xl p-8 border border-fogo-gray-700/50 shadow-fogo hover:shadow-fogo-lg transition-all duration-300 hover:scale-105 hover:-translate-y-1 min-h-[180px] overflow-hidden"
         style={{ animationDelay: `${delay}ms` }}
       >
         <div className="space-y-6 h-full flex flex-col">
-          <p className="text-fogo-gray-400 text-sm font-inter font-medium uppercase tracking-wide">{title}</p>
+          <p className="text-fogo-gray-400 text-sm font-satoshi font-medium uppercase tracking-wide">{title}</p>
           
           <div className="flex-1 flex items-center min-w-0">
             <p 
-              className={`font-inter-bold text-white break-all overflow-hidden ${
+              className={`font-heading text-white break-all overflow-hidden ${
                 isLongValue ? 'text-2xl leading-tight' : 'text-4xl'
               }`}
               title={isLongValue ? valueStr : undefined}
@@ -182,14 +182,14 @@ export default function SimpleStats({ className = '' }: SimpleStatsProps) {
           <div className="flex items-center space-x-2">
             {isPositive && <ArrowUpIcon className="h-4 w-4 text-fogo-success" />}
             {isNegative && <ArrowDownIcon className="h-4 w-4 text-fogo-error" />}
-            <span className={`text-sm font-inter font-medium ${
+            <span className={`text-sm font-satoshi font-medium ${
               isPositive ? 'text-fogo-success' : 
               isNegative ? 'text-fogo-error' : 
               'text-fogo-gray-400'
             }`}>
               {formatChange(change, true)}
             </span>
-            <span className="text-fogo-gray-500 text-sm font-inter-light">this week</span>
+            <span className="text-fogo-gray-500 text-sm font-satoshi-light">this week</span>
           </div>
         </div>
       </div>
@@ -201,18 +201,18 @@ export default function SimpleStats({ className = '' }: SimpleStatsProps) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-4 sm:space-y-0">
         <div>
-          <h2 className="text-3xl font-inter-bold text-white mb-2">Protocol Statistics</h2>
-          <p className="text-fogo-gray-400 font-inter-light">Real-time data and performance metrics</p>
+          <h2 className="text-3xl font-heading text-white mb-2">Protocol Statistics</h2>
+          <p className="text-fogo-gray-400 font-satoshi-light">Real-time data and performance metrics</p>
         </div>
         
         <div className="flex items-center space-x-4">
           {/* Live Status */}
           <div className="flex items-center space-x-2">
             <div className={`w-3 h-3 rounded-full ${isLive ? 'status-online' : 'status-offline'}`} />
-            <span className="text-sm text-fogo-gray-400 font-inter">Live</span>
+            <span className="text-sm text-fogo-gray-400 font-satoshi">Live</span>
             <button 
               onClick={() => setIsLive(!isLive)}
-              className="text-xs px-3 py-1 rounded-lg bg-fogo-gray-700 hover:bg-fogo-gray-600 transition-colors hover-lift font-inter"
+              className="text-xs px-3 py-1 rounded-lg bg-fogo-gray-700 hover:bg-fogo-gray-600 transition-colors hover-lift font-satoshi"
             >
               {isLive ? 'Pause' : 'Resume'}
             </button>
@@ -222,13 +222,13 @@ export default function SimpleStats({ className = '' }: SimpleStatsProps) {
       
       {/* Per-Crucible Stats */}
       {isClient && crucibles.length > 0 && (
-        <div className="bg-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700 shadow-fogo">
-          <h3 className="text-xl font-inter-bold text-white mb-6">Per-Crucible Statistics</h3>
+        <div className="panel rounded-2xl p-6 border border-fogo-gray-700 shadow-fogo">
+          <h3 className="text-xl font-heading text-white mb-6">Per-Crucible Statistics</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {crucibles.map((crucible) => {
               const yieldEarned = crucible.apyEarnedByUsers || 0; // APY-based yield earned
               return (
-                <div key={crucible.id} className="bg-fogo-gray-800 rounded-xl p-6 border border-fogo-gray-600">
+                <div key={crucible.id} className="panel-muted rounded-xl p-6 border border-fogo-gray-600">
                   <div className="flex items-center space-x-3 mb-4">
                     {crucible.icon.startsWith('/') ? (
                       <img 
@@ -241,21 +241,21 @@ export default function SimpleStats({ className = '' }: SimpleStatsProps) {
                         <span className="text-fogo-primary font-bold text-sm">{crucible.symbol[0]}</span>
                       </div>
                     )}
-                    <h4 className="text-lg font-inter-bold text-white">{crucible.name} Crucible</h4>
+                    <h4 className="text-lg font-heading text-white">{crucible.name} Crucible</h4>
                   </div>
                   
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <span className="text-fogo-gray-400 text-sm">TVL:</span>
-                      <span className="text-white font-inter-bold">{formatCurrency(crucible.tvl)}</span>
+                      <span className="text-white font-heading">{formatCurrency(crucible.tvl)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-fogo-gray-400 text-sm">APY:</span>
-                      <span className="text-fogo-accent font-inter-bold">{(crucible.apr * 100).toFixed(1)}%</span>
+                      <span className="text-fogo-accent font-heading">{(crucible.apr * 100).toFixed(1)}%</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-fogo-gray-400 text-sm">Yield Earned:</span>
-                      <span className="text-fogo-primary font-inter-bold">{formatCurrency(yieldEarned)}</span>
+                      <span className="text-fogo-primary font-heading">{formatCurrency(yieldEarned)}</span>
                     </div>
                   </div>
                 </div>

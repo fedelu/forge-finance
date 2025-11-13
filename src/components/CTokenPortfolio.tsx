@@ -327,7 +327,7 @@ export default function CTokenPortfolio() {
     <div className="space-y-8">
       {/* Unified Dashboard Summary - Enhanced */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-gradient-to-br from-fogo-gray-900 via-fogo-gray-800 to-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700/50 shadow-xl hover:shadow-fogo-lg hover:border-fogo-primary/30 transition-all duration-300 group relative overflow-hidden">
+        <div className="panel rounded-2xl p-6 hover:shadow-fogo-lg hover:border-fogo-primary/30 transition-all duration-300 group relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-fogo-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-3">
@@ -338,12 +338,12 @@ export default function CTokenPortfolio() {
               </div>
               <div className="text-fogo-gray-400 text-sm font-medium">Total Deposited Value</div>
             </div>
-            <div className="text-3xl font-inter-bold text-white">
+            <div className="text-3xl font-heading text-white">
               ${totalPortfolioValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
           </div>
         </div>
-        <div className="bg-gradient-to-br from-fogo-gray-900 via-fogo-gray-800 to-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700/50 shadow-xl hover:shadow-fogo-lg hover:border-fogo-primary/30 transition-all duration-300 group relative overflow-hidden">
+        <div className="panel rounded-2xl p-6 hover:shadow-fogo-lg hover:border-fogo-primary/30 transition-all duration-300 group relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-3">
@@ -354,12 +354,12 @@ export default function CTokenPortfolio() {
               </div>
               <div className="text-fogo-gray-400 text-sm font-medium">Weighted APY</div>
             </div>
-            <div className="text-3xl font-inter-bold text-green-400">
+            <div className="text-3xl font-heading text-green-400">
               {weightedAPY.toFixed(2)}%
             </div>
           </div>
         </div>
-        <div className="bg-gradient-to-br from-fogo-gray-900 via-fogo-gray-800 to-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700/50 shadow-xl hover:shadow-fogo-lg hover:border-fogo-primary/30 transition-all duration-300 group relative overflow-hidden">
+        <div className="panel rounded-2xl p-6 hover:shadow-fogo-lg hover:border-fogo-primary/30 transition-all duration-300 group relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-fogo-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-3">
@@ -370,7 +370,7 @@ export default function CTokenPortfolio() {
               </div>
               <div className="text-fogo-gray-400 text-sm font-medium">Active Positions</div>
             </div>
-            <div className="text-3xl font-inter-bold text-white">
+            <div className="text-3xl font-heading text-white">
               {cTokenPositions.length + allCTokenUSDCPositions.length}
               <span className="text-base text-fogo-gray-400 ml-2 font-normal">
                 ({cTokenPositions.length} cTokens, {allCTokenUSDCPositions.length} ifTOKEN/USDC)
@@ -381,15 +381,15 @@ export default function CTokenPortfolio() {
       </div>
 
       {/* cTOKENS Section - Simple wrap positions */}
-      <div className="bg-gradient-to-br from-fogo-gray-900/90 via-fogo-gray-800/80 to-fogo-gray-900/90 rounded-3xl p-8 border border-fogo-gray-700/50 shadow-2xl backdrop-blur-sm">
+      <div className="panel rounded-3xl p-8">
         <div className="flex items-center gap-4 mb-8">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/30 to-blue-500/10 flex items-center justify-center ring-2 ring-blue-500/20">
             <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h3 className="text-2xl font-inter-bold text-white">cTOKENS</h3>
-          <span className="px-4 py-1.5 bg-gradient-to-r from-blue-500/20 to-blue-500/10 text-blue-400 text-xs font-bold rounded-full border border-blue-500/30">{cTokenPositions.length}</span>
+          <h3 className="text-2xl font-heading text-white">cTOKENS</h3>
+          <span className="px-4 py-1.5 bg-gradient-to-r from-blue-500/20 to-blue-500/10 text-blue-400 text-xs text-lg font-heading rounded-full border border-blue-500/30">{cTokenPositions.length}</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
@@ -419,7 +419,7 @@ export default function CTokenPortfolio() {
                       <td className="py-5 px-6">
                         <div className="flex items-center space-x-3">
                           <div className="w-12 h-12 bg-gradient-to-br from-blue-500/30 to-blue-500/10 rounded-xl flex items-center justify-center ring-2 ring-blue-500/20 group-hover:ring-blue-500/40 transition-all duration-300 group-hover:scale-110">
-                            <span className="text-blue-400 font-bold text-base">
+                            <span className="text-blue-400 text-lg font-heading text-base">
                               {position.ctokenSymbol.substring(1, 2).toUpperCase()}
                             </span>
                           </div>
@@ -462,42 +462,42 @@ export default function CTokenPortfolio() {
       </div>
 
       {/* ifTOKEN/USDC Section - LP positions with detailed info */}
-      <div className="bg-gradient-to-br from-fogo-gray-900 via-fogo-gray-800 to-fogo-gray-900 rounded-2xl p-6 border border-fogo-gray-700/50 shadow-xl">
+      <div className="panel rounded-2xl p-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
             <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
           </div>
-          <h3 className="text-2xl font-inter-bold text-white">ifTOKEN/USDC</h3>
-          <span className="px-3 py-1 bg-green-500/20 text-green-400 text-xs font-bold rounded-full">{allCTokenUSDCPositions.length}</span>
+          <h3 className="text-2xl font-heading text-white">ifTOKEN/USDC</h3>
+          <span className="px-3 py-1 bg-green-500/20 text-green-400 text-xs text-lg font-heading rounded-full">{allCTokenUSDCPositions.length}</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
               <tr className="border-b border-fogo-gray-700">
-                <th className="text-left py-3 px-4 text-fogo-gray-400 font-medium text-sm">Pair</th>
-                <th className="text-right py-3 px-4 text-fogo-gray-400 font-medium text-sm">
-                  <div className="flex flex-col items-end">
+                <th className="text-left py-3 px-4 text-fogo-gray-400 text-xs font-heading uppercase tracking-[0.18em]">Pair</th>
+                <th className="text-right py-3 px-4 text-fogo-gray-400 text-xs font-heading uppercase tracking-[0.18em]">
+                  <div className="flex flex-col items-end gap-0.5">
                     <span>Collateral</span>
-                    <span className="text-xs text-fogo-gray-500 mt-0.5">cToken value</span>
+                    <span className="text-[10px] text-fogo-gray-500 font-satoshi">cToken value</span>
                   </div>
                 </th>
-                <th className="text-right py-3 px-4 text-fogo-gray-400 font-medium text-sm">
-                  <div className="flex flex-col items-end">
+                <th className="text-right py-3 px-4 text-fogo-gray-400 text-xs font-heading uppercase tracking-[0.18em]">
+                  <div className="flex flex-col items-end gap-0.5">
                     <span>Borrowed</span>
-                    <span className="text-xs text-fogo-gray-500 mt-0.5">USDC</span>
+                    <span className="text-[10px] text-fogo-gray-500 font-satoshi">USDC</span>
                   </div>
                 </th>
-                <th className="text-right py-3 px-4 text-fogo-gray-400 font-medium text-sm">Leverage</th>
-                <th className="text-right py-3 px-4 text-fogo-gray-400 font-medium text-sm">
-                  <div className="flex flex-col items-end">
+                <th className="text-right py-3 px-4 text-fogo-gray-400 text-xs font-heading uppercase tracking-[0.18em]">Leverage</th>
+                <th className="text-right py-3 px-4 text-fogo-gray-400 text-xs font-heading uppercase tracking-[0.18em]">
+                  <div className="flex flex-col items-end gap-0.5">
                     <span>Health</span>
-                    <span className="text-xs text-fogo-gray-500 mt-0.5">Factor</span>
+                    <span className="text-[10px] text-fogo-gray-500 font-satoshi">Factor</span>
                   </div>
                 </th>
-                <th className="text-right py-3 px-4 text-fogo-gray-400 font-medium text-sm">APY</th>
-                <th className="text-right py-3 px-4 text-fogo-gray-400 font-medium text-sm">Total Value</th>
+                <th className="text-right py-3 px-4 text-fogo-gray-400 text-xs font-heading uppercase tracking-[0.18em]">APY</th>
+                <th className="text-right py-3 px-4 text-fogo-gray-400 text-xs font-heading uppercase tracking-[0.18em]">Total Value</th>
               </tr>
             </thead>
             <tbody>
@@ -536,12 +536,12 @@ export default function CTokenPortfolio() {
                     <tr key={position.id} className="border-b border-fogo-gray-800 hover:bg-fogo-gray-800/30 transition-colors">
                       <td className="py-4 px-4">
                         <div className="flex items-center space-x-2">
-                          <span className="text-white font-medium">
+                          <span className="text-white text-base font-heading">
                             {crucible
                               ? `if${crucible.ctokenSymbol.replace(/^c/i, '')}/USDC`
                               : `if${position.baseToken.replace(/^if/i, '')}/USDC`}
                           </span>
-                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                          <span className={`px-2 py-0.5 rounded text-xs font-heading uppercase tracking-[0.16em] ${
                             leverage > 1 ? 'bg-orange-500/20 text-orange-400' : 'bg-green-500/20 text-green-400'
                           }`}>
                             {leverage > 1 ? 'Leveraged' : 'LP'}
@@ -549,25 +549,23 @@ export default function CTokenPortfolio() {
                         </div>
                       </td>
                       <td className="text-right py-4 px-4">
-                        <div className="text-white font-medium">
+                        <div className="text-white text-base font-heading">
                           ${collateralValueUSD.toFixed(2)} USD
                         </div>
-                        <div className="text-fogo-gray-500 text-xs mt-1">
+                        <div className="text-fogo-gray-500 text-xs font-satoshi mt-1">
                           {position.baseAmount.toFixed(2)} {position.baseToken}
                           {depositUSDC > 0 && (
-                            <span className="ml-2 text-green-400">+ {depositUSDC.toFixed(2)} USDC</span>
+                            <span className="ml-2 text-green-400 font-heading">+ {depositUSDC.toFixed(2)} USDC</span>
                           )}
                         </div>
                       </td>
                       <td className="text-right py-4 px-4">
-                        {borrowedUSDC > 0 ? (
-                          <span className="text-orange-400 font-medium">{borrowedUSDC.toFixed(2)} USDC</span>
-                        ) : (
-                          <span className="text-fogo-gray-500 text-sm">-</span>
-                        )}
+                        <span className={`text-base font-heading ${borrowedUSDC > 0 ? 'text-orange-400' : 'text-fogo-gray-500'}`}>
+                          {borrowedUSDC > 0 ? `${borrowedUSDC.toFixed(2)} USDC` : '-'}
+                        </span>
                       </td>
                       <td className="text-right py-4 px-4">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        <span className={`px-2 py-1 rounded text-xs font-heading uppercase tracking-[0.16em] ${
                           leverage === 2.0 ? 'bg-yellow-500/20 text-yellow-400' :
                           leverage === 1.5 ? 'bg-orange-500/20 text-orange-400' :
                           'bg-green-500/20 text-green-400'
@@ -576,24 +574,21 @@ export default function CTokenPortfolio() {
                         </span>
                       </td>
                       <td className="text-right py-4 px-4">
-                        {healthFactor < 999 ? (
-                          <span className={`text-xs font-medium ${
-                            healthFactor >= 2.0 ? 'text-green-400' :
-                            healthFactor >= 1.5 ? 'text-yellow-400' :
-                            healthFactor >= 1.0 ? 'text-orange-400' :
-                            'text-red-400'
-                          }`}>
-                            {healthFactor.toFixed(2)}x
-                          </span>
-                        ) : (
-                          <span className="text-fogo-gray-500 text-xs">-</span>
-                        )}
+                        <span className={`text-xs font-heading ${
+                          healthFactor >= 999 ? 'text-fogo-gray-500' :
+                          healthFactor >= 2.0 ? 'text-green-400' :
+                          healthFactor >= 1.5 ? 'text-yellow-400' :
+                          healthFactor >= 1.0 ? 'text-orange-400' :
+                          'text-red-400'
+                        }`}>
+                          {healthFactor >= 999 ? '-' : `${healthFactor.toFixed(2)}x`}
+                        </span>
                       </td>
                       <td className="text-right py-4 px-4">
-                        <span className="text-green-400 font-medium">{lpAPY.toFixed(2)}%</span>
+                        <span className="text-green-400 text-base font-heading">{lpAPY.toFixed(2)}%</span>
                       </td>
                       <td className="text-right py-4 px-4">
-                        <span className="text-white font-medium">${totalValue.toFixed(2)}</span>
+                        <span className="text-white text-base font-heading">${totalValue.toFixed(2)}</span>
                       </td>
                     </tr>
                   )
@@ -826,53 +821,53 @@ function CTokenPositionRow({ position, onSelect }: { position: CTokenPosition, o
       <td className="py-4 px-4">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-fogo-primary/20 rounded-full flex items-center justify-center">
-            <span className="text-fogo-primary font-bold text-sm">
+            <span className="text-fogo-primary text-lg font-heading">
               {position.ctokenSymbol.substring(1, 2).toUpperCase()}
             </span>
           </div>
           <div>
-            <div className="text-white font-medium">{position.ctokenSymbol}</div>
-            <div className="text-fogo-gray-500 text-xs">{position.baseTokenSymbol}</div>
+            <div className="text-white text-base font-heading">{position.ctokenSymbol}</div>
+            <div className="text-fogo-gray-500 text-xs font-satoshi">{position.baseTokenSymbol}</div>
           </div>
         </div>
       </td>
       <td className="text-right py-4 px-4">
         <div className="flex flex-col items-end">
-          <div className="text-white font-medium">
+          <div className="text-white text-base font-heading">
             {collateralInBaseTokens > 0 ? collateralInBaseTokens.toFixed(2) : '0.00'} {position.baseTokenSymbol}
           </div>
-          <div className="text-fogo-gray-500 text-xs mt-1">
+          <div className="text-fogo-gray-500 text-xs font-satoshi mt-1">
             {ctokenBalanceDisplay > 0 ? `${ctokenBalanceDisplay.toFixed(2)} ${position.ctokenSymbol}` : 'No position'}
           </div>
-          <div className="text-fogo-gray-400 text-xs mt-0.5" title="Value of your cTokens in base tokens (collateral)">
+          <div className="text-fogo-gray-400 text-xs font-satoshi mt-0.5" title="Value of your cTokens in base tokens (collateral)">
             ≈ ${collateralValueUSD.toFixed(2)} USD
           </div>
         </div>
       </td>
       <td className="text-right py-4 px-4">
         {borrowedUSDC > 0 ? (
-          <span className="text-orange-400 font-medium">{borrowedUSDC.toFixed(2)} USDC</span>
+          <span className="text-orange-400 text-base font-heading">{borrowedUSDC.toFixed(2)} USDC</span>
         ) : (
-          <span className="text-fogo-gray-500" title="No borrowed funds">-</span>
+          <span className="text-fogo-gray-500 font-satoshi" title="No borrowed funds">-</span>
         )}
       </td>
       <td className="text-right py-4 px-4">
         {leverage?.leverage && leverage.leverage > 1.0 ? (
-          <span className={`px-2 py-1 rounded text-xs font-medium ${
+          <span className={`px-2 py-1 rounded text-xs font-heading ${
             leverage.leverage === 2.0 ? 'bg-yellow-500/20 text-yellow-400' :
             'bg-green-500/20 text-green-400'
           }`}>
             {leverage.leverage}x
           </span>
         ) : (
-          <span className="text-fogo-gray-500" title="No leverage (standard position)">1x</span>
+          <span className="text-fogo-gray-500 font-satoshi" title="No leverage (standard position)">1x</span>
         )}
       </td>
       <td className="text-right py-4 px-4">
         <div className="flex flex-col items-end">
           {borrowedUSDC > 0 ? (
             <>
-              <span className={`text-xs font-medium ${
+              <span className={`text-xs font-heading ${
                 healthFactor >= 2.0 ? 'text-green-400' :
                 healthFactor >= 1.5 ? 'text-yellow-400' :
                 healthFactor >= 1.0 ? 'text-orange-400' :
@@ -881,16 +876,16 @@ function CTokenPositionRow({ position, onSelect }: { position: CTokenPosition, o
                 {healthFactor.toFixed(2)}x
               </span>
               {healthFactor < 1.0 && (
-                <span className="text-red-400 text-xs mt-0.5">⚠️ Risk</span>
+                <span className="text-red-400 text-xs font-satoshi mt-0.5">⚠️ Risk</span>
               )}
             </>
           ) : (
-            <span className="text-fogo-gray-500 text-xs" title="No borrowed funds, position is safe">-</span>
+            <span className="text-fogo-gray-500 text-xs font-satoshi" title="No borrowed funds, position is safe">-</span>
           )}
         </div>
       </td>
       <td className="text-right py-4 px-4">
-        <span className={`font-medium ${
+        <span className={`text-base font-heading ${
           effectiveAPY >= position.baseAPY * 1.5 ? 'text-green-400' :
           effectiveAPY >= position.baseAPY * 1.2 ? 'text-yellow-400' :
           'text-fogo-primary'
@@ -902,7 +897,7 @@ function CTokenPositionRow({ position, onSelect }: { position: CTokenPosition, o
         <button
           onClick={onSelect}
           disabled={ctokenBalance === BigInt(0)}
-          className="px-3 py-1 bg-fogo-primary hover:bg-fogo-secondary disabled:bg-fogo-gray-700 disabled:text-fogo-gray-500 disabled:cursor-not-allowed text-white rounded text-sm font-medium transition-colors"
+          className="px-3 py-1 bg-fogo-primary hover:bg-fogo-secondary disabled:bg-fogo-gray-700 disabled:text-fogo-gray-500 disabled:cursor-not-allowed text-white rounded text-sm font-heading transition-colors"
           title={ctokenBalance === BigInt(0) ? 'No position to manage' : 'View position details'}
         >
           Manage
@@ -926,9 +921,9 @@ function CTokenPositionDetails({ position, onClose }: { position: CTokenPosition
   const exchangeRate = crucible.exchangeRate ? Number(crucible.exchangeRate) / Number(1_000_000_000) : 1.045
 
   return (
-    <div className="bg-fogo-gray-800/50 rounded-lg p-6 border border-fogo-gray-700">
+    <div className="panel-muted rounded-lg p-6 border border-fogo-gray-700">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl font-bold text-white">{position.ctokenSymbol} Position</h3>
+        <h3 className="text-xl font-heading text-white">{position.ctokenSymbol} Position</h3>
         <button
           onClick={onClose}
           className="text-fogo-gray-400 hover:text-white transition-colors"
@@ -950,35 +945,35 @@ function CTokenPositionDetails({ position, onClose }: { position: CTokenPosition
         
         return (
           <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="bg-fogo-gray-900/50 rounded-lg p-4">
-              <div className="text-fogo-gray-400 text-sm mb-1">cToken Balance</div>
-              <div className="text-white font-bold text-lg">
+            <div className="panel-muted rounded-lg p-4">
+              <div className="text-fogo-gray-400 text-sm font-satoshi mb-1">cToken Balance</div>
+              <div className="text-white text-lg font-heading">
                 {ctokenBalance.toFixed(2)} {position.ctokenSymbol}
               </div>
             </div>
-            <div className="bg-fogo-gray-900/50 rounded-lg p-4">
-              <div className="text-fogo-gray-400 text-sm mb-1">
+            <div className="panel-muted rounded-lg p-4">
+              <div className="text-fogo-gray-400 text-sm font-satoshi mb-1">
                 Collateral
                 <span className="ml-1 text-xs" title="The base token value of your position">(ℹ️)</span>
               </div>
-              <div className="text-white font-bold text-lg">
+              <div className="text-white text-lg font-heading">
                 {userBalance.baseDeposited.toFixed(2)} {position.baseTokenSymbol}
               </div>
-              <div className="text-fogo-gray-500 text-xs mt-1">
+              <div className="text-fogo-gray-500 text-xs font-satoshi mt-1">
                 cToken Balance: {ctokenBalance.toFixed(2)} {position.ctokenSymbol}
               </div>
             </div>
-            <div className="bg-fogo-gray-900/50 rounded-lg p-4">
-              <div className="text-fogo-gray-400 text-sm mb-1">Borrowed (USDC)</div>
-              <div className={`font-bold text-lg ${
+            <div className="panel-muted rounded-lg p-4">
+              <div className="text-fogo-gray-400 text-sm font-satoshi mb-1">Borrowed (USDC)</div>
+              <div className={`text-lg font-heading ${
                 borrowedUSDC > 0 ? 'text-orange-400' : 'text-fogo-gray-500'
               }`}>
                 {borrowedUSDC > 0 ? `${borrowedUSDC.toFixed(2)} USDC` : '-'}
               </div>
             </div>
-            <div className="bg-fogo-gray-900/50 rounded-lg p-4">
-              <div className="text-fogo-gray-400 text-sm mb-1">Health Factor</div>
-              <div className={`font-bold text-lg ${
+            <div className="panel-muted rounded-lg p-4">
+              <div className="text-fogo-gray-400 text-sm font-satoshi mb-1">Health Factor</div>
+              <div className={`text-lg font-heading ${
                 healthFactor >= 2.0 ? 'text-green-400' :
                 healthFactor >= 1.5 ? 'text-yellow-400' :
                 healthFactor >= 1.0 ? 'text-orange-400' :
@@ -988,18 +983,18 @@ function CTokenPositionDetails({ position, onClose }: { position: CTokenPosition
                 {healthFactor >= 999 ? '∞' : healthFactor.toFixed(2)}
               </div>
               {healthFactor < 999 && healthFactor < 1.0 && (
-                <div className="text-red-400 text-xs mt-1">⚠️ Liquidation risk</div>
+                <div className="text-red-400 text-xs font-satoshi mt-1">⚠️ Liquidation risk</div>
               )}
             </div>
-            <div className="bg-fogo-gray-900/50 rounded-lg p-4">
-              <div className="text-fogo-gray-400 text-sm mb-1">Leverage</div>
-              <div className="text-white font-bold text-lg">
+            <div className="panel-muted rounded-lg p-4">
+              <div className="text-fogo-gray-400 text-sm font-satoshi mb-1">Leverage</div>
+              <div className="text-white text-lg font-heading">
                 {leverage?.leverage || 1.0}x
               </div>
             </div>
-            <div className="bg-fogo-gray-900/50 rounded-lg p-4">
-              <div className="text-fogo-gray-400 text-sm mb-1">Exchange Rate</div>
-              <div className="text-white font-bold text-lg">
+            <div className="panel-muted rounded-lg p-4">
+              <div className="text-fogo-gray-400 text-sm font-satoshi mb-1">Exchange Rate</div>
+              <div className="text-white text-lg font-heading">
                 1 {position.ctokenSymbol} = {exchangeRate.toFixed(2)} {position.baseTokenSymbol}
               </div>
             </div>
@@ -1010,7 +1005,7 @@ function CTokenPositionDetails({ position, onClose }: { position: CTokenPosition
       <div className="flex space-x-3">
         <button
           onClick={() => setShowWithdraw(true)}
-          className="flex-1 px-4 py-3 bg-fogo-primary hover:bg-fogo-secondary text-white rounded-lg font-medium transition-colors"
+          className="flex-1 px-4 py-3 bg-fogo-primary-light hover:bg-fogo-primary text-white rounded-lg font-medium transition-colors shadow-[0_10px_30px_rgba(255,102,14,0.25)]"
         >
           Close Position
         </button>

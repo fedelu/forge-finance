@@ -73,17 +73,21 @@ export default function LeveragedProjectionChart({
   ]
   
   return (
-    <div className="bg-gradient-to-br from-fogo-gray-800/60 to-fogo-gray-900/60 backdrop-blur-sm rounded-2xl p-6 border border-fogo-gray-700/50">
+    <div className="panel rounded-2xl p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-inter-bold text-white mb-1">
+          <h3 className="text-lg font-heading text-white mb-1">
             Yield Projections
           </h3>
         </div>
         <button
           onClick={() => setShowChart(!showChart)}
-          className="px-4 py-2 bg-fogo-gray-700/80 hover:bg-fogo-primary/20 border border-fogo-gray-600 hover:border-fogo-primary rounded-lg text-sm font-semibold text-white transition-all duration-300 hover:scale-105 flex items-center gap-2"
+          className={`px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-[0.18em] transition-all duration-300 flex items-center gap-2 ${
+            showChart
+              ? 'bg-fogo-primary-light/30 border border-fogo-primary/40 text-white shadow-[0_10px_25px_rgba(255,102,14,0.25)] hover:bg-fogo-primary/30 hover:border-fogo-primary/50'
+              : 'bg-white/5 border border-white/10 text-fogo-gray-200 hover:text-white hover:bg-white/10 hover:border-white/20'
+          }`}
         >
           <span>{showChart ? 'Hide Chart' : 'Show Chart'}</span>
           {showChart ? (
