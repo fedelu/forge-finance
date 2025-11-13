@@ -398,7 +398,7 @@ const baseAmountForPosition = mode === 'lp' ? Math.max(0, parsedAmount - inferno
             >
               <div className="relative flex items-center justify-center gap-2">
                 <BoltIcon className="w-4 h-4" />
-                <span className="text-base">Leveraged</span>
+                <span className="text-base">Inferno</span>
               </div>
             </button>
           </div>
@@ -553,7 +553,7 @@ const baseAmountForPosition = mode === 'lp' ? Math.max(0, parsedAmount - inferno
             ) : (
               <>
                 <div className="flex justify-between items-center py-1.5 px-2.5 panel-muted rounded-lg">
-                  <span className="text-fogo-gray-400 text-xs font-satoshi">LP Pair</span>
+                  <span className="text-fogo-gray-400 text-xs font-satoshi">LP Token</span>
                   <span className="text-white text-base font-heading">{displayPairSymbol}/USDC</span>
                 </div>
                 <div className="flex justify-between items-center py-1.5 px-2.5 panel-muted rounded-lg">

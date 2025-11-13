@@ -1044,7 +1044,7 @@ export function FogoSessionsButton() {
                 <div className="w-1.5 h-1.5 bg-fogo-success rounded-full animate-pulse" title="Live"></div>
               </div>
               {balances.filter(balance => ['FOGO', 'USDC', 'FORGE', 'cFOGO', 'cFORGE', 'cFOGO/USDC LP', 'cFORGE/USDC LP'].includes(balance.symbol)).map((balance) => {
-                const displaySymbol = balance.symbol.replace(/^c([A-Z]+)/, 'if$1')
+                const displaySymbol = balance.symbol
                 return (
                   <div 
                     key={balance.symbol} 
